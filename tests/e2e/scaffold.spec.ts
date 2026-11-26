@@ -18,13 +18,13 @@ test('preview loads without a backend and routes survive a Pages reload', async 
   await page.goto('./')
   // RYT-112: without a backend the Glossary is the only page that ships, so it is the landing.
   await expect(page.getByRole('heading', { name: 'Glossary', exact: true })).toBeVisible()
-  await expect(page).toHaveURL(/#\/glossary$/)
+  await expect(page).toHaveURL(/\/rytta-dnd-app\/glossary$/)
   await expect(page.locator('header')).not.toContainText('Preview · sample data')
   await capture(page, testInfo.outputPath('glossary.png'))
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Glossary', exact: true })).toBeVisible()
   // Pages that have not shipped say so plainly, never in ticket ids, and lead home.
-  await page.goto('./#/quests')
+  await page.goto('./quests')
   await expect(page.getByRole('heading', { name: 'Page not found', exact: true })).toBeVisible()
   await expect(page.getByText('RYT-006')).toHaveCount(0)
   await page.getByRole('link', { name: 'Go to the start' }).click()
@@ -67,7 +67,7 @@ test('the settings gear opens the drawer from the keyboard and returns focus', a
 
 test('large text and reduced motion retain usable navigation', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('./#/inventory')
+  await page.goto('./inventory')
   await page.addStyleTag({ content: 'html { font-size: 150%; }' })
   await expect(page.getByRole('heading', { name: 'Page not found', exact: true })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
@@ -182,7 +182,7 @@ test('the update notice is quiet, accessible, clear of the bottom bar and return
 test('RYT-167 the preview without a backend says its glossary needs the content library', async ({
   page,
 }, testInfo) => {
-  await page.goto('./#/glossary')
+  await page.goto('./glossary')
   await expect(page.getByRole('heading', { level: 1, name: 'Glossary' })).toBeVisible()
   await expect(page.getByText(/the glossary needs the content library/)).toBeVisible()
   expect(

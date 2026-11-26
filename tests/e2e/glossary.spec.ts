@@ -3,8 +3,8 @@ import AxeBuilder from '@axe-core/playwright'
 import { campaignId, characterId, identityFixture } from './fixtures/identity.ts'
 import { capture, expectTouchTargets } from './fixtures/audit.ts'
 
-const glossaryUrl = `./#/campaign/${campaignId}/glossary`
-const sheetUrl = `./#/campaign/${campaignId}/party/${characterId}`
+const glossaryUrl = `./campaign/${campaignId}/glossary`
+const sheetUrl = `./campaign/${campaignId}/party/${characterId}`
 /** Below 62em the reader replaces the index (phones and portrait tablets). */
 const narrow = (page: Page) => page.viewportSize()!.width < 992
 const size = (project: string) =>
@@ -670,7 +670,7 @@ test('the DM reaches the glossary from navigation and the module switch lists it
   page,
 }, info) => {
   await identityFixture(page, { modules: ['party'] })
-  await page.goto(`./#/campaign/${campaignId}/members?panel=modules`)
+  await page.goto(`./campaign/${campaignId}/members?panel=modules`)
   await expect(page.getByRole('switch', { name: /Glosario/ })).toBeVisible()
   await page.goto(glossaryUrl)
   await expect(page.getByRole('heading', { level: 1, name: 'Glosario' })).toBeVisible()
@@ -688,7 +688,7 @@ test('Escape closes a definition opened from an item card before the card itself
 }) => {
   await identityFixture(page, { player: true, sheet: 'complete', inventory: true })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(`./#/campaign/${campaignId}/inventory`)
+  await page.goto(`./campaign/${campaignId}/inventory`)
   await page.getByRole('button', { name: /Espada larga, (cantidad|quantity) 1/ }).click()
   const card = page.getByRole('dialog', { name: /Espada larga|Objeto/ }).first()
   await expect(card).toBeVisible()
@@ -711,7 +711,7 @@ test('a definition closed before its focus trap moves in still returns focus to 
 }) => {
   await identityFixture(page, { player: true, sheet: 'complete', inventory: true })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(`./#/campaign/${campaignId}/inventory`)
+  await page.goto(`./campaign/${campaignId}/inventory`)
   await page.getByRole('button', { name: /Espada larga, (cantidad|quantity) 1/ }).click()
   const term = page.getByRole('button', { name: 'cortante: ver definición' })
   await term.click()

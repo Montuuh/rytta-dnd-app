@@ -51,7 +51,7 @@ for (const [language, scheme] of [
       },
     })
     await page.emulateMedia({ reducedMotion: 'reduce' })
-    await page.goto(`./#/campaign/${campaignId}/inventory`)
+    await page.goto(`./campaign/${campaignId}/inventory`)
     await page.addStyleTag({ content: 'html { font-size: 150% }' })
     const name = es ? deck.name_es : deck.name_en
     await page.getByRole('button', { name: new RegExp(`${name}, (cantidad|quantity) 1`) }).click()
@@ -115,7 +115,7 @@ test('a shop that sells an item with a long text still opens and keeps its lines
   })
   await shopsFixture(page, fixture)
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(`./#/campaign/${campaignId}/shops`)
+  await page.goto(`./campaign/${campaignId}/shops`)
   await expect(page.getByRole('heading', { level: 1, name: 'Tiendas' })).toBeVisible()
   const listing = page.locator('.listing-card', { hasText: 'Anillo de la marea' })
   await expect(listing).toBeVisible()
@@ -155,8 +155,8 @@ test('a trade shows the whole text of the partner item', async ({ browser }, inf
   await identityFixture(bea, { player: true, party: true, sheet: 'complete', as: peerId })
   await server.install(arin, characterId)
   await server.install(bea, beaId)
-  await arin.goto(`./#/campaign/${campaignId}/party`)
-  await bea.goto(`./#/campaign/${campaignId}/party`)
+  await arin.goto(`./campaign/${campaignId}/party`)
+  await bea.goto(`./campaign/${campaignId}/party`)
   await arin
     .getByRole('article', { name: 'Bea' })
     .getByRole('button', { name: 'Comerciar con Bea' })
@@ -193,7 +193,7 @@ test('the library item form sets a rarity and takes the whole text', async ({ pa
   await page.emulateMedia({ reducedMotion: 'reduce' })
   const server = libraryServer({ srd: true, sample: true })
   await server.install(page)
-  await page.goto(`./#/library/${srdLibraryPackId}/item`)
+  await page.goto(`./library/${srdLibraryPackId}/item`)
   await page.getByRole('searchbox').fill('espada larga')
   await page.getByRole('link', { name: /^Espada larga/ }).click()
   await expect(page.getByRole('heading', { level: 2, name: 'Espada larga' })).toBeFocused()

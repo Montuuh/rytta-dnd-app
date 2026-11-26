@@ -23,6 +23,7 @@ import { Board } from './board'
 import { CalibrationDialog } from './calibration'
 import { StoryPlate } from './overlays'
 import { U } from './palette'
+import { hrefOf } from '@/shared/lib/app-path'
 
 export function TableProjectionButton({ campaignId }: { campaignId: string }) {
   const { t } = useTranslation()
@@ -193,7 +194,7 @@ function ProjectionSetup({ campaignId }: { campaignId: string }) {
         )}
         <Button
           component="a"
-          href={`#/campaign/${campaignId}/tabletop-table`}
+          href={hrefOf(`/campaign/${campaignId}/tabletop-table`, import.meta.env.BASE_URL)}
           target="_blank"
           rel="noopener"
           rightSection={<ExternalLink size={16} aria-hidden="true" />}

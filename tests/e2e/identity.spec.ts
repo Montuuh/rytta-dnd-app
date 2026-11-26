@@ -10,6 +10,7 @@ import {
   dmId,
 } from './fixtures/identity.ts'
 import { capture, expectTouchTargets, focusAcrossFrames, limitMatrix } from './fixtures/audit.ts'
+import { openInApp } from './fixtures/navigate.ts'
 
 /** The sheet a row's `···` opens (RYT-180) and its rows; the confirmation is a dialog of its own. */
 const memberSheet = (page: Page, name: string) => page.getByRole('dialog', { name, exact: true })
@@ -120,7 +121,7 @@ test('a DM copies invitation instructions and a player accepts from a separate b
       await route.fulfill({ json: campaignId })
     })
 
-    await dm.goto(`./#/campaign/${campaignId}/members`)
+    await dm.goto(`./campaign/${campaignId}/members`)
     await dm.getByRole('button', { name: 'Invitar jugador', exact: true }).click()
     const dialog = dm.getByRole('dialog', { name: 'Invitar jugador' })
     await dialog.getByRole('textbox', { name: 'Correo del jugador' }).fill(accountEmail)
@@ -344,7 +345,7 @@ async function finishArinPreview(page: Page) {
 
 async function openHandoverDialog(page: Page) {
   await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   const { trigger: arinMenu, sheet } = await openMemberSheet(page, 'Arin')
   await sheet.getByRole('button', { name: 'Nombrar DM', exact: true }).click()
   await expect(confirmation(page)).toBeVisible()
@@ -380,7 +381,7 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
   page,
 }) => {
   const f = await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   // RYT-179: inside a panel the phone bar names the screen; the h1 stays for assistive technology.
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Centro de mando DM')
   // RYT-180: leaving is a row of the sheet of the DM's own member row, blocked for the only DM
@@ -410,7 +411,7 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
   ).toBeFocused()
   await page.getByRole('button', { name: 'Listo', exact: true }).click()
   await expect(page.getByRole('dialog')).not.toBeVisible()
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   await expect(page.getByText('new@example.com', { exact: true })).toBeVisible()
   // A sent invitation is a row of the same list; its sheet is titled with the email.
   await page.getByRole('button', { name: 'Opciones de la invitación para new@example.com' }).click()
@@ -453,7 +454,7 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
   await expect(header.getByRole('link', { name: 'Campamento' })).toHaveCount(0)
   await expect(header.getByText('Inventario', { exact: false })).toHaveCount(0)
   await expect(header.getByText('Centro de mando DM', { exact: false })).toHaveCount(0)
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   // RYT-095: the command center uses the same confirmation as My campaigns.
   await page.getByRole('button', { name: 'Acciones de Table DM', exact: true }).click()
   await memberSheet(page, 'Table DM')
@@ -470,12 +471,12 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
   expect(
     f.calls.some((c) => c.method === 'change_campaign_member' && c.body.new_role === null),
   ).toBe(true)
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   await expect(page.getByText('Esta campaña no está disponible para tu cuenta.')).toBeVisible()
 })
 
 const phone = (page: Page) => page.viewportSize()!.width < 768
-const homeUrl = `./#/campaign/${campaignId}`
+const homeUrl = `./campaign/${campaignId}`
 const liveEncounter = {
   id: '90000000-0000-4000-8000-000000000001',
   name: 'The bridge',
@@ -628,7 +629,7 @@ test('RYT-179 a live encounter leads the home and every panel is two taps from a
     route.fulfill({ json: [liveEncounter] }),
   )
   const mainNav = page.getByRole('navigation', { name: 'Navegación principal' })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await mainNav.getByRole('link', { name: 'Centro de mando DM' }).click()
   const now = page.getByRole('region', { name: 'Ahora' })
   const resume = now.getByRole('link', { name: 'Continuar encuentro' })
@@ -660,7 +661,7 @@ test('RYT-179 a live encounter leads the home and every panel is two taps from a
     ['Dados', 'dice'],
     ['Auditoría', 'audit'],
   ] as const) {
-    await page.goto(`./#/campaign/${campaignId}/party`)
+    await openInApp(page, `campaign/${campaignId}/party`)
     await mainNav.getByRole('link', { name: 'Centro de mando DM' }).click()
     await page
       .locator('.dm-home')
@@ -688,7 +689,7 @@ test('RYT-179 old preparation links open the home, which says what waits on the 
       ],
     }),
   )
-  await page.goto(`./#/campaign/${campaignId}/members?panel=prepare`)
+  await page.goto(`./campaign/${campaignId}/members?panel=prepare`)
   await expect(page).toHaveURL(new RegExp(`/campaign/${campaignId}$`))
   const pending = page.getByRole('region', { name: 'Pendiente' })
   const invites = pending.getByRole('link', { name: 'Invitaciones por aceptar' })
@@ -732,7 +733,7 @@ test('RYT-179 panels are links with a current mark; the phone sheet opens, choos
 }, info) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/members?panel=audit`)
+  await page.goto(`./campaign/${campaignId}/members?panel=audit`)
   // One h1 for the screen, one h2 for the panel.
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Centro de mando DM')
   await expect(page.locator('.dm-shell-panel h2')).toHaveCount(1)
@@ -807,7 +808,7 @@ test('RYT-179 the party level is its own panel', async ({ page }) => {
   await expect(page).toHaveURL(/panel=level$/)
   await expect(page.getByRole('region', { name: /Nivel del grupo/ })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Invitar jugador' })).toHaveCount(0)
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   await expect(page.getByRole('button', { name: 'Invitar jugador', exact: true })).toBeVisible()
   await expect(page.getByRole('region', { name: /Nivel del grupo/ })).toHaveCount(0)
   // The panel's first control is in the first screen (on phones, under the bar that names it).
@@ -821,7 +822,7 @@ test('RYT-144 the DM changes the active character from the member sheet, where t
   page,
 }) => {
   await identityFixture(page, { linkedPlayer: true, reserve: ['Eira'], archived: ['Nico'] })
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   const person = page.locator('.member-row').filter({ hasText: 'Arin' })
   // From tablets up the row says who is in reserve; the phone's row stays two lines.
   if (!phone(page)) await expect(person.getByText('En reserva · Eira')).toBeVisible()
@@ -849,7 +850,7 @@ test('RYT-180 a member sheet that cannot change a character says what failed and
   await page.route('**/rest/v1/rpc/set_active_character', (route) =>
     route.fulfill({ status: 500, json: { message: 'boom' } }),
   )
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   const { sheet } = await openMemberSheet(page, 'Arin')
   await sheet.getByRole('button', { name: /^Cambiar activo/ }).click()
   await sheet.getByRole('button', { name: 'Eira', exact: true }).click()
@@ -863,7 +864,7 @@ test('RYT-029: Players land on Party with no Camp entry and no discoveries secti
   page,
 }, info) => {
   await identityFixture(page, { player: true })
-  await page.goto(`./#/campaign/${campaignId}`)
+  await page.goto(`./campaign/${campaignId}`)
   await expect(page).toHaveURL(new RegExp(`/campaign/${campaignId}/party$`))
   // RYT-112: Party is the Player's only destination, so there is no navigation bar to offer
   // Camp in; the Party page itself is what they land on.
@@ -878,7 +879,7 @@ test('Player has no management payload or controls; revoked campaign fails close
   page,
 }) => {
   const f = await identityFixture(page, { player: true })
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   await expect(page.getByText('Tu DM gestiona los miembros y las invitaciones.')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Invitar jugador' })).toHaveCount(0)
   expect(
@@ -896,7 +897,7 @@ test('DM command center manages modules, the item storeroom, audit log and playe
 }, info) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   const f = await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   const mainNav = page.getByRole('navigation', { name: 'Navegación principal' })
   // RYT-027: the DM Command Center comes first; phones show the short "DM" label.
   await expect(mainNav.getByRole('link').nth(0)).toHaveAccessibleName('Centro de mando DM')
@@ -960,7 +961,7 @@ test('DM command center manages modules, the item storeroom, audit log and playe
 
 test('account change and session expiry remove the previous private screen', async ({ page }) => {
   await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   await expect(
     page.getByRole('button', { name: 'Acciones de Table DM', exact: true }),
   ).toBeVisible()
@@ -994,7 +995,7 @@ test('self-demotion clears management views and offline actions are not queued',
   context,
 }) => {
   const f = await identityFixture(page, { twoDms: true })
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   // RYT-179: inside a panel the phone bar names the screen; the h1 stays for assistive technology.
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Centro de mando DM')
   await page.getByRole('button', { name: 'Invitar jugador', exact: true }).click()
@@ -1010,7 +1011,7 @@ test('self-demotion clears management views and offline actions are not queued',
   await context.setOffline(false)
   expect(f.calls.filter((c) => c.method === 'invite_campaign_member')).toHaveLength(0)
   await page.keyboard.press('Escape')
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   await page.getByRole('button', { name: 'Acciones de Table DM', exact: true }).click()
   await memberSheet(page, 'Table DM')
     .getByRole('button', { name: 'Cambiar a jugador', exact: true })
@@ -1139,7 +1140,7 @@ for (const language of ['es', 'en'] as const)
       await page.emulateMedia({ reducedMotion: 'reduce' })
       for (const [screen, route] of [
         ['hub', './'],
-        ['members', `./#/campaign/${campaignId}/members`],
+        ['members', `./campaign/${campaignId}/members`],
       ] as const) {
         await page.goto(route)
         await expect(page.getByRole('heading', { level: 1 })).toBeAttached()
@@ -1286,13 +1287,13 @@ test('RYT-095 a Player leaves from the campaign card menu', async ({ page }) => 
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Winter at the Keep' })).toBeVisible()
   await expect(page.getByText('Has abandonado')).toHaveCount(0)
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await expect(page.getByText('Esta campaña no está disponible para tu cuenta.')).toBeVisible()
 })
 
 test('RYT-095 a Player leaves from the profile menu inside the campaign', async ({ page }) => {
   const f = await identityFixture(page, { player: true })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
   const profile = page.getByRole('button', { name: /Sesión de player@example.com/ })
   await profile.click()
@@ -1317,7 +1318,7 @@ test('RYT-095 a Player leaves from the profile menu inside the campaign', async 
   await profile.click()
   await item.click()
   await dialog.getByRole('button', { name: 'Abandonar campaña', exact: true }).click()
-  await expect(page).toHaveURL(/#\/$/)
+  await expect(page).toHaveURL(/\/rytta-dnd-app\/$/)
   await expect(
     page.getByRole('status').filter({ hasText: 'Has abandonado The Sunken Coast.' }),
   ).toBeFocused()
@@ -1358,7 +1359,7 @@ test('RYT-095 the only DM is told to name another DM; with a co-DM they can leav
   ).not.toHaveAttribute('aria-disabled')
   await page.keyboard.press('Escape')
   // Inside the campaign: the profile menu says the same; the Player view has no leave action.
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   const profile = page.getByRole('button', { name: /Sesión de dm@example.com/ })
   await profile.click()
   await expect(page.getByRole('menuitem', { name: 'Abandonar campaña' })).toHaveAttribute(
@@ -1391,7 +1392,7 @@ test('RYT-095 a DM with a co-DM leaves; the server still keeps one DM', async ({
       body: JSON.stringify({ code: 'P0001', message: 'Keep at least one DM' }),
     })
   })
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   const profile = page.getByRole('button', { name: /Sesión de dm@example.com/ })
   await profile.click()
   const item = page.getByRole('menuitem', { name: 'Abandonar campaña' })
@@ -1608,21 +1609,21 @@ test('J1-11 Back closes the hub dialogs instead of leaving the page', async ({ p
 
 test('J3-16 a Player sent to the old items address lands on the inventory', async ({ page }) => {
   await identityFixture(page, { player: true, inventory: true })
-  await page.goto(`./#/campaign/${campaignId}/items`)
-  await expect(page).toHaveURL(new RegExp(`#/campaign/${campaignId}/inventory$`))
+  await page.goto(`./campaign/${campaignId}/items`)
+  await expect(page).toHaveURL(new RegExp(`/campaign/${campaignId}/inventory$`))
 })
 
 test('J3-16 the DM keeps landing on the storeroom of the command center', async ({ page }) => {
   await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/items`)
-  await expect(page).toHaveURL(new RegExp(`#/campaign/${campaignId}/members\\?panel=items$`))
+  await page.goto(`./campaign/${campaignId}/items`)
+  await expect(page).toHaveURL(new RegExp(`/campaign/${campaignId}/members\\?panel=items$`))
 })
 
 test('J1-12 the emblem inside a campaign returns to My campaigns; the name stays its home', async ({
   page,
 }) => {
   await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   const home = page.getByRole('link', { name: 'Inicio de The Sunken Coast' })
   const list = page.getByRole('link', { name: 'RYTTA · Mis campañas' })
   await expect(home).toBeVisible()
@@ -1690,7 +1691,7 @@ for (const dialog of ['handover', 'invite'] as const)
       if (dialog === 'handover') trigger = await openHandoverDialog(page)
       else {
         await identityFixture(page)
-        await page.goto(`./#/campaign/${campaignId}/members`)
+        await page.goto(`./campaign/${campaignId}/members`)
         trigger = page
           .getByRole('region', { name: 'Miembros' })
           .getByRole('button', { name: 'Invitar jugador', exact: true })
@@ -1717,7 +1718,7 @@ test('RYT-135 Escape pressed in the same frame as the dialog opens closes it and
   page,
 }) => {
   await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   const { trigger: arinMenu, sheet: arinSheet } = await openMemberSheet(page, 'Arin')
   const item = arinSheet.getByRole('button', { name: 'Nombrar DM', exact: true })
   await item.focus()
@@ -1751,7 +1752,7 @@ test('RYT-136 the profile menu returns focus on Escape and after a choice that o
   page,
 }) => {
   await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/members?panel=audit`)
+  await page.goto(`./campaign/${campaignId}/members?panel=audit`)
   const trigger = page.getByRole('button', { name: /Sesión de/ })
   await expect(trigger).toBeVisible()
   // The keyboard opens the menu; a slow page may need the key again, so it is retried until it shows.
@@ -1846,7 +1847,7 @@ test('RYT-179 invitations to accept land on their list; another panel starts at 
       ],
     }),
   )
-  await page.goto(`./#/campaign/${campaignId}`)
+  await page.goto(`./campaign/${campaignId}`)
   await page.getByRole('link', { name: /Invitaciones por aceptar/ }).click()
   // The action is consumed: the address is clean and the sent invitations have focus.
   await expect(page).toHaveURL(/\/members$/)
@@ -1889,7 +1890,7 @@ test('RYT-180 Members: compact rows, sent invitations in the same list, no badge
 }, info) => {
   await identityFixture(page, { linkedPlayer: true, party: true })
   await withSentInvitation(page)
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   const rows = page.locator('.member-row')
   // Members first (the DM, Arin, Bea, Cato), then the invitation: one list, no second section.
   await expect(rows).toHaveCount(5)
@@ -1944,7 +1945,7 @@ for (const theme of ['default', 'parchment'] as const)
     limitMatrix(info, theme === 'default')
     await page.addInitScript((id) => localStorage.setItem('rytta-theme', id), theme)
     await identityFixture(page, { linkedPlayer: true, reserve: ['Eira'], free: ['Nico'] })
-    await page.goto(`./#/campaign/${campaignId}/members`)
+    await page.goto(`./campaign/${campaignId}/members`)
     const { trigger, sheet } = await openMemberSheet(page, 'Arin')
     // A bottom drawer on phones, the shared modal from 48em; titled with the member, the email under it.
     await expect(sheet).toHaveClass(phone(page) ? /Drawer/ : /Modal/)
@@ -1988,7 +1989,7 @@ test('RYT-180 changing a role is three taps, and the only DM cannot step down or
   page,
 }) => {
   const f = await identityFixture(page, { linkedPlayer: true })
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   const { sheet } = await openMemberSheet(page, 'Arin')
   await sheet.getByRole('button', { name: 'Nombrar DM', exact: true }).click()
   await expect(confirmation(page)).toContainText('Arin')
@@ -2007,7 +2008,7 @@ test('RYT-180 the only DM cannot step down: the row says why and does nothing', 
   page,
 }) => {
   await identityFixture(page, { linkedPlayer: true })
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   const own = await openMemberSheet(page, 'Table DM')
   const role = own.sheet.getByRole('button', { name: /^Cambiar a jugador/ })
   await expect(role).toHaveAttribute('aria-disabled', 'true')
@@ -2020,7 +2021,7 @@ test('RYT-180 the only DM cannot step down: the row says why and does nothing', 
 
 test('RYT-180 a member with no free character to link is offered no Link row', async ({ page }) => {
   await identityFixture(page, { linkedPlayer: true })
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   const { sheet } = await openMemberSheet(page, 'Arin')
   await expect(sheet.getByRole('button', { name: /^Vincular personaje/ })).toHaveCount(0)
   await expect(sheet.getByRole('button', { name: /^Cambiar activo/ })).toHaveCount(0)
@@ -2032,7 +2033,7 @@ test('RYT-180 the sent invitation sheet shares the instructions again and return
 }) => {
   await identityFixture(page)
   await withSentInvitation(page)
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   const trigger = page.getByRole('button', {
     name: 'Opciones de la invitación para wait@example.com',
   })
@@ -2053,7 +2054,7 @@ test('RYT-180 sent invitations that cannot load say so with a retry above the li
   await page.route('**/rest/v1/campaign_invitations?**', (route) =>
     route.fulfill({ status: 500, json: { message: 'boom' } }),
   )
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   await expect(page.getByRole('button', { name: 'Reintentar' }).first()).toBeVisible()
   await expect(page.locator('.member-row').first()).toBeVisible()
 })
@@ -2062,7 +2063,7 @@ test('RYT-180 Modules: one muted line, no badge, no fill; one tap saves', async 
   page,
 }, info) => {
   const f = await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/members?panel=modules`)
+  await page.goto(`./campaign/${campaignId}/members?panel=modules`)
   const section = page.getByRole('region', { name: 'Módulos activos', exact: true })
   await expect(section.getByText('Los jugadores ven 1 de 7')).toBeVisible()
   await expect(section.locator('.mantine-Badge-root')).toHaveCount(0)
@@ -2139,7 +2140,7 @@ test('RYT-180 Audit: filter by character and kind, events by day with times, nam
       ],
     }),
   )
-  await page.goto(`./#/campaign/${campaignId}/members?panel=audit`)
+  await page.goto(`./campaign/${campaignId}/members?panel=audit`)
   const section = page.getByRole('region', { name: 'Auditoría', exact: true })
   // No sentence about the screen; the days are headings, each event has its time.
   await expect(section.getByText('Historial cronológico')).toHaveCount(0)
@@ -2187,7 +2188,7 @@ test('RYT-180 the audit offers a retry when the events cannot load', async ({ pa
   await page.route('**/rest/v1/character_events?**', (route) =>
     route.fulfill({ status: 500, json: { message: 'boom' } }),
   )
-  await page.goto(`./#/campaign/${campaignId}/members?panel=audit`)
+  await page.goto(`./campaign/${campaignId}/members?panel=audit`)
   const section = page.getByRole('region', { name: 'Auditoría', exact: true })
   await expect(section.getByRole('button', { name: 'Reintentar' })).toBeVisible()
 })
@@ -2197,7 +2198,7 @@ test('RYT-180 the settings panels keep a readable measure from 48em and name the
 }) => {
   await identityFixture(page, { party: true, sheet: 'complete', partyLevel: 6 })
   for (const panel of ['level', 'modules', 'audit']) {
-    await page.goto(`./#/campaign/${campaignId}/members?panel=${panel}`)
+    await page.goto(`./campaign/${campaignId}/members?panel=${panel}`)
     const section = page.locator('.dm-shell-panel section').first()
     await expect(section).toBeVisible()
     const heading = section.getByRole('heading', { level: 2 })

@@ -171,9 +171,7 @@ for (const role of ['dm', 'player'] as const)
       const { id } = seedFight(combat)
       // The way in is the fight's own screen, for either role.
       await page.goto(
-        role === 'dm'
-          ? `./#/campaign/${campaignId}/combat/${id}`
-          : `./#/campaign/${campaignId}/combat`,
+        role === 'dm' ? `./campaign/${campaignId}/combat/${id}` : `./campaign/${campaignId}/combat`,
       )
       const checkWire = watchTableResponses(page)
       await openScreen(page, role)
@@ -243,9 +241,7 @@ for (const role of ['dm', 'player'] as const)
       const { id } = seedFight(combat)
       putSceneOnTable(server)
       await page.goto(
-        role === 'dm'
-          ? `./#/campaign/${campaignId}/combat/${id}`
-          : `./#/campaign/${campaignId}/combat`,
+        role === 'dm' ? `./campaign/${campaignId}/combat/${id}` : `./campaign/${campaignId}/combat`,
       )
       const checkWire = watchTableResponses(page)
       await openScreen(page, role)
@@ -292,7 +288,7 @@ test('RYT-131 a Player whose map is closed gets the order without hammering the 
   })
   seedFight(combat)
   putSceneOnTable(server)
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   await expect(page.locator('.tt-order')).toBeVisible({ timeout: 15_000 })
   await expect(page.getByRole('alert')).toHaveCount(0)
   // No start card: there is no map to play sound for.
@@ -311,7 +307,7 @@ test('RYT-131 without a map a Player gets an honest message for each failure', a
   test.setTimeout(90_000)
   await page.setViewportSize(sizes[1]!)
   const { combat } = await prepare(page, 'player', { modules: ['party', 'combat'], closed: true })
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   // No fight yet: what comes next is a fight, never a scene this Player cannot see.
   await expect(page.getByText('No hay combate ahora')).toBeVisible({ timeout: 15_000 })
   await expect(page.getByText(/en cuanto el DM empiece un combate/)).toBeVisible()
@@ -335,7 +331,7 @@ test('RYT-131 Escape and the visible key leave the screen', async ({ page }) => 
   await page.setViewportSize(sizes[1]!)
   const { combat, server } = await prepare(page, 'player')
   seedFight(combat)
-  await page.goto(`./#/campaign/${campaignId}/combat`)
+  await page.goto(`./campaign/${campaignId}/combat`)
   const heading = page.getByRole('heading', { level: 1, name: 'Emboscada del puente' })
   await expect(heading).toBeVisible({ timeout: 15_000 })
 
@@ -365,12 +361,12 @@ test('RYT-131 Escape and the visible key leave the screen', async ({ page }) => 
   await expect(heading).toBeVisible()
 
   // A screen opened on its own (the TV) goes to the campaign.
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   await expect(page.getByRole('dialog', { name: 'Pantalla de mesa' })).toBeVisible({
     timeout: 15_000,
   })
   await page.keyboard.press('Escape')
-  await expect(page).toHaveURL(new RegExp(`#/campaign/${campaignId}(/party)?$`))
+  await expect(page).toHaveURL(new RegExp(`/campaign/${campaignId}(/party)?$`))
 })
 
 test('RYT-131 each turn change is announced once and the acting row follows it', async ({
@@ -380,7 +376,7 @@ test('RYT-131 each turn change is announced once and the acting row follows it',
   await page.setViewportSize(sizes[1]!)
   const { combat } = await prepare(page, 'dm')
   const { pass } = seedFight(combat)
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   const order = page.locator('.tt-order')
   await expect(order).toBeVisible({ timeout: 15_000 })
   const live = page.locator('.tt-table > .visually-hidden[aria-live="polite"]')
@@ -422,7 +418,7 @@ test('RYT-131 the plate moves by pointer and keys, shrinks, and keeps the choice
   const { combat, server } = await prepare(page, 'dm')
   seedFight(combat, 3)
   putSceneOnTable(server)
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   await begin(page)
   const turn = plate(page)
   await expect(turn).toBeVisible({ timeout: 15_000 })
@@ -514,7 +510,7 @@ test('RYT-131 the plate works when the device blocks storage', async ({ page }) 
   const { combat, server } = await prepare(page, 'dm')
   seedFight(combat, 3)
   putSceneOnTable(server)
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   await begin(page)
   const turn = plate(page)
   await expect(turn).toHaveAttribute('data-corner', 'top-left', { timeout: 15_000 })
@@ -530,7 +526,7 @@ test('RYT-131 the table screen says what it cannot show', async ({ page }) => {
   test.setTimeout(90_000)
   await page.setViewportSize(sizes[1]!)
   const { combat } = await prepare(page, 'dm')
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   await expect(page.getByText('Nada en la mesa')).toBeVisible({ timeout: 15_000 })
   await expect(page.getByText(/empieza un combate/)).toBeVisible()
   await audit(page)
@@ -595,7 +591,7 @@ test('RYT-135 with reduced motion the names are measured once and then left alon
   await page.setViewportSize({ width: 1280, height: 720 })
   const { combat } = await prepare(page, 'player')
   seedFight(combat, 9, { long: true })
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   await expect(page.locator('.tt-order-row')).toHaveCount(14, { timeout: 15_000 })
   await expect(page.getByText('Guardiana Ancestral de la Cripta')).toBeVisible()
   // Once the screen has settled, nothing measures the names again: no attribute flips and every
@@ -635,7 +631,7 @@ for (const size of sizes)
       await page.setViewportSize(size)
       const { combat } = await prepare(page, 'player')
       seedFight(combat, 9, { long: true })
-      await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+      await page.goto(`./campaign/${campaignId}/tabletop-table`)
       await expect(page.locator('.tt-order-row')).toHaveCount(14, { timeout: 15_000 })
       await page.evaluate((fontSize) => (document.documentElement.style.fontSize = fontSize), zoom)
       if (wide) await page.addStyleTag({ content: wideFont })
@@ -686,7 +682,7 @@ test('RYT-131 the order follows a re-ordered and a shortened fight', async ({ pa
   const { combat } = await prepare(page, 'player')
   const { encounter } = seedFight(combat, 5)
   const idOf = (name: string) => encounter.combatants.find((c) => c.name === name)!.id
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   const rows = page.locator('.tt-order-row')
   const acting = page.locator('.tt-order-row[aria-current="step"]')
   await expect(rows).toHaveCount(8, { timeout: 15_000 })
@@ -716,7 +712,7 @@ test('RYT-131 a hidden creature’s turn is announced without a name', async ({ 
   await page.setViewportSize(sizes[1]!)
   const { combat } = await prepare(page, 'player')
   const { encounter } = seedFight(combat, 3)
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   await expect(page.locator('.tt-order')).toBeVisible({ timeout: 15_000 })
   const live = page.locator('.tt-table > .visually-hidden[aria-live="polite"]')
   // The fixture cannot pass the turn to a hidden creature, so the DM's pick is set directly.
@@ -744,7 +740,7 @@ test('RYT-131 a turned table mirrors the plate’s arrow keys and its announced 
       screen: { diagonal_in: 32, px_w: 1920, px_h: 1080, base_mm: 25.4, fine: 1, flip: true },
     },
   })
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   await begin(page)
   const turn = plate(page)
   await expect(turn).toBeVisible({ timeout: 15_000 })
@@ -771,7 +767,7 @@ test('RYT-131 the table screen at 390px: order and map', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   const { combat, server } = await prepare(page, 'player')
   seedFight(combat)
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   const order = page.locator('.tt-order')
   await expect(order).toBeVisible({ timeout: 15_000 })
   // One column; the list may scroll here, and the acting row is in view.
@@ -805,7 +801,7 @@ test('RYT-131 evidence captures', async ({ page }) => {
   test.setTimeout(300_000)
   const { combat, server } = await prepare(page, 'dm')
   seedFight(combat)
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   for (const scene of [false, true]) {
     if (scene) putSceneOnTable(server)
     for (const language of ['es', 'en'])
@@ -841,7 +837,7 @@ test('RYT-135 leaving the table screen puts keyboard focus back on the Player li
   await page.setViewportSize(sizes[1]!)
   const { combat } = await prepare(page, 'player')
   seedFight(combat)
-  await page.goto(`./#/campaign/${campaignId}/combat`)
+  await page.goto(`./campaign/${campaignId}/combat`)
   const link = page.getByRole('link', { name: /Pantalla de mesa/ })
   await expect(link).toBeVisible({ timeout: 15_000 })
   for (const leave of ['Escape', 'key'] as const) {
@@ -881,7 +877,7 @@ test('RYT-135 a fight that cannot be loaded says the fight, in English too', asy
   const { combat } = await prepare(page, 'player', { modules: ['party', 'combat'], closed: true })
   seedFight(combat, 2)
   await page.route(/\/rpc\/get_combat_state$/, (route) => route.abort('connectionrefused'))
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   const alert = page.getByRole('alert')
   await expect(alert).toContainText('The fight did not load', { timeout: 20_000 })
   await expect(alert).not.toContainText('tabletop')
@@ -896,7 +892,7 @@ test('RYT-131 the offline state stays visible on the order screen and goes with 
   await page.setViewportSize(sizes[1]!)
   const { combat } = await prepare(page, 'player')
   seedFight(combat, 3)
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   const order = page.locator('.tt-order')
   await expect(order).toBeVisible({ timeout: 15_000 })
   const offline = page.locator('.tt-status-net.is-offline')
@@ -927,7 +923,7 @@ test('RYT-131 the offline state stays visible on the plate over the map and goes
   const { combat, server } = await prepare(page, 'dm')
   seedFight(combat, 3)
   putSceneOnTable(server)
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   await begin(page)
   const turn = plate(page)
   await expect(turn).toBeVisible({ timeout: 15_000 })
@@ -977,7 +973,7 @@ test('RYT-131 reduced motion: the acting row and the plate neither transition no
   await spyOnScrolling(page)
   const { combat, server } = await prepare(page, 'dm')
   const { pass } = seedFight(combat, 13)
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   const order = page.locator('.tt-order')
   await expect(order).toBeVisible({ timeout: 15_000 })
   const acting = order.locator('.tt-order-row[aria-current="step"]')
@@ -993,7 +989,7 @@ test('RYT-131 reduced motion: the acting row and the plate neither transition no
 
   // With a map, the plate and everything on it.
   putSceneOnTable(server)
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   await begin(page)
   const turn = plate(page)
   await expect(turn).toBeVisible({ timeout: 15_000 })
@@ -1015,7 +1011,7 @@ test('RYT-131 without a reduced-motion setting the order follows the turn smooth
   const { combat } = await prepare(page, 'dm')
   seedFight(combat, 13)
   await page.emulateMedia({ reducedMotion: 'no-preference' })
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   await expect(page.locator('.tt-order')).toBeVisible({ timeout: 15_000 })
   expect(await scrolls(page)).toContain('smooth')
 })

@@ -60,11 +60,12 @@ data. Stale, connecting and offline states must be visible. No offline mutation 
 
 ## Routing and auth
 
-HashRouter supports deep reloads on Pages without rewrites; Vite base handles assets.
+Routes are plain paths under the Vite base (ADR 061). Pages answers unknown paths with
+index.html (no top-level 404.html); old `#/` addresses are rewritten to the same path on load.
 Browser tests run at /rytta-dnd-app/. For OAuth/magic links use PKCE with an exact allowed
 base URL. The auth adapter consumes and scrubs the query-string callback before private
 route rendering. SDK URL auto-detection is disabled to avoid duplicate exchanges.
-Do not combine implicit-flow fragments with hash routing.
+Implicit-flow fragments are rejected.
 
 ## Backend extension
 

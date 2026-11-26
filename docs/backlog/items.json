@@ -5717,6 +5717,33 @@
         "tests/database/super-admin.test.ts",
         "supabase/migrations/20261229120000_admin_access_campaign_reads.sql"
       ]
+    },
+    {
+      "id": "RYT-186",
+      "title": "Clean addresses: routes without the #/ prefix",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "review",
+      "dependsOn": ["RYT-116", "RYT-128"],
+      "sources": [
+        "Owner question and request, 26 November 2026: why the routing has a /#/, and remove it if it is no longer needed, reviewing Cloudflare, Supabase and Google sign-in."
+      ],
+      "scope": "Hash routing (ADR 001) existed because the first host could not serve index.html for deep paths. Cloudflare Pages serves rytta.app at the site root with its single-page fallback (no top-level 404.html), so the router moves to browser paths under the Vite base. Old #/ links (invitations, bookmarks, the rytta.pages.dev redirect) are rewritten to the same path on load. The offline shell answers every navigation under the base offline with the cached app. Sign-in still returns to the base URL, so the Supabase Auth redirect allowlist and the Google client are unchanged. Non-goals: new routes, server-side rendering.",
+      "acceptance": [
+        "Every in-app address is a plain path under the base (rytta.app/campaign/<id>/party); no screen, link or test builds a #/ address.",
+        "Opening an old #/ address, with or without its own query, lands on the same route as a path and keeps the history entry count.",
+        "Reloading or opening any deep path works in the preview server, the Cloudflare-like header server and production; the static privacy and terms pages still answer crawlers.",
+        "Google sign-in, email confirmation and password reset still return to the base URL and restore the page the visitor started from; implicit-flow fragments are still rejected.",
+        "Offline, a reload on a deep path opens the cached app; only the base path response is stored.",
+        "npm run check and npm run test:e2e pass."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "npm run check:supabase",
+        "curl of rytta.app deep paths after deploy"
+      ],
+      "evidence": ["docs/evidence/RYT-186/verification.md", "docs/decisions/061-path-routing.md"]
     }
   ]
 }

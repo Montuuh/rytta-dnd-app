@@ -16,7 +16,7 @@ test('the SRD glossary works outside a campaign, in English, with deep links', a
     if (request.url().includes('/rpc/')) reads.push(request.url().split('/rpc/')[1]!)
   })
   await identityFixture(page)
-  await page.goto('./#/glossary')
+  await page.goto('./glossary')
   await expect(page.getByRole('heading', { level: 1, name: 'Glossary' })).toBeVisible()
   await page.getByRole('searchbox', { name: 'Search the glossary' }).fill('agarrado')
   await page.getByRole('searchbox').press('Enter')

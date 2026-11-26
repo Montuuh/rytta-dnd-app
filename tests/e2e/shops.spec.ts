@@ -4,7 +4,7 @@ import { identityFixture, campaignId } from './fixtures/identity.ts'
 import { expectTouchTargets, capture, expectArtPrompt } from './fixtures/audit.ts'
 import { shopsFixture, shopIds } from './fixtures/shops.ts'
 
-const shops = `./#/campaign/${campaignId}/shops`
+const shops = `./campaign/${campaignId}/shops`
 const modules = ['party', 'inventory', 'shops']
 /** One cart button: the dock on a phone's buy tab, the purse bar's button on a tablet (J3-33). */
 const cartButton = (page: Page, count: string, total = '[0-9]+') =>
@@ -63,7 +63,7 @@ test('a Player buys a cart in an auto shop and finds it in the RYT-004 inventory
   await expect(potion).toContainText('40 po')
   await expect(potion.getByRole('link', { name: 'Tienes 4 en el inventario' })).toHaveAttribute(
     'href',
-    `#/campaign/${campaignId}/inventory`,
+    `/rytta-dnd-app/campaign/${campaignId}/inventory`,
   )
   await expect(page.locator('.listing-card', { hasText: 'Anillo de la marea' })).toContainText(
     'Solo para ti',

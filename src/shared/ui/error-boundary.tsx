@@ -21,7 +21,7 @@ function FatalError() {
         >
           {t('error.reload')}
         </button>
-        <a className="fatal-error-secondary" href={`${import.meta.env.BASE_URL}#/`}>
+        <a className="fatal-error-secondary" href={import.meta.env.BASE_URL}>
           {t('error.home')}
         </a>
       </div>

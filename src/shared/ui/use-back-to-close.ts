@@ -8,8 +8,8 @@ import { useEffect, useRef } from 'react'
  * useBackToClose(opened, close)
  * ```
  *
- * While `opened` is true the overlay owns one history entry (same URL, so the hash router sees no
- * navigation). Back pops that entry and calls `close`; closing by any other means (button, Escape,
+ * While `opened` is true the overlay owns one history entry (same URL and router state, so the
+ * router sees no navigation). Back pops that entry and calls `close`; closing by any other means (button, Escape,
  * success) removes the entry again with a silent `history.back()`. Nested overlays each own an
  * entry and close in reverse order. If the page navigates while an overlay is open (a link inside
  * a drawer), the leftover entry is skipped the first time Back reaches it.

@@ -48,6 +48,7 @@ import {
   type SpellFilters,
 } from './spell-filters'
 import { glossaryTabs, inTab, isGlossaryTab, type GlossaryTab } from './tabs'
+import { routeOf } from '@/shared/lib/app-path'
 
 const conditionsAtTheTable = [
   'condition.grappled',
@@ -66,9 +67,7 @@ const conditionsAtTheTable = [
  * category chosen meanwhile; reading the live URL keeps both (`?q=` and `?cat=`).
  */
 function liveSearchParams() {
-  const hash = window.location.hash
-  const at = hash.indexOf('?')
-  return new URLSearchParams(at === -1 ? '' : hash.slice(at + 1))
+  return new URLSearchParams(window.location.search)
 }
 
 /** The entry last read on its own (phone) route; the index returns focus to its row. */
@@ -116,7 +115,11 @@ export function GlossaryPage() {
     const handle = window.setTimeout(() => {
       // A navigation can still be rendering (router transitions): the address bar already
       // shows the new path, and writing ?q= now would send it back to this page's path.
-      const currentPath = window.location.hash.replace(/^#/, '').split('?')[0]
+      const currentPath = routeOf(
+        window.location.href,
+        window.location.origin,
+        import.meta.env.BASE_URL,
+      )?.split('?')[0]
       if (currentPath !== scheduledPath) return
       setWrittenQuery(value)
       const next = liveSearchParams()

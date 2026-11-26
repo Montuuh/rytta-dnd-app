@@ -4,7 +4,7 @@ import { identityFixture, campaignId } from './fixtures/identity.ts'
 import { expectTouchTargets, capture, limitMatrix, expectArtPrompt } from './fixtures/audit.ts'
 import { giveItem, storeAction } from './fixtures/storeroom.ts'
 
-const url = `./#/campaign/${campaignId}/inventory`
+const url = `./campaign/${campaignId}/inventory`
 async function audit(page: Page, path: string) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   expect(
@@ -166,7 +166,7 @@ test('the DM forges from an existing item, gives it out and sees the hidden-modu
   ).toBeVisible()
   // The inventory page no longer links to the storeroom; the DM opens it from the Command Center.
   await expect(page.getByRole('link', { name: 'Almacén de objetos' })).toHaveCount(0)
-  await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+  await page.goto(`./campaign/${campaignId}/members?panel=items`)
   await storeAction(page, 'new')
   // RYT-104: the static SRD list is gone; the helper searches the campaign, templates first.
   const picker = page.getByRole('combobox', { name: 'Partir de un objeto existente' })

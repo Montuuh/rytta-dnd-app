@@ -158,3 +158,5 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     one card and one switch per pack, one update notice, entries in a sheet, items added one at a
     time, one-step campaign creation, pack covers and lists that open on what the campaign uses
     (RYT-184).
+74. [ADR 061: routes are plain paths](decisions/061-path-routing.md): browser paths under the
+    base, old `#/` addresses rewritten on load, sign-in and the Auth allowlist unchanged (RYT-186).

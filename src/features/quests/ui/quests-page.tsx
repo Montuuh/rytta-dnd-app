@@ -13,7 +13,7 @@ import {
 } from '@mantine/core'
 import { ChevronDown, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useSearchParams } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { useAuth } from '@/features/auth'
 import { StaleLine, useCampaign } from '@/features/campaigns'
 import { PageHead } from '@/shared/ui/page-head'
@@ -81,7 +81,8 @@ function Journal({ dmView }: { dmView: boolean }) {
   // and Escape closes only the topmost layer.
   const [editor, setEditor] = useState({ dirty: false, dialog: false })
   /** Where the DM was going when they had unsaved changes: a quest, none, or another page. */
-  const [leaving, setLeaving] = useState<{ to: string | null; href?: string } | null>(null)
+  const [leaving, setLeaving] = useState<{ to: string | null; route?: string } | null>(null)
+  const navigate = useNavigate()
   const dirty = editing && editor.dirty
   const go = (id: string | null) => {
     if (id === selected) return
@@ -90,7 +91,7 @@ function Journal({ dmView }: { dmView: boolean }) {
     else select(id)
   }
   // Other destinations (navigation, links) and reloading ask too.
-  useLeaveGuard(dirty, (href) => setLeaving({ to: selected, href }))
+  useLeaveGuard(dirty, (route) => setLeaving({ to: selected, route }))
   const detail =
     creating || (quest && dm) ? (
       <QuestEditor
@@ -223,12 +224,12 @@ function Journal({ dmView }: { dmView: boolean }) {
               color="red"
               onClick={() => {
                 const to = leaving?.to ?? null
-                const href = leaving?.href
+                const route = leaving?.route
                 setLeaving(null)
                 setEditor({ dirty: false, dialog: false })
                 keepUnsaved(account, creating ? newId : (quest?.id ?? ''), null)
-                if (href) {
-                  window.location.href = href
+                if (route) {
+                  void navigate(route)
                   return
                 }
                 if (to === NEW) setNewId(crypto.randomUUID())

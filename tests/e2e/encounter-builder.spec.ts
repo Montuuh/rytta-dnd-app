@@ -59,7 +59,7 @@ async function prepare(page: Page, seed?: (server: Server, encounterId: string) 
     request_id: 'crypt',
   }) as { encounter_id: string }
   seed?.(server, created.encounter_id)
-  await page.goto(`./#/campaign/${campaignId}/combat/${created.encounter_id}`)
+  await page.goto(`./campaign/${campaignId}/combat/${created.encounter_id}`)
   await expect(page.getByRole('heading', { level: 1, name: 'Cripta' })).toBeVisible({
     timeout: 15_000,
   })

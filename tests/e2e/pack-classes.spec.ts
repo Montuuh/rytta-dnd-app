@@ -5,7 +5,7 @@ import { capture, expectTouchTargets, limitMatrix } from './fixtures/audit.ts'
 
 // RYT-168 (ADR 051): classes and subclasses come from the campaign's packs. A pack class is offered
 // beside the SRD ones with its pack named; a pack subclass of an SRD class is offered at level up.
-const sheetUrl = `./#/campaign/${campaignId}/party/${characterId}`
+const sheetUrl = `./campaign/${campaignId}/party/${characterId}`
 const evidence = 'docs/evidence/ui-review/ryt-168'
 
 async function audit(page: Page, scope = 'body') {
@@ -47,7 +47,7 @@ for (const [language, theme] of [
     )
     await identityFixture(page, { player: true })
     await page.emulateMedia({ reducedMotion: 'reduce' })
-    await page.goto(`./#/campaign/${campaignId}/party`)
+    await page.goto(`./campaign/${campaignId}/party`)
     await page.getByRole('button', { name: es ? 'Terminar ficha' : 'Finish sheet' }).click()
     await page
       .getByRole('dialog')
@@ -74,7 +74,7 @@ test('RYT-168 a blank sheet takes a pack class with its table and first-level fe
 }) => {
   const fixture = await identityFixture(page, { player: true })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await page.getByRole('button', { name: 'Terminar ficha' }).click()
   await page.getByRole('dialog').getByText('En blanco', { exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Empezar' }).click()
@@ -142,7 +142,7 @@ test('RYT-175 a blank sheet at level 3 takes a pack subclass that gives spellcas
 }, info) => {
   const fixture = await identityFixture(page, { player: true })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await page.getByRole('button', { name: 'Terminar ficha' }).click()
   await page.getByRole('dialog').getByText('En blanco', { exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Empezar' }).click()

@@ -31,11 +31,11 @@ async function axeAndTargets(page: Page) {
     'main button:visible, main a.roster-link:visible, main a.roster-foot-link:visible, main a.roster-row-sheet:visible, [role="dialog"] button:visible',
   )
 }
-const rosterPath = `./#/campaign/${campaignId}/party/roster`
+const rosterPath = `./campaign/${campaignId}/party/roster`
 
 test('a Player without characters is guided to create the first one', async ({ page }, info) => {
   const f = await identityFixture(page, { player: true, noCharacters: true })
-  await page.goto(`./#/campaign/${campaignId}`)
+  await page.goto(`./campaign/${campaignId}`)
   await expect(page).toHaveURL(/\/party$/)
   const welcome = page.getByRole('region', { name: '¿Con quién vas a jugar?' })
   await expect(welcome).toBeVisible()
@@ -71,7 +71,7 @@ test('a Player without characters is guided to create the first one', async ({ p
   expect(created[0]!.body).toMatchObject({ target_campaign: campaignId, character_name: 'Vex' })
   expect(created[0]!.body.request_id).toMatch(/^[0-9a-f-]{36}$/)
   // Back on Party the first character is the active one.
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await expect(page.getByRole('heading', { name: 'Vex', exact: true })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Mis personajes, 1 en total' })).toBeVisible()
 })
@@ -110,7 +110,7 @@ test('switching the active character changes who appears in Party', async ({ pag
     sheet: 'complete',
     reserve: ['Bram'],
   })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Bram', exact: true })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'Bea', exact: true })).toBeVisible()
@@ -267,7 +267,7 @@ test('the DM archives an unassigned character from Party and restores it', async
   page,
 }, info) => {
   const f = await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   const more = page.getByRole('button', { name: 'Más acciones para Arin' })
   await more.click()
   await page.getByRole('menuitem', { name: 'Archivar personaje' }).click()
@@ -327,7 +327,7 @@ test('English light roster', async ({ page }, info) => {
 
 test('the DM Player preview shows the roster read-only', async ({ page }) => {
   const f = await identityFixture(page, { linkedPlayer: true, reserve: ['Bram'] })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await page.getByRole('switch', { name: 'Vista jugador', exact: true }).click()
   await page.getByRole('link', { name: 'Mis personajes, 2 en total' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Personajes de Arin' })).toBeVisible()
@@ -341,7 +341,7 @@ test('the DM sees every Player roster with active and reserve characters', async
   page,
 }, info) => {
   await identityFixture(page, { linkedPlayer: true, party: true, reserve: ['Bram', 'Cora'] })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   // Party lists characters in play only.
   await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Bram', exact: true })).toHaveCount(0)
@@ -400,7 +400,7 @@ test('a Player with only archived characters can restore one or create another',
   page,
 }, info) => {
   const f = await identityFixture(page, { player: true, noCharacters: true, archived: ['Old'] })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   const welcome = page.getByRole('region', { name: '¿Con quién vas a jugar?' })
   await expect(welcome).toContainText('Tus personajes están archivados.')
   await expect(welcome.getByRole('button', { name: 'Crear un personaje nuevo' })).toBeVisible()
@@ -429,7 +429,7 @@ test('RYT-096 a Player without characters plays as a free character in two taps'
     noCharacters: true,
     free: ['Mirabel', 'Tor'],
   })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   const welcome = page.getByRole('region', { name: '¿Con quién vas a jugar?' })
   await expect(welcome.getByRole('heading', { level: 3 })).toHaveText(['Mirabel', 'Tor'])
   await expect(welcome).toContainText('Bardo de nivel 5')
@@ -563,7 +563,7 @@ test('RYT-124 a double tap on Create sends one request with one id and makes one
   page,
 }) => {
   const f = await identityFixture(page, { player: true, noCharacters: true })
-  await page.goto(`./#/campaign/${campaignId}`)
+  await page.goto(`./campaign/${campaignId}`)
   await page
     .getByRole('region', { name: '¿Con quién vas a jugar?' })
     .getByRole('button', { name: 'Crear mi personaje' })
@@ -577,6 +577,6 @@ test('RYT-124 a double tap on Create sends one request with one id and makes one
   })
   await expect(page).toHaveURL(/\/party\/40000000-0000-4000-8000-0000000000e1\/create$/)
   expect(f.calls.filter((c) => c.method === 'create_own_character')).toHaveLength(1)
-  await page.goto(`./#/campaign/${campaignId}/party/roster`)
+  await page.goto(`./campaign/${campaignId}/party/roster`)
   await expect(page.getByText('Vex', { exact: true })).toHaveCount(1)
 })

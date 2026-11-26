@@ -83,7 +83,7 @@ const membersPage = /^\/campaign\/[^/]+\/members/
 /** RYT-069: Settings is a right-hand drawer over the current page, not a page of its own. */
 const SettingsDrawerContext = createContext<() => void>(() => {})
 
-/** Old `#/settings` links open the drawer over the home screen. */
+/** Old `/settings` links open the drawer over the home screen. */
 export function SettingsRoute() {
   const openSettings = useContext(SettingsDrawerContext)
   const navigate = useNavigate()
@@ -487,7 +487,7 @@ export function Layout() {
       // RYT-093: moving inside the content library keeps focus and scroll; the library moves them.
       const withinLibrary =
         previousPath.current.startsWith('/library') && pathname.startsWith('/library')
-      // An old #/settings link redirects with the drawer open: focus stays inside the dialog.
+      // An old /settings link redirects with the drawer open: focus stays inside the dialog.
       if (!settingsOpened && !withinLibrary) mainRef.current?.focus()
       if (!withinLibrary) window.scrollTo(0, 0)
       previousPath.current = pathname

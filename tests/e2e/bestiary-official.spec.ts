@@ -31,7 +31,7 @@ const detail = (page: Page, info: TestInfo): Locator =>
 /** List rows by the creature's own name (not its gloss in the other language or its monogram). */
 const rows = (page: Page, name: string) =>
   page.locator('.bst-row').filter({ has: page.getByText(name, { exact: true }) })
-const content = `#/campaign/${campaignId}/members?panel=content`
+const content = `/rytta-dnd-app/campaign/${campaignId}/members?panel=content`
 
 /** Picks a source by name: from the list when the sources are one, else from the segments. */
 async function chooseSource(page: Page, name: string) {
@@ -71,7 +71,7 @@ test('RYT-094 the bestiary reads the SRD pack, edits a creature in place and hid
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(e.message))
   await start(page, server)
-  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+  await page.goto(`./campaign/${campaignId}/members?panel=bestiary`)
 
   // The SRD creatures pack, loaded from the library at the campaign's version.
   await expect(page.getByText('330 criaturas', { exact: true })).toBeVisible({ timeout: 15_000 })
@@ -144,7 +144,7 @@ test('RYT-094 with no creature pack, the bestiary and the fight screens lead to 
   const server = combatServer()
   server.official.downloaded = false
   await start(page, server)
-  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+  await page.goto(`./campaign/${campaignId}/members?panel=bestiary`)
 
   // No creatures at all: one invitation, nothing to search yet.
   const choose = page.getByRole('link', { name: 'Elegir en Contenido' })
@@ -183,7 +183,7 @@ test('RYT-094 with no creature pack, the bestiary and the fight screens lead to 
     encounter_name: 'Cripta',
     request_id: 'crypt',
   }) as { encounter_id: string }
-  await page.goto(`./#/campaign/${campaignId}/combat/${created.encounter_id}`)
+  await page.goto(`./campaign/${campaignId}/combat/${created.encounter_id}`)
   await expect(page.getByRole('heading', { level: 1, name: 'Cripta' })).toBeVisible({
     timeout: 15_000,
   })
@@ -215,7 +215,7 @@ test('RYT-094 two creature packs: a source list, the pack on each row, its creat
     request_id: 'pass',
   }) as { encounter_id: string }
   await page.goto(
-    `./#/campaign/${campaignId}/members?panel=bestiary&encounter=${created.encounter_id}`,
+    `./campaign/${campaignId}/members?panel=bestiary&encounter=${created.encounter_id}`,
   )
   await expect(page.getByText('332 criaturas', { exact: true })).toBeVisible({ timeout: 15_000 })
   await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('yeti')
@@ -243,7 +243,7 @@ test('RYT-094 an unreachable library shows a retryable error, never the bundled 
   const server = combatServer()
   server.official.unreachable = true
   await start(page, server)
-  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+  await page.goto(`./campaign/${campaignId}/members?panel=bestiary`)
   const retry = page.getByRole('button', { name: 'Reintentar' })
   await expect(retry).toBeVisible({ timeout: 20_000 })
   await expect(page.locator('.bst-row')).toHaveCount(0)
@@ -277,7 +277,7 @@ for (const [language, theme] of [
     const server = combatServer()
     server.official.north = true
     await start(page, server)
-    await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+    await page.goto(`./campaign/${campaignId}/members?panel=bestiary`)
     await expect(
       page.getByText(es ? '332 criaturas' : '332 creatures', { exact: true }),
     ).toBeVisible({
@@ -316,7 +316,7 @@ test('RYT-184 a creature of another pack is used by its `<pack ref>--<key>` refe
   // A bare key is the SRD's: it names no creature of the other pack.
   server.used.references.push('abcdef12--yeti', 'yeti')
   await start(page, server)
-  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+  await page.goto(`./campaign/${campaignId}/members?panel=bestiary`)
   await expect(page.getByText('1 criatura', { exact: true })).toBeVisible({ timeout: 15_000 })
   const row = page.locator('[data-row-key="srd:abcdef12--yeti"]')
   await expect(row).toBeVisible()

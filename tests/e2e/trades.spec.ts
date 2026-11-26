@@ -46,8 +46,8 @@ test('RYT-034 two Players trade items and gold with a double confirmation', asyn
   await identityFixture(bea, { player: true, party: true, sheet: 'complete', as: peerId })
   await server.install(arin, characterId)
   await server.install(bea, beaId)
-  await arin.goto(`./#/campaign/${campaignId}/party`)
-  await bea.goto(`./#/campaign/${campaignId}/party`)
+  await arin.goto(`./campaign/${campaignId}/party`)
+  await bea.goto(`./campaign/${campaignId}/party`)
 
   // 1. Arin invites Bea from the trade icon on her portrait.
   const beaCard = arin.getByRole('article', { name: 'Bea' })
@@ -180,8 +180,8 @@ test('RYT-034 declined invitations and phone bottom-sheet picker', async ({ brow
     localStorage.setItem('rytta-language', 'en')
     localStorage.setItem('rytta-color-scheme', 'light')
   })
-  await arin.goto(`./#/campaign/${campaignId}/party`)
-  await bea.goto(`./#/campaign/${campaignId}/party`)
+  await arin.goto(`./campaign/${campaignId}/party`)
+  await bea.goto(`./campaign/${campaignId}/party`)
   // RYT-097: no general launcher; every teammate carries its own trade icon.
   await expect(arin.getByRole('button', { name: 'Proponer un trueque' })).toHaveCount(0)
   await arin
@@ -258,7 +258,7 @@ test('RYT-097 trading starts from the portrait icon, also with an unshared teamm
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await identityFixture(page, { player: true, party: true, sheet: 'complete' })
   await server.install(page, characterId)
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   const cato = page.getByRole('article', { name: 'Cato' })
   await expect(cato).toContainText('Estado no compartido')
   await cato.getByRole('button', { name: 'Comerciar con Cato' }).click()
@@ -308,8 +308,8 @@ test('RYT-149 Give from the item card puts the item on the table and Bea only ac
   await server.install(arin, characterId)
   await server.install(bea, beaId)
   const stacks = arin.waitForResponse((r) => r.url().includes('/rest/v1/inventory_items'))
-  await arin.goto(`./#/campaign/${campaignId}/inventory`)
-  await bea.goto(`./#/campaign/${campaignId}/party`)
+  await arin.goto(`./campaign/${campaignId}/inventory`)
+  await bea.goto(`./campaign/${campaignId}/party`)
   const potionStack = ((await (await stacks).json()) as { id: string; quantity: number }[]).find(
     (row) => row.quantity === 3,
   )!

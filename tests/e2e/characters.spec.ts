@@ -34,7 +34,7 @@ for (const language of ['es', 'en'] as const)
       )
       await identityFixture(page)
       await page.emulateMedia({ reducedMotion: 'reduce' })
-      await page.goto(`./#/campaign/${campaignId}/party`)
+      await page.goto(`./campaign/${campaignId}/party`)
       await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
       await page.addStyleTag({ content: 'html { font-size: 150%; }' })
       const es = language === 'es'
@@ -55,7 +55,7 @@ for (const language of ['es', 'en'] as const)
           await characterAction(page, 'Arin', es ? 'Desvincular jugador' : 'Unlink Player', es)
         if (screen === 'members') {
           await page.keyboard.press('Escape')
-          await page.goto(`./#/campaign/${campaignId}/members`)
+          await page.goto(`./campaign/${campaignId}/members`)
           await expect(page.getByRole('heading', { level: 1 })).toHaveText(
             es ? 'Centro de mando DM' : 'DM Command Center',
           )
@@ -93,7 +93,7 @@ test('assignment explains unavailable Players and recovers from failed member re
   page,
 }, info) => {
   await identityFixture(page, { twoDms: true })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await characterAction(page, 'Arin', 'Vincular jugador')
   await expect(
     page.getByText('Todavía no hay miembros con rol Jugador.', { exact: false }),
@@ -130,7 +130,7 @@ test('RYT-044 a linked Player can receive a second character, which waits in res
   page,
 }, info) => {
   await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await characterAction(page, 'Arin', 'Vincular jugador')
   await page.getByRole('combobox').selectOption(playerId)
   await page
@@ -166,7 +166,7 @@ test('DM creates before assignment, edits whole homebrew units and recovers from
   page,
 }) => {
   const f = await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   const create = page.getByRole('button', { name: 'Nuevo personaje', exact: true })
   await create.click()
   await expect(page.getByLabel('Nombre del personaje')).toBeFocused()
@@ -207,7 +207,7 @@ test('Profile menu: Enter opens it, Escape closes it and focus returns to the tr
   page,
 }) => {
   await identityFixture(page, { player: true })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   const trigger = page.getByRole('button', { name: /Sesión de player@example.com/ })
   // Let the page settle first: the header re-renders while data loads and would blur the trigger.
   await expect(page.getByText('Tu personaje', { exact: true })).toBeVisible()
@@ -235,7 +235,7 @@ test('Player sees own resources read-only; account menu returns home without lea
   page,
 }) => {
   const f = await identityFixture(page, { player: true })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await expect(page.getByText('Tu personaje', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: /Más acciones para/ })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Crear personaje' })).toHaveCount(0)
@@ -283,7 +283,7 @@ for (const language of ['es', 'en'] as const)
       page.on('pageerror', (e) => errors.push(e.message))
       await identityFixture(page)
       await page.emulateMedia({ reducedMotion: 'reduce' })
-      await page.goto(`./#/campaign/${campaignId}/party`)
+      await page.goto(`./campaign/${campaignId}/party`)
       await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
       await capture(page, info.outputPath(`party-${language}-${scheme}-100.png`))
       await page.addStyleTag({ content: 'html { font-size: 150%; }' })
@@ -335,7 +335,7 @@ test('maximum valid resources remain readable within cards at 150% text', async 
 }, info) => {
   const fixture = await identityFixture(page)
   fixture.maxResources()
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
   await page.addStyleTag({ content: 'html { font-size: 150%; }' })
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
@@ -354,7 +354,7 @@ test('Party owns character assignment and Player preview hides DM actions', asyn
   page,
 }, info) => {
   const f = await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   await expect(
     page.getByRole('button', { name: /Vincular|Desvincular|Crear personaje/ }),
   ).toHaveCount(0)
@@ -444,7 +444,7 @@ test('localhost sends all REST reads and RPC writes to the PRE schema', async ({
       })
   })
   await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Nuevo personaje', exact: true }).click()
   await page.getByLabel('Nombre del personaje').fill('PRE only')
@@ -462,7 +462,7 @@ test('RYT-025 navigation and exhaustion track adapt to phones and laptops', asyn
   page,
 }, info) => {
   await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
   const phone = (page.viewportSize()?.width ?? 1024) < 768
   const nav = page.getByRole('navigation', { name: 'Navegación principal' })
@@ -505,7 +505,7 @@ test('RYT-025 keyboard focus stays on steppers, preview switch and More drawer c
   page,
 }) => {
   await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   const arin = page.getByRole('article', { name: 'Arin', exact: true })
   const gold = arin.getByRole('button', { name: /Editar oro de Arin/ })
   await gold.focus()
@@ -538,7 +538,7 @@ test('RYT-025 keyboard focus stays on steppers, preview switch and More drawer c
   await expect(preview).not.toBeChecked()
 
   // RYT-035: planned modules cannot be enabled, so they never reach Player navigation.
-  await page.goto(`./#/campaign/${campaignId}/members?panel=modules`)
+  await page.goto(`./campaign/${campaignId}/members?panel=modules`)
   await expect(page.getByRole('region', { name: 'Módulos activos', exact: true })).toBeVisible()
   // RYT-007: combat is implemented, so the DM can enable it like shops.
   // RYT-006: quests shipped too.
@@ -557,7 +557,7 @@ test('RYT-035 a planned module enabled by an old campaign row is not a destinati
   page,
 }) => {
   await identityFixture(page, { player: true, modules: ['party', 'quests', 'atlas', 'combat'] })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   const nav = page.getByRole('navigation', { name: /principal|Main/i }).first()
   await expect(nav.getByRole('link', { name: 'Grupo' })).toHaveCount(1)
   await expect(page.getByRole('link', { name: 'Atlas' })).toHaveCount(0)
@@ -591,7 +591,7 @@ test('RYT-135 a teammate concentration is shown in the party plates only where c
   f.vitalsOf(beaId)!.concentration = 'Bendición de la hoguera'
   f.vitalsOf(catoId)!.concentration = 'Sanar'
   const overview = page.waitForResponse('**/rest/v1/rpc/get_party_overview')
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   const party = page.getByRole('region', { name: 'Compañeros', exact: true })
   const bea = party.getByRole('article', { name: 'Bea' })
   await expect(bea.getByText('Concentración: Bendición de la hoguera')).toBeVisible()
@@ -614,7 +614,7 @@ test('RYT-031/097 Player sees teammates; live state only for those the DM shares
   page.on('pageerror', (e) => errors.push(e.message))
   const f = await identityFixture(page, { player: true, party: true, sheet: 'complete' })
   const overview = page.waitForResponse('**/rest/v1/rpc/get_party_overview')
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
   // The own plate leads with HP, AC, exhaustion and the purse.
   const own = page.getByRole('article', { name: 'Arin', exact: true })
@@ -675,7 +675,7 @@ test('RYT-031 DM toggles live sharing per character with a labelled 44px control
   page,
 }, info) => {
   const f = await identityFixture(page, { party: true, sheet: 'complete' })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   // RYT-035: a labelled switch ("En vivo") instead of an icon-only toggle.
   const cato = page.getByRole('switch', { name: 'En vivo · Cato', exact: true })
   await expect(cato).not.toBeChecked()
@@ -704,9 +704,9 @@ test('RYT-031 DM opens the per-character history from the sheet; Players do not 
   page,
 }, info) => {
   await identityFixture(page, { party: true, sheet: 'complete' })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await page.getByRole('switch', { name: 'En vivo · Arin', exact: true }).click({ force: true })
-  await page.goto(`./#/campaign/${campaignId}/party/${characterId}`)
+  await page.goto(`./campaign/${campaignId}/party/${characterId}`)
   // RYT-070 moved the per-character history into the sheet's History block.
   const open = page.getByRole('button', { name: /^Historial/ })
   await open.click()
@@ -724,7 +724,7 @@ test('RYT-031 DM opens the per-character history from the sheet; Players do not 
 
 test('RYT-070 the assigned Player also reads the history of their sheet', async ({ page }) => {
   await identityFixture(page, { player: true, party: true, sheet: 'complete' })
-  await page.goto(`./#/campaign/${campaignId}/party/${characterId}`)
+  await page.goto(`./campaign/${campaignId}/party/${characterId}`)
   await expect(page.getByRole('heading', { name: 'Arin', level: 1 })).toBeVisible()
   await page.getByRole('button', { name: /^Historial/ }).click()
   await expect(page.getByRole('dialog', { name: 'Historial' })).toContainText('Solo lectura')
@@ -736,7 +736,7 @@ test('RYT-097 the DM creates from the head and changes counters on the plate', a
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(e.message))
   const f = await identityFixture(page, { party: true, sheet: 'complete' })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   const create = page.getByRole('button', { name: 'Nuevo personaje', exact: true })
   await expect(create).toHaveText('Personaje')
   await expect(page.locator('.party-new-card')).toHaveCount(0)
@@ -782,7 +782,7 @@ test('RYT-097 a teammate portrait opens the viewer and Escape returns to it', as
       ]),
     }),
   )
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   const bea = page.getByRole('article', { name: 'Bea' })
   const portrait = bea.getByRole('button', { name: 'Ver el retrato de Bea', exact: true })
   await portrait.click()
@@ -813,7 +813,7 @@ for (const theme of ['default', 'parchment', 'wizard'] as const)
       f.vitalsOf(characterId)!.concentration = 'Orientación'
       f.vitalsOf(beaId)!.concentration = 'Bendición de la hoguera con un nombre muy largo'
       await page.emulateMedia({ reducedMotion: 'reduce' })
-      await page.goto(`./#/campaign/${campaignId}/party`)
+      await page.goto(`./campaign/${campaignId}/party`)
       await page.addStyleTag({ content: `html { font-size: ${percent}%; }` })
       await expect(page.getByText('Concentración: Orientación')).toBeVisible()
       await axeAndTargets(page)

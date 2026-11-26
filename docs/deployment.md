@@ -224,8 +224,8 @@ the same steps (RYT-116). Until a rehearsal exists, treat the backup as unproven
 
 ## Vercel fallback
 
-Vite preset, npm ci, npm run build, output dist, base /. Same hash routes work without
-rewrites. Set public environment variables and allowlist the stable domain in Supabase.
+Vite preset, npm ci, npm run build, output dist, base /. Add a rewrite of unknown paths
+to index.html (ADR 061). Set public environment variables and allowlist the stable domain in Supabase.
 Preview domains need an explicit auth policy. No Vercel project is provisioned now.
 
 ## Rollback

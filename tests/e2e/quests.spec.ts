@@ -37,7 +37,7 @@ async function prefer(page: Page, language: string, theme: string) {
   )
 }
 
-const journal = `./#/campaign/${campaignId}/quests`
+const journal = `./campaign/${campaignId}/quests`
 
 for (const [language, theme] of [
   ['es', 'default'],

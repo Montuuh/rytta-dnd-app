@@ -3,10 +3,10 @@ import AxeBuilder from '@axe-core/playwright'
 import { identityFixture, campaignId, characterId } from './fixtures/identity.ts'
 import { expectTouchTargets, capture } from './fixtures/audit.ts'
 
-const sheetUrl = `./#/campaign/${campaignId}/party/${characterId}`
-const membersUrl = `./#/campaign/${campaignId}/members`
+const sheetUrl = `./campaign/${campaignId}/party/${characterId}`
+const membersUrl = `./campaign/${campaignId}/members`
 // RYT-179: the party level is its own command centre panel.
-const levelUrl = `./#/campaign/${campaignId}/members?panel=level`
+const levelUrl = `./campaign/${campaignId}/members?panel=level`
 
 async function audit(page: Page, path: string) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
@@ -755,7 +755,7 @@ test('RYT-130 the full editor shows the finished sheet level as locked for the P
     sheetLevel: 4,
     partyLevel: 5,
   })
-  await page.goto(`./#/campaign/${campaignId}/party/${characterId}/create?mode=full`)
+  await page.goto(`./campaign/${campaignId}/party/${characterId}/create?mode=full`)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Clase y nivel')
   await expect(page.getByText('El nivel sube con la subida de nivel, no a mano.')).toBeVisible()
   await expect(page.getByRole('button', { name: /^Subir nivel/ })).toHaveCount(0)

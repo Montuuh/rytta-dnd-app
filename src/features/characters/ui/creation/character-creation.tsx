@@ -563,7 +563,7 @@ function Wizard({
         onKeep={() => setLeaving(null)}
         onDiscard={(target) => {
           setLeaving(null)
-          window.location.href = target
+          void navigate(target)
         }}
       />
     </Stack>

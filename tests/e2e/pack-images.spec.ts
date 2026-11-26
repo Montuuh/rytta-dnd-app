@@ -47,7 +47,7 @@ for (const [language, scheme] of [
     await identityFixture(page)
     const server = libraryServer({ srd: true })
     await server.install(page)
-    await page.goto(`./#/library/${srdLibraryPackId}/item`)
+    await page.goto(`./library/${srdLibraryPackId}/item`)
     await page.getByRole('searchbox').fill(es ? 'espada larga' : 'longsword')
     // The list shows each item's picture: its category painting until it has its own.
     const row = page.getByRole('link', { name: es ? /^Espada larga/ : /^Longsword/ })
@@ -118,7 +118,7 @@ test('RYT-172 an inventory tile shows the pack picture of the item it came from'
   page.on('request', (request) => {
     if (request.url().includes('/storage/v1/object/sign/pack-images')) signed.push(request.url())
   })
-  await page.goto(`./#/campaign/${campaignId}/inventory`)
+  await page.goto(`./campaign/${campaignId}/inventory`)
   const sword = page.getByRole('button', { name: /Espada larga/ }).first()
   await expect(sword.locator('img')).toHaveAttribute('src', /public-test/)
   expect(signed.length).toBeGreaterThan(0)

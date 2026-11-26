@@ -23,8 +23,8 @@ import { expectTouchTargets, focusAcrossFrames } from './fixtures/audit.ts'
 // RYT-133: the table's dice. The DM's setting, the sheet in physical mode (what to roll, and
 // recording the result), the sheet in app mode (3D dice, the maths, the recent rolls), who sees
 // which roll, and initiative and hit dice following the same mode.
-const sheetUrl = `./#/campaign/${campaignId}/party/${characterId}`
-const diceUrl = `./#/campaign/${campaignId}/members?panel=dice`
+const sheetUrl = `./campaign/${campaignId}/party/${characterId}`
+const diceUrl = `./campaign/${campaignId}/members?panel=dice`
 
 async function audit(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
@@ -94,7 +94,7 @@ async function openTile(page: Page, name: RegExp) {
 }
 
 async function equipSword(page: Page) {
-  await page.goto(`./#/campaign/${campaignId}/inventory`)
+  await page.goto(`./campaign/${campaignId}/inventory`)
   await page.getByRole('button', { name: /Espada larga, cantidad 1/ }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Equipar' }).click()
   await expect(page.locator('.inventory-notice')).toContainText('Equipado en Mano principal')
@@ -807,7 +807,7 @@ async function viewerPage(
     ...(viewer === 'dm' ? {} : { player: true }),
     ...(viewer === 'bea' ? { as: peerId } : {}),
   })
-  await page.goto(viewer === 'bea' ? `./#/campaign/${campaignId}/party/${beaId}` : sheetUrl)
+  await page.goto(viewer === 'bea' ? `./campaign/${campaignId}/party/${beaId}` : sheetUrl)
   await expect.poll(() => fixture.calls.some((call) => call.method === 'campaign_rolls')).toBe(true)
   return { page, fixture }
 }
@@ -909,7 +909,7 @@ test('RYT-133 initiative follows the campaign dice: typed with physical dice, ro
     serverFaces(f, [13])
     server.useDice(f.dice)
     await server.install(page)
-    await page.goto(`./#/campaign/${campaignId}/combat`)
+    await page.goto(`./campaign/${campaignId}/combat`)
     const entry = page.locator('.combat-entry')
     await expect(entry).toBeVisible({ timeout: 15_000 })
     const keypad = page.getByRole('group', { name: 'Teclado numérico' })
@@ -1354,7 +1354,7 @@ async function initiativePage(
         body: '{"message":"x"}',
       })
     })
-  await page.goto(`./#/campaign/${campaignId}/combat`)
+  await page.goto(`./campaign/${campaignId}/combat`)
   const entry = page.locator('.combat-entry')
   await expect(entry).toBeVisible({ timeout: 15_000 })
   return { server, page, f, entry, context }
@@ -1739,7 +1739,7 @@ async function dmOnTable(
     dice: f.dice,
   })
   await server.install(page)
-  await page.goto(`./#/campaign/${campaignId}/combat/${encounterId}?view=console`)
+  await page.goto(`./campaign/${campaignId}/combat/${encounterId}?view=console`)
   await expect(arinRow(page)).toBeVisible({ timeout: 15_000 })
   return { page, context }
 }
@@ -2073,7 +2073,7 @@ test('RYT-137 initiative: with physical dice nothing changes and any total saves
   page.on('request', (request) => {
     if (request.url().includes('/rpc/get_roll_context')) contextReads.push(request.url())
   })
-  await page.goto(`./#/campaign/${campaignId}/combat`)
+  await page.goto(`./campaign/${campaignId}/combat`)
   const entry = page.locator('.combat-entry')
   await expect(entry).toBeVisible({ timeout: 15_000 })
   await expect(entry.getByRole('button', { name: 'Tirar por mí' })).toHaveCount(0)
@@ -2263,7 +2263,7 @@ test('RYT-137 hit dice: the DM resets a Player roll from the rest panel, and the
   const made = otherDevice(f, 'hit_die', '1d8+2')
   expect(made.dice).toHaveLength(1)
   f.restVote(characterId, 'yes', 1, made.dice[0]!)
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await page.getByRole('region', { name: 'Descanso del grupo' }).getByRole('button').first().click()
   const panel = page.getByRole('dialog', { name: 'Descanso del grupo' })
   const person = panel.locator('.rest-person', { hasText: 'Arin' })
@@ -2392,7 +2392,7 @@ for (const theme of ['default', 'parchment'])
     await dm.emulateMedia({ reducedMotion: 'reduce' })
     g.openRest('short', { user: playerId, character: characterId })
     otherDevice(g, 'hit_die', '1d8+2')
-    await dm.goto(`./#/campaign/${campaignId}/party`)
+    await dm.goto(`./campaign/${campaignId}/party`)
     await dm.getByRole('region', { name: 'Descanso del grupo' }).getByRole('button').first().click()
     const panel = dm.getByRole('dialog', { name: 'Descanso del grupo' })
     const person = panel.locator('.rest-person', { hasText: 'Arin' })
@@ -2534,7 +2534,7 @@ test('RYT-137 hit dice: a discard whose reply is lost is retried with the same i
   f.openRest('short', { user: playerId, character: characterId })
   const made = otherDevice(f, 'hit_die', '1d8+2')
   f.restVote(characterId, 'yes', 1, made.dice[0]!)
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await page.getByRole('region', { name: 'Descanso del grupo' }).getByRole('button').first().click()
   const panel = page.getByRole('dialog', { name: 'Descanso del grupo' })
   const person = panel.locator('.rest-person', { hasText: 'Arin' })
@@ -2669,7 +2669,7 @@ for (const theme of ['default', 'parchment'])
     await server.install(page)
     await staleUntilRefusal(page)
     serverFaces(f, [11, 4])
-    await page.goto(`./#/campaign/${campaignId}/combat`)
+    await page.goto(`./campaign/${campaignId}/combat`)
     const entry = page.locator('.combat-entry')
     await expect(entry).toBeVisible({ timeout: 15_000 })
     await expect(entry.getByRole('button', { name: 'Roll for me' })).toBeVisible()
@@ -2698,7 +2698,7 @@ for (const theme of ['default', 'parchment'])
       dice: f.dice,
     })
     await server.install(dm)
-    await dm.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
+    await dm.goto(`./campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
     await dm.getByRole('button', { name: 'Options for Arin' }).click()
     await expect(dm.getByRole('menuitem', { name: 'Clear their initiative roll' })).toBeVisible()
     await evidence(dm, info, `en-dm-menu-${theme}`)
@@ -2745,7 +2745,7 @@ for (const theme of ['default', 'parchment'])
     await dmPage.emulateMedia({ reducedMotion: 'reduce' })
     h.openRest('short', { user: playerId, character: characterId })
     otherDevice(h, 'hit_die', '1d8+2')
-    await dmPage.goto(`./#/campaign/${campaignId}/party`)
+    await dmPage.goto(`./campaign/${campaignId}/party`)
     await dmPage.getByRole('region', { name: 'Group rest' }).getByRole('button').first().click()
     const row = dmPage
       .getByRole('dialog', { name: 'Group rest' })

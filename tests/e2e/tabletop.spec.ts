@@ -119,7 +119,7 @@ test('RYT-055 the DM sets up the table, generates a dungeon and works the map', 
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(e.message))
   const { server } = await prepare(page)
-  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  await page.goto(`./campaign/${campaignId}/tabletop`)
   await expect(page.getByRole('heading', { level: 1, name: 'Mesa' })).toBeVisible({
     timeout: 15_000,
   })
@@ -422,7 +422,7 @@ test('RYT-145 the DM checks the public projection and its freshness before launc
   const { server, combat } = await prepare(page)
   const sceneId = seedScene(server)
   combat.seedActive()
-  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  await page.goto(`./campaign/${campaignId}/tabletop`)
   await expect(page.getByRole('heading', { name: 'Editar en este dispositivo' })).toBeVisible()
   const projection = page.getByRole('button', { name: 'Abrir pantalla para jugadores' })
   await projection.click()
@@ -446,13 +446,16 @@ test('RYT-145 the DM checks the public projection and its freshness before launc
   await capture(page, info.outputPath('ryt-145-player-screen-stale-150.png'), { fullPage: false })
   await page.context().setOffline(false)
   const launch = dialog.getByRole('link', { name: 'Abrir pantalla para jugadores en otra pestaña' })
-  await expect(launch).toHaveAttribute('href', `#/campaign/${campaignId}/tabletop-table`)
+  await expect(launch).toHaveAttribute(
+    'href',
+    `/rytta-dnd-app/campaign/${campaignId}/tabletop-table`,
+  )
   await expect(launch).toHaveAttribute('target', '_blank')
   await page.keyboard.press('Escape')
   await expect(projection).toBeFocused()
   await page.evaluate(() => (document.documentElement.style.fontSize = ''))
 
-  await page.goto(`./#/campaign/${campaignId}/tabletop/${sceneId}`)
+  await page.goto(`./campaign/${campaignId}/tabletop/${sceneId}`)
   await expect(page.locator('.tt-tool-readout')).toHaveText('Selección')
   await page.getByRole('radio', { name: 'Medir' }).click()
   await expect(page.locator('.tt-tool-readout')).toHaveText('Regla')
@@ -476,7 +479,7 @@ test('RYT-075/076 the DM deletes a scene and chooses what the table shows', asyn
     request_id: 'cavern',
     fields: { name: 'Gran caverna', map_kind: 'blank', ground: 'stone', cols: 60, rows: 40 },
   })
-  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  await page.goto(`./campaign/${campaignId}/tabletop`)
   await expect(page.getByRole('heading', { level: 1, name: 'Mesa' })).toBeVisible({
     timeout: 15_000,
   })
@@ -568,7 +571,7 @@ test('RYT-065 a Dungeon Alchemist export arrives with its grid, doors and fog ar
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(e.message))
   const { server } = await prepare(page)
-  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  await page.goto(`./campaign/${campaignId}/tabletop`)
   await expect(page.getByRole('heading', { level: 1, name: 'Mesa' })).toBeVisible({
     timeout: 15_000,
   })
@@ -673,7 +676,7 @@ test('RYT-055 the table screen shows only what the table may see', async ({ page
   page.on('pageerror', (e) => errors.push(e.message))
   const { server } = await prepare(page)
   const sceneId = seedScene(server)
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   const start = page.getByRole('dialog', { name: 'Pantalla de mesa' })
   await expect(start).toBeVisible({ timeout: 15_000 })
   await audit(page)
@@ -750,7 +753,7 @@ test('RYT-055 Players read the scene on the table only while the module is open'
   test.setTimeout(90_000)
   const { server } = await prepare(page, ['party', 'tabletop'], true)
   seedScene(server)
-  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  await page.goto(`./campaign/${campaignId}/tabletop`)
   await expect(page.getByRole('heading', { level: 1, name: 'Puente de Vado' })).toBeVisible({
     timeout: 15_000,
   })
@@ -801,7 +804,7 @@ test('RYT-113 a teammate under a table alias shows only the alias on the Player 
       { kind: 'token', x: 7, y: 2, label: 'Bea', character_id: beaId, data: { srd_id: 'acolyte' } },
     ],
   })
-  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  await page.goto(`./campaign/${campaignId}/tabletop`)
   const board = page.getByLabel('Mapa de Puente de Vado')
   await expect(board.locator('.tt-token', { hasText: 'Encapuchada' })).toBeVisible({
     timeout: 15_000,
@@ -818,7 +821,7 @@ test('RYT-113 a teammate under a table alias shows only the alias on the Player 
 
 test('RYT-055 the tabletop stays closed to Players until the DM opens it', async ({ page }) => {
   await prepare(page, ['party'], true)
-  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  await page.goto(`./campaign/${campaignId}/tabletop`)
   await expect(page.getByText('El DM aún no ha abierto la mesa.')).toBeVisible({ timeout: 15_000 })
 })
 
@@ -827,7 +830,7 @@ test('RYT-086 the Player board fits below a scene title that wraps', async ({ pa
   const { server } = await prepare(page, ['party', 'tabletop'], true)
   const name = 'La Cripta del Rey Hechicero bajo las Colinas de Ceniza y el Puente Roto'
   seedScene(server, name)
-  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  await page.goto(`./campaign/${campaignId}/tabletop`)
   const title = page.getByRole('heading', { level: 1, name })
   await expect(title).toBeVisible({ timeout: 15_000 })
   // The title wraps on phones and tablets; the board takes the room that is left.
@@ -904,7 +907,7 @@ test('RYT-056–062 story cards, audio, props, areas, fog and events from the ed
   page.on('pageerror', (e) => errors.push(e.message))
   const { server } = await prepare(page)
   const sceneId = seedScene(server)
-  await page.goto(`./#/campaign/${campaignId}/tabletop/${sceneId}`)
+  await page.goto(`./campaign/${campaignId}/tabletop/${sceneId}`)
   await expect(page.getByRole('heading', { level: 1, name: 'Puente de Vado' })).toBeVisible({
     timeout: 15_000,
   })
@@ -1054,7 +1057,7 @@ test('RYT-101 the DM places a party character and grants map actions without an 
 }, info) => {
   const { server } = await prepare(page, ['party', 'tabletop'])
   const id = seedScene(server)
-  await page.goto(`./#/campaign/${campaignId}/tabletop/${id}`)
+  await page.goto(`./campaign/${campaignId}/tabletop/${id}`)
   if (phone(info)) {
     await page.getByRole('button', { name: 'Paneles' }).click()
     await page.getByRole('menuitem', { name: 'Fichas' }).click()
@@ -1081,7 +1084,7 @@ test('RYT-101 the DM places a party character and grants map actions without an 
 test('RYT-101 pointer ruler, door and five-foot area controls', async ({ page }, info) => {
   const { server } = await prepare(page)
   const id = seedScene(server)
-  await page.goto(`./#/campaign/${campaignId}/tabletop/${id}`)
+  await page.goto(`./campaign/${campaignId}/tabletop/${id}`)
   const board = page.locator('.tt-viewport')
   await expect(board).toBeVisible()
   await board.focus()
@@ -1134,7 +1137,7 @@ test('RYT-101 Player measures seven squares by drag, touch and keyboard', async 
     lit: [],
     bright: [],
   }
-  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  await page.goto(`./campaign/${campaignId}/tabletop`)
   await expect(page.locator('.tt-world .tt-token')).toHaveCount(2)
   const outlines = page.locator('.tt-own-token-outlines > g')
   await expect(outlines).toHaveCount(1)
@@ -1187,7 +1190,7 @@ for (const language of ['es', 'en'])
         { language, theme },
       )
       const id = seedScene(server)
-      await page.goto(`./#/campaign/${campaignId}/tabletop/${id}`)
+      await page.goto(`./campaign/${campaignId}/tabletop/${id}`)
       await expect(page.locator('.tt-viewport')).toBeVisible()
       if (phone(info)) {
         await page
@@ -1264,7 +1267,7 @@ for (const language of ['es', 'en'])
       })
       await server.install(playerPage)
       await combatServer().install(playerPage)
-      await playerPage.goto(`./#/campaign/${campaignId}/tabletop`)
+      await playerPage.goto(`./campaign/${campaignId}/tabletop`)
       // On a phone the effects open from a round key over the map, in a sheet (RYT-132).
       if (phone(info))
         await playerPage
@@ -1305,7 +1308,7 @@ test('RYT-126 the table screen says when it is offline, dims stale news and reco
   page.on('pageerror', (e) => errors.push(e.message))
   const { server } = await prepare(page)
   seedScene(server)
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   await page
     .getByRole('dialog', { name: 'Pantalla de mesa' })
     .getByRole('button', { name: 'Empezar' })
@@ -1344,7 +1347,7 @@ test('RYT-126 one invalid token does not blank the map, and a scene change clear
   seedScene(server)
   // The server hands out a token whose colour this build does not know.
   server.items.find((i) => i.label === 'Centinela')!.data = { color: 'not-a-colour' }
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   await page
     .getByRole('dialog', { name: 'Pantalla de mesa' })
     .getByRole('button', { name: 'Empezar' })
@@ -1406,7 +1409,7 @@ test('RYT-131 every scene card in the library is visible and none covers another
       request_id: `library-${name}`,
       fields: { name, map_kind: 'blank', ground: 'grass', cols: 12, rows: 8, items: [] },
     })
-  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  await page.goto(`./campaign/${campaignId}/tabletop`)
   const cards = page.locator('.tt-plates > li')
   await expect(cards).toHaveCount(3, { timeout: 15_000 })
   for (const name of ['Puente de Vado', 'Cripta olvidada', 'Taberna del Ciervo'])

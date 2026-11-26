@@ -15,15 +15,15 @@ describe('return to the deep link after sign-in', () => {
 
   it('hands the remembered route back once', () => {
     stubStorage()
-    rememberReturnTo('#/campaign/abc/inventory?tab=gear')
+    rememberReturnTo('/campaign/abc/inventory?tab=gear')
     expect(takeReturnTo()).toBe('/campaign/abc/inventory?tab=gear')
     expect(takeReturnTo()).toBeNull()
   })
 
   it('ignores the home screen and anything that is not a plain in-app route', () => {
     stubStorage()
-    for (const hash of ['', '#', '#/', '#//evil.example', '#https://evil.example', '#/a<b>']) {
-      rememberReturnTo(hash)
+    for (const route of ['', '/', '//evil.example', 'https://evil.example', '/a<b>']) {
+      rememberReturnTo(route)
       expect(takeReturnTo()).toBeNull()
     }
   })

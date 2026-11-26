@@ -1,10 +1,9 @@
 /** J1-17: the page a visitor was on when they tapped "Continue with Google", restored after the callback. */
 const returnKey = 'rytta-return-to'
-/** In-app hash routes only: a leading slash, no scheme, no `//`. */
+/** In-app routes only (RYT-186: paths under the base): a leading slash, no scheme, no `//`. */
 const safeRoute = /^\/(?!\/)[\w\-./?=&%~]{0,300}$/
 
-export function rememberReturnTo(hash: string) {
-  const route = hash.replace(/^#/, '')
+export function rememberReturnTo(route: string) {
   try {
     if (route.length > 1 && safeRoute.test(route)) sessionStorage.setItem(returnKey, route)
     else sessionStorage.removeItem(returnKey)

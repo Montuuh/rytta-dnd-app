@@ -5,7 +5,7 @@ import { campaignId, characterId, identityFixture, rulePackState } from './fixtu
 // RYT-164, RYT-165 (ADR 051): spells, class features and rules come from the campaign's packs.
 // A hidden entry is no longer offered but stays where a character has it; without the library the
 // sheet keeps working and rule texts offer a retry.
-const sheetUrl = `./#/campaign/${campaignId}/party/${characterId}`
+const sheetUrl = `./campaign/${campaignId}/party/${characterId}`
 async function audit(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   const result = await new AxeBuilder({ page })
@@ -60,7 +60,7 @@ test('RYT-165 a hidden rule leaves the glossary search but keeps its definition 
   rulePackState.hidden = ['condition.grappled']
   await identityFixture(page, { player: true, modules: ['party', 'glossary'], sheet: 'complete' })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(`./#/campaign/${campaignId}/glossary?cat=all`)
+  await page.goto(`./campaign/${campaignId}/glossary?cat=all`)
   // One entry fewer than the 838 of the SRD.
   await expect(page.getByText('837 entradas')).toBeVisible({ timeout: 15_000 })
   const search = page.getByRole('searchbox').first()
@@ -79,13 +79,13 @@ test('with more than one pack the glossary rows name their pack, with one pack t
   try {
     await identityFixture(page, { player: true, modules: ['party', 'glossary'], sheet: 'complete' })
     await page.emulateMedia({ reducedMotion: 'reduce' })
-    await page.goto(`./#/campaign/${campaignId}/glossary?cat=feature&q=pendenciero`)
+    await page.goto(`./campaign/${campaignId}/glossary?cat=feature&q=pendenciero`)
     const own = page.locator('.gl-row', { hasText: 'Pendenciero' })
     await expect(own.locator('.gl-row-pack')).toHaveText('Libros del dueño', { timeout: 15_000 })
     // The entry name is still whole next to the mark.
     await expect(own.locator('.gl-row-name')).toContainText('Pendenciero')
     // The SRD's own entries name the base pack.
-    await page.goto(`./#/campaign/${campaignId}/glossary?cat=condition`)
+    await page.goto(`./campaign/${campaignId}/glossary?cat=condition`)
     await expect(page.locator('.gl-row-pack').filter({ hasText: 'SRD' }).first()).toBeVisible()
     await audit(page)
     rulePackState.books = false
@@ -129,7 +129,7 @@ test('RYT-164 a blank sheet waits for the library with a retry, then creates the
   rulePackState.unreachable = true
   await identityFixture(page, { player: true })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await page.getByRole('button', { name: 'Terminar ficha' }).click()
   await page.getByRole('dialog').getByText('En blanco', { exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Empezar' }).click()
@@ -159,7 +159,7 @@ test('RYT-167 the class step says the classes are loading and retries when the l
   try {
     await identityFixture(page, { player: true })
     await page.emulateMedia({ reducedMotion: 'reduce' })
-    await page.goto(`./#/campaign/${campaignId}/party`)
+    await page.goto(`./campaign/${campaignId}/party`)
     await page.getByRole('button', { name: 'Terminar ficha' }).click()
     await page.getByRole('dialog').getByText('Completa', { exact: true }).click()
     await page.getByRole('dialog').getByRole('button', { name: 'Empezar' }).click()

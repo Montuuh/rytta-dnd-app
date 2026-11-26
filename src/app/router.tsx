@@ -1,4 +1,4 @@
-import { HashRouter, Navigate, Route, Routes, useNavigate } from 'react-router'
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router'
 import { lazy, Suspense, useEffect } from 'react'
 import { LoadingScreen } from '@/shared/ui/loading-screen'
 import { Layout, SettingsRoute } from './layout'
@@ -9,6 +9,7 @@ import { LibraryPage } from '@/features/content-library'
 import { AdminPage } from '@/features/admin'
 import { QuestsPage } from '@/features/quests'
 import { config } from '@/shared/lib/config'
+import { routerBasename } from '@/shared/lib/app-path'
 import { SignInPage } from '@/pages/sign-in-page'
 import { PartyRecapLink } from '@/pages/session-links'
 import { CampaignLanding } from '@/pages/campaign-landing'
@@ -117,7 +118,7 @@ export function AppRouter() {
   const { state } = useAuth()
   const live = config.VITE_DATA_MODE === 'supabase'
   return (
-    <HashRouter>
+    <BrowserRouter basename={routerBasename(import.meta.env.BASE_URL)}>
       <RestoreReturnTo />
       <Suspense fallback={<LoadingScreen />}>
         <Routes>
@@ -214,6 +215,6 @@ export function AppRouter() {
           </Route>
         </Routes>
       </Suspense>
-    </HashRouter>
+    </BrowserRouter>
   )
 }

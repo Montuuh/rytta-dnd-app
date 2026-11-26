@@ -94,7 +94,7 @@ test('a sole DM with other members sees the campaigns and no confirm control', a
   const link = dialog.getByRole('link', { name: 'Miembros de The Sunken Coast' })
   await expect(link).toHaveAttribute('href', new RegExp(`/campaign/${campaignId}/members$`))
   await link.click()
-  await expect(page).toHaveURL(new RegExp(`#/campaign/${campaignId}/members`))
+  await expect(page).toHaveURL(new RegExp(`/campaign/${campaignId}/members`))
   await expect(dialog).toBeHidden()
   await expect(settings).toBeHidden()
 })

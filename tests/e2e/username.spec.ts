@@ -64,13 +64,13 @@ test('after signing in, a dialog asks for a username, suggests one and refuses a
 
 test('the dialog appears on any page after signing in', async ({ page }) => {
   await identityFixture(page, { username: null })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await expect(page.getByRole('dialog', { name: 'Elige tu nombre de usuario' })).toBeVisible()
 })
 
 test('the dialog waits while Settings, which holds the same field, is open', async ({ page }) => {
   await identityFixture(page, { username: null })
-  await page.goto('./#/settings')
+  await page.goto('./settings')
   const drawer = page.getByRole('dialog', { name: 'Ajustes' })
   await expect(drawer).toBeVisible()
   const dialog = page.getByRole('dialog', { name: 'Elige tu nombre de usuario' })

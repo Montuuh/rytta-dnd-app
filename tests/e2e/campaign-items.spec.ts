@@ -1,4 +1,5 @@
 import { itemPackState, resetItemPacks, srdItemsPackId } from './fixtures/item-packs.ts'
+import { openInApp } from './fixtures/navigate.ts'
 import { test, expect, type Locator, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { identityFixture, campaignId, characterId } from './fixtures/identity.ts'
@@ -13,7 +14,7 @@ import {
   storeMenu,
 } from './fixtures/storeroom.ts'
 // RYT-027: /items redirects into the DM Command Center storeroom tab.
-const url = `./#/campaign/${campaignId}/items`
+const url = `./campaign/${campaignId}/items`
 
 test('RYT-181 the loot view picks alphabetically, toggles recipients, delivers in one action and reopens a saved batch', async ({
   page,
@@ -126,7 +127,7 @@ test('RYT-181 a failed delivery keeps the loot view open and Retry repeats the s
     if (++attempts === 1) return route.fulfill({ status: 503, json: { message: 'Unavailable' } })
     return route.fallback()
   })
-  await page.goto(`./#/campaign/${campaignId}/members?panel=items&do=loot`)
+  await page.goto(`./campaign/${campaignId}/members?panel=items&do=loot`)
   const dialog = page.getByRole('dialog', { name: 'Repartir botín' })
   await dialog.getByRole('button', { name: /Poción de curación/ }).click()
   await dialog
@@ -250,7 +251,7 @@ test('direct gold accepts zero, Escape cancels and stale edits cannot overwrite 
   page,
 }, info) => {
   const f = await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   const gold = page.getByRole('button', { name: /Editar oro de Arin/ })
   await gold.click()
   await page.getByRole('textbox', { name: 'Oro', exact: true }).fill('12345')
@@ -274,7 +275,7 @@ test('the DM in Player view can equip and unequip the previewed Player character
   page,
 }) => {
   await identityFixture(page, { linkedPlayer: true, inventory: true, sheet: 'complete' })
-  await page.goto(`./#/campaign/${campaignId}/inventory?character=${characterId}&view=equipment`)
+  await page.goto(`./campaign/${campaignId}/inventory?character=${characterId}&view=equipment`)
   await page.getByRole('switch', { name: 'Vista jugador', exact: true }).click()
   await expect(page.getByText('Viendo como jugador · Arin')).toBeVisible()
   const torso = page.getByRole('button', { name: 'Torso: Armadura de cuero', exact: true })
@@ -295,11 +296,11 @@ test('Players cannot access the DM catalogue and unequip from the slot drawer', 
   await expect(page.getByRole('heading', { level: 1, name: 'Inventario' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Almacén de objetos' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Acciones del almacén' })).toHaveCount(0)
-  await page.goto(`./#/campaign/${campaignId}/party/${characterId}`)
+  await page.goto(`./campaign/${campaignId}/party/${characterId}`)
   // The sheet must have replaced the inventory (a mounted page keeps its view), then no gear link.
   await expect(page.getByRole('heading', { level: 1, name: 'Arin' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Ver y cambiar equipo' })).toHaveCount(0)
-  await page.goto(`./#/campaign/${campaignId}/inventory?character=${characterId}&view=equipment`)
+  await page.goto(`./campaign/${campaignId}/inventory?character=${characterId}&view=equipment`)
   // The equipped-items list is gone: unequip lives in the slot drawer only.
   await expect(page.getByRole('button', { name: 'Quitar Armadura de cuero' })).toHaveCount(0)
   await page.getByRole('button', { name: 'Torso: Armadura de cuero', exact: true }).click()
@@ -315,7 +316,7 @@ test('shop picker opens the shared editor and keeps the new item selected', asyn
     modules: ['party', 'inventory', 'shops'],
   })
   await shopsFixture(page, f)
-  await page.goto(`./#/campaign/${campaignId}/shops`)
+  await page.goto(`./campaign/${campaignId}/shops`)
   await page.getByRole('button', { name: 'Añadir objeto', exact: true }).click()
   await page.getByRole('button', { name: 'Crear objeto', exact: true }).click()
   await page.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Shop-only stone')
@@ -397,7 +398,7 @@ test('equipment displays the authoritative manual AC override and retains focus 
     }
     return route.fallback()
   })
-  await page.goto(`./#/campaign/${campaignId}/inventory?view=equipment`)
+  await page.goto(`./campaign/${campaignId}/inventory?view=equipment`)
   await expect(page.getByRole('img', { name: 'Clase de Armadura 23' })).toBeVisible()
   const torso = page.getByRole('button', { name: 'Torso: Armadura de cuero', exact: true })
   await torso.focus()
@@ -411,7 +412,7 @@ test('equipment displays the authoritative manual AC override and retains focus 
   await page.getByRole('button', { name: 'Quitar Armadura de cuero', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Torso: vacío', exact: true })).toBeFocused()
   await expect(page.getByRole('img', { name: 'Clase de Armadura 23' })).toBeVisible()
-  await page.goto(`./#/campaign/${campaignId}/party/${characterId}`)
+  await page.goto(`./campaign/${campaignId}/party/${characterId}`)
   await expect(page.getByText('23', { exact: true })).toBeVisible()
 })
 
@@ -427,7 +428,7 @@ test('a partial shop bulk-add keeps only unfinished selections and reuses its re
     if (++attempts === 2) return route.fulfill({ status: 503, json: { message: 'Unavailable' } })
     return route.fallback()
   })
-  await page.goto(`./#/campaign/${campaignId}/shops`)
+  await page.goto(`./campaign/${campaignId}/shops`)
   await page.getByRole('button', { name: 'Añadir objeto', exact: true }).click()
   const picks = page.locator('.pick-tile')
   await picks.nth(0).click()
@@ -448,7 +449,7 @@ test('RYT-027 a new item created for a character from Party lands in that satche
   page,
 }, info) => {
   const f = await identityFixture(page, { inventory: true, sheet: 'complete' })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await page.getByRole('button', { name: 'Más acciones para Arin', exact: true }).click()
   await page.getByRole('menuitem', { name: 'Nuevo objeto para Arin', exact: true }).click()
   await expect(page).toHaveURL(/panel=items/)
@@ -543,7 +544,7 @@ test('RYT-181 search ranks starts before word starts, ignores accents, Enter ope
   page,
 }) => {
   await identityFixture(page, { inventory: true, catalogue: true, sheet: 'complete' })
-  await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+  await page.goto(`./campaign/${campaignId}/members?panel=items`)
   await expect(page.locator('.store-row').first()).toBeVisible()
   const search = page.getByRole('searchbox', { name: 'Buscar objetos' })
   // "/" outside a field goes to the item search, not to the quick switcher.
@@ -623,17 +624,12 @@ test('RYT-027 R2-2 a ?create= link followed inside the storeroom opens "new item
   page,
 }) => {
   await identityFixture(page, { inventory: true, sheet: 'complete' })
-  await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+  await page.goto(`./campaign/${campaignId}/members?panel=items`)
   await expect(page.locator('.store-row').first()).toBeVisible()
   for (let round = 0; round < 2; round++) {
     // R3-2: whatever had focus before the link, closing lands on the ⋯ menu.
     await page.getByRole('searchbox', { name: 'Buscar objetos' }).focus()
-    await page.evaluate(
-      ({ campaignId, characterId }) => {
-        location.hash = `#/campaign/${campaignId}/members?panel=items&create=${characterId}`
-      },
-      { campaignId, characterId },
-    )
+    await openInApp(page, `campaign/${campaignId}/members?panel=items&create=${characterId}`)
     const editor = page.getByRole('dialog', { name: 'Nuevo objeto para Arin' })
     await expect(editor).toBeVisible()
     await expect(editor.getByRole('button', { name: 'Arin', exact: true })).toHaveAttribute(
@@ -654,7 +650,7 @@ test('RYT-027 a shop listing opens the shared item editor', async ({ page }) => 
     modules: ['party', 'inventory', 'shops'],
   })
   await shopsFixture(page, f)
-  await page.goto(`./#/campaign/${campaignId}/shops`)
+  await page.goto(`./campaign/${campaignId}/shops`)
   await page
     .getByRole('button', { name: /Poción de curación/ })
     .first()
@@ -822,7 +818,7 @@ test('RYT-032 the DM adds an existing storeroom item or a new one to a character
     if (++attempts === 1) return route.fulfill({ status: 503, json: { message: 'Unavailable' } })
     return route.fallback()
   })
-  await page.goto(`./#/campaign/${campaignId}/inventory?character=${characterId}`)
+  await page.goto(`./campaign/${campaignId}/inventory?character=${characterId}`)
   const add = page.locator('main').getByRole('button', { name: 'Añadir objeto', exact: true })
   await add.click()
   const chooser = page.getByRole('dialog', { name: 'Añadir un objeto para Arin' })
@@ -878,7 +874,7 @@ test('RYT-105 Players search basic items first and propose what is missing', asy
     catalogue: true,
     sheet: 'complete',
   })
-  await page.goto(`./#/campaign/${campaignId}/inventory`)
+  await page.goto(`./campaign/${campaignId}/inventory`)
   await page.locator('main').getByRole('button', { name: 'Añadir objeto', exact: true }).click()
   const drawer = page.getByRole('dialog')
   await drawer.getByRole('textbox', { name: 'Buscar objetos básicos' }).fill('racion')
@@ -972,7 +968,7 @@ test('RYT-104 and RYT-166 the DM updates imported items from their packs and imp
     return route.fallback()
   })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+  await page.goto(`./campaign/${campaignId}/members?panel=items`)
   const open = page.getByRole('button', { name: 'Importar objetos' })
   await storeAction(page, 'manage')
   await open.click()
@@ -1029,7 +1025,7 @@ test('RYT-166 the import filters by pack, leaves hidden items out and sends the 
       return route.fallback()
     })
     await page.emulateMedia({ reducedMotion: 'reduce' })
-    await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+    await page.goto(`./campaign/${campaignId}/members?panel=items`)
     await storeAction(page, 'manage')
     await page.getByRole('button', { name: 'Importar objetos' }).click()
     const drawer = page.getByRole('dialog', { name: 'Importar objetos' })
@@ -1074,7 +1070,7 @@ test('RYT-105 the DM review keeps focus through its steps; Escape steps back and
 }) => {
   await identityFixture(page, { inventory: true, catalogue: true, sheet: 'complete' })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+  await page.goto(`./campaign/${campaignId}/members?panel=items`)
   await page.locator('.store-proposals').click()
   const drawer = page.getByRole('dialog', { name: 'Propuestas de jugadores' })
   const onBody = () => page.evaluate(() => document.activeElement === document.body)
@@ -1109,7 +1105,7 @@ test('RYT-105 the DM review keeps focus through its steps; Escape steps back and
 test('RYT-104 the merge confirmation says it cannot be undone', async ({ page }) => {
   await identityFixture(page, { inventory: true, catalogue: true })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+  await page.goto(`./campaign/${campaignId}/members?panel=items`)
   await itemMenu(page, 'Cuerda de cáñamo', 'Fusionar con…')
   const drawer = page.getByRole('dialog', { name: 'Fusionar Cuerda de cáñamo' })
   await drawer
@@ -1172,7 +1168,7 @@ test('RYT-151 the storeroom and shops fill only the table action and mark select
   expect(await all.evaluate((el) => getComputedStyle(el).boxShadow)).toMatch(/inset/)
   await page.keyboard.press('Escape')
 
-  await page.goto(`./#/campaign/${campaignId}/shops`)
+  await page.goto(`./campaign/${campaignId}/shops`)
   await expect(page.getByRole('button', { name: 'Añadir objeto' })).toBeVisible()
   expect(await filledControls(page)).toEqual(['Añadir objeto'])
   const views = page.getByRole('navigation', { name: 'Existencias y pedidos' })
@@ -1239,7 +1235,7 @@ test('RYT-181 the item sheet reads the item and offers Give, Edit and a menu wit
 }, info) => {
   await identityFixture(page, { inventory: true, catalogue: true, sheet: 'complete' })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+  await page.goto(`./campaign/${campaignId}/members?panel=items`)
   const sheet = await openItem(page, 'Espada larga')
   // Read-only: name, one muted line, the properties that exist; no form fields.
   await expect(sheet.locator('.item-sheet-line')).toContainText('Armas · Común')
@@ -1340,7 +1336,7 @@ test('RYT-181 a proposal is accepted in one tap from its card; only the last ans
     bodies.push(route.request().postDataJSON())
     await route.fallback()
   })
-  await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+  await page.goto(`./campaign/${campaignId}/members?panel=items`)
   const row = page.locator('.store-proposals')
   await expect(row).toContainText('1 propuesta de un jugador por revisar')
   // One proposal waits: its row opens the card itself, so accepting is two taps (row, accept).
@@ -1384,7 +1380,7 @@ test('RYT-181 "Review first" opens the forge with the draft, and a proposal can 
     bodies.push(route.request().postDataJSON())
     await route.fallback()
   })
-  await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+  await page.goto(`./campaign/${campaignId}/members?panel=items`)
   await page.locator('.store-proposals').click()
   const drawer = page.getByRole('dialog', { name: 'Propuestas de jugadores' })
   await drawer.getByRole('button', { name: 'Revisar antes', exact: true }).click()
@@ -1437,7 +1433,7 @@ test('RYT-181 an answer with proposals still waiting is said on the proposals vi
       },
     })
   })
-  await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+  await page.goto(`./campaign/${campaignId}/members?panel=items`)
   await expect(page.locator('.store-proposals')).toContainText('2 propuestas de jugadores')
   await page.locator('.store-proposals').click()
   const drawer = page.getByRole('dialog', { name: 'Propuestas de jugadores' })
@@ -1462,7 +1458,7 @@ test('RYT-181 a proposal that would not pass the forge is not accepted directly'
     sent.push(route.request().postDataJSON())
     await route.fallback()
   })
-  await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+  await page.goto(`./campaign/${campaignId}/members?panel=items`)
   await page.locator('.store-proposals').click()
   const drawer = page.getByRole('dialog', { name: 'Propuestas de jugadores' })
   // A blank name still has a heading; only "Review first" is offered, filled, and one line says what is missing.

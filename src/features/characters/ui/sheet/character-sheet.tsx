@@ -24,7 +24,7 @@ import {
   X,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { useAuth } from '@/features/auth'
 import {
   campaignsQuery,
@@ -307,6 +307,7 @@ function SheetPanel({
   const [lastLibraryTab, setLastLibraryTab] = useState<LibraryTab>('spells')
   const [rest, setRest] = useState<'short' | 'long' | null>(null)
   const [leaving, setLeaving] = useState<string | null>(null)
+  const navigate = useNavigate()
   const [cancelAsk, setCancelAsk] = useState(false)
   const [syncInfo, setSyncInfo] = useState<string | null>(null)
   const [levelUp, setLevelUp] = useState<{
@@ -1057,7 +1058,7 @@ function SheetPanel({
           onDiscard={(target) => {
             setLeaving(null)
             setDraft(null)
-            window.location.href = target
+            void navigate(target)
           }}
         />
         <LeaveDialog

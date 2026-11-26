@@ -237,7 +237,7 @@ test('RYT-013 inside a campaign a failed refresh keeps its header and navigation
   context,
 }, info) => {
   await identityFixture(page)
-  await page.goto(`./#/campaign/20000000-0000-4000-8000-000000000001`)
+  await page.goto(`./campaign/20000000-0000-4000-8000-000000000001`)
   const header = page.locator('.app-header')
   await expect(header).toContainText('The Sunken Coast')
   const nav = page.locator('nav.bottom-nav, nav.nav-tabs').filter({ visible: true }).first()
@@ -304,7 +304,7 @@ for (const screen of screens)
     context,
   }, info) => {
     await screen.setup(page)
-    await page.goto(`./#/campaign/${campaignId}/${screen.path}`)
+    await page.goto(`./campaign/${campaignId}/${screen.path}`)
     await expect(screen.shows(page)).toBeVisible()
     await context.setOffline(true)
     const strip = page.locator('.connection-strip')
@@ -342,7 +342,7 @@ test('RYT-161 a slow screen after reconnecting: "connection back", then "up to d
   context,
 }) => {
   await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await expect(page.getByText('Arin').first()).toBeVisible()
   await context.setOffline(true)
   const strip = page.locator('.connection-strip')
@@ -370,7 +370,7 @@ test('RYT-161 the line in English on Parchment', async ({ page, context }, info)
     localStorage.setItem('rytta-color-scheme', 'light')
   })
   await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await expect(page.getByText('Arin').first()).toBeVisible()
   await context.setOffline(true)
   await page.route('**/rest/v1/**', (route) => route.fulfill({ status: 500, body: '{}' }))
@@ -388,7 +388,7 @@ test('RYT-161 a sheet whose inventory never loaded says so in place', async ({ p
   await page.route('**/rest/v1/inventory_items*', (route) =>
     route.fulfill({ status: 500, body: '{}' }),
   )
-  await page.goto(`./#/campaign/${campaignId}/party/${characterId}`)
+  await page.goto(`./campaign/${campaignId}/party/${characterId}`)
   await expect(page.locator('.hp-current')).toBeVisible()
   const line = page.locator('.stale-line')
   await expect(line).toHaveCount(1, { timeout: 15_000 })
@@ -421,7 +421,7 @@ for (const [language, scheme] of [
     )
     const es = language === 'es'
     await identityFixture(page)
-    await page.goto(`./#/campaign/${campaignId}/party`)
+    await page.goto(`./campaign/${campaignId}/party`)
     await expect(page.getByText('Arin').first()).toBeVisible()
     await shellReady(page)
     // Only the header and navigation's needs are kept: nothing of the campaign's data.
@@ -487,7 +487,7 @@ test('RYT-160 a campaign never opened on this device has no shell offline', asyn
   expect(await shellKeys(page)).toEqual([])
   await page.route(backend, (route) => route.abort('internetdisconnected'))
   await context.setOffline(true)
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await page.reload()
   await expect(page.locator('.offline-placeholder')).toBeVisible()
   await expect(page.locator('.app-header')).not.toContainText('The Sunken Coast')
@@ -495,7 +495,7 @@ test('RYT-160 a campaign never opened on this device has no shell offline', asyn
 
 test('RYT-160 signing out removes the kept campaigns', async ({ page }) => {
   await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await expect(page.getByText('Arin').first()).toBeVisible()
   await expect.poll(() => shellKeys(page)).toHaveLength(1)
   await page.getByRole('button', { name: /Sesión de dm@example.com/ }).click()
@@ -509,7 +509,7 @@ test('RYT-160 sections that are not modules keep their own title offline', async
   context,
 }) => {
   await identityFixture(page)
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await expect(page.getByText('Arin').first()).toBeVisible()
   await shellReady(page)
   await page.route(backend, (route) => route.abort('internetdisconnected'))
@@ -520,7 +520,7 @@ test('RYT-160 sections that are not modules keep their own title offline', async
     ['', 'Centro de mando DM'],
     ['tabletop-table', 'Mesa'],
   ] as const) {
-    await page.goto(`./#/campaign/${campaignId}/${path}`)
+    await page.goto(`./campaign/${campaignId}/${path}`)
     await page.reload()
     // The table screen lies under the miniatures without the app's header.
     if (path !== 'tabletop-table')

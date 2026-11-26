@@ -1,0 +1,77 @@
+# RYT-187: private packs for Tasha's Cauldron of Everything and Xanathar's Guide to Everything
+
+Status: in progress. First slice delivered on 2026-11-26: both packs and the skeleton of their
+entries, as unpublished drafts with keys, names and index data and no text. The owner writes the
+texts.
+
+## The packs
+
+| Pack                            | Title (EN / ES)                                                | PRE id                                 | Production id                          |
+| ------------------------------- | -------------------------------------------------------------- | -------------------------------------- | -------------------------------------- |
+| `tasha-cauldron-of-everything`  | Tasha's Cauldron of Everything / El caldero de Tasha para todo | `dbccfbe7-ded1-4f14-882b-f4900b3a837d` | `d81fcf21-a8bf-4e6a-9af9-f19dd6b51814` |
+| `xanathars-guide-to-everything` | Xanathar's Guide to Everything / Guía de Xanathar para todo    | `dc1591dc-2562-42a4-9e46-cdacb7d58ab3` | `aa00de02-295b-4386-93c3-7ce877cda278` |
+
+Both: edition 2014, license "Private use", private, version 0 (nothing published), owned by the
+super admin, created through `save_content_pack` as the super admin.
+
+## Skeleton
+
+877 drafts in each environment, none with `data.en` or `data.es`.
+
+| Kind       | Tasha | Xanathar | What they are                                                                                                                       |
+| ---------- | ----- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `class`    | 1     | 0        | Artificer: d8, Con and Int saves, two of seven skills, half caster with Int, subclass at 3                                          |
+| `subclass` | 30    | 31       | With their class (four artificer specialists in Tasha)                                                                              |
+| `feature`  | 276   | 199      | Class and subclass features with class, subclass and level; options without class or level; one `feat-<key>` text entry per feat |
+| `feat`     | 20    | 15       | General feats at level 4; Tasha's five fighting styles                                                                              |
+| `spell`    | 21    | 95       | Level, school, class lists, concentration and ritual marks                                                                          |
+| `item`     | 47    | 48       | Category, slot and rarity; weight and price 0                                                                                       |
+| `creature` | 15    | 0        | Summon spirits, steel defender, homunculus servant, wildfire spirit, primal companions                                              |
+| `rule`     | 11    | 56       | Optional rules and DM tools; Xanathar's 25 tool descriptions and downtime activities                                                |
+| `hazard`   | 0     | 12       | Xanathar's sample traps (nine simple, three complex)                                                                                |
+
+Options (`feature` entries with no class or level, so no reader grants them on its own): Tasha's
+41 optional class features (`optional-<class>-…`), 16 infusions, 8 invocations, Pact of the
+Talisman, 7 maneuvers, 2 metamagic options; Xanathar's 8 arcane shots and 14 invocations.
+
+## Sources and checks
+
+- **Lists.** Tasha's PDF has a text layer: feature names and levels, infusions, invocations,
+  maneuvers, metamagic, spells and magic items were compared against its extracted text.
+  Xanathar's PDF is page images: its class spell lists (spells, schools, rituals, classes) and its
+  common magic items and sample traps were compared against the page images. Xanathar's subclass
+  feature names and levels, the racial feats and the concentration marks of both books were
+  written from the book's structure and not compared page by page.
+- **Local files.** Line files and a build script under the ignored `content-private/` produce one
+  import file per kind. `npm run content:check` accepted all 15 files: 877 entries, 877 valid.
+- **Import.** Each kind went through `import_content_entries` as the super admin by owner SQL, PRE
+  first and production after it, each environment in one transaction that rolls back unless every
+  entry is added and none is updated, unchanged or refused. All 15 kinds passed in both.
+- **Stored content.** After the import, the MD5 of each kind's stored entries (key, names and data
+  ordered by key) equals the local file's, in PRE and production.
+- **Actor check** (production, rolled back): an unrelated DM does not see either pack in the
+  library or in the choices for a new campaign and is refused their entries (`Forbidden`); the
+  super admin sees both in the library and reads their drafts.
+
+## Not verified and known gaps
+
+- Spanish names are working translations, not the Spanish editions'.
+- Creature index values are placeholders: these stat blocks have no challenge rating (stored as
+  `0`) and their AC and hit points grow with the spell or character level (the lowest values are
+  stored).
+- Items with tiered rarity (+1/+2/+3) or "rarity varies" are one entry at the lowest rarity; magic
+  items have no price or weight.
+- The 2014 subclasses keep the book's levels; the base pack's classes choose a subclass at level 3,
+  so a level 1 or 2 subclass feature is offered when the subclass is chosen.
+- The artificer class has no prepared-spells table (`prepared` stays empty) and uses the half
+  caster progression of the app, which rounds down where the book's artificer rounds up.
+- Artificer spells name the pack's `artificer` class; the base pack's spells the book adds to the
+  artificer list are not linked.
+- Left out: random tables (names, backstory, encounters), Tasha's sidekick classes (one rule
+  entry names them), pictures.
+- Nothing was looked at in the library screen.
+
+## Still to do
+
+- Texts and stat blocks (owner), then publishing a version, then offering the packs to the
+  owner's campaigns.

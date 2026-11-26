@@ -5744,6 +5744,32 @@
         "curl of rytta.app deep paths after deploy"
       ],
       "evidence": ["docs/evidence/RYT-186/verification.md", "docs/decisions/061-path-routing.md"]
+    },
+    {
+      "id": "RYT-187",
+      "title": "Private packs for Tasha's Cauldron of Everything and Xanathar's Guide to Everything",
+      "priority": "P2",
+      "owner": "fullstack",
+      "status": "in_progress",
+      "dependsOn": ["RYT-175"],
+      "sources": [
+        "Owner, 26 November 2026: \"He movido los libros de tasha y xanatar (mios comprados) a la carpeta de dnd_books. Quiero que hagas la importación de datos de ambos libros a dos paquetes respectivamente. Un paquete para cada libro. Si no puedes importar los datos por CC, quiero que te encargues de crear la estructura de todos los datos que consideras necesarios importar (monstruos, hechizos, items, feats,....). Con la estructura me refiero a crear los registros, ponerle nombre, el nombre de la API, etc... Yo luego relleno los datos. Recuerda que es rytta.dnd@gmail.com la cuenta superadmin que puede modificar la biblioteca de paquetes.\"",
+        "Both books are 2014-rules supplements the owner bought. Private packs are for content from books the owner bought (ADR 040, ADR 051): offered only to the campaigns a super admin adds, never in the public base pack or repository. Same method as RYT-175: line files and import files under the ignored content-private/ folder."
+      ],
+      "scope": "Two private packs owned by the super admin, one per book, created in PRE and production: tasha-cauldron-of-everything and xanathars-guide-to-everything (edition 2014). First slice: the skeleton of every entry worth having at the table, with key, English and Spanish name and the index the lists and choices read, and no text: subclasses with their features by level, the artificer class and its features, optional class features, infusions, invocations, maneuvers, metamagic and arcane shot options, feats (with their feat-<key> text entries), spells with level, school, class lists, concentration and ritual marks, magic items with category, slot and rarity, summon and companion creatures, rules and traps. The owner then writes the texts and stat blocks. Later slices: texts, publishing a version, offering the packs to the owner's campaigns. Non-goals: random tables (names, backstory, encounters), sidekick classes, pictures from the books, automating the new mechanics, anything in the public base pack or the repository.",
+      "acceptance": [
+        "Both packs exist in PRE and production, private and unpublished, owned by the super admin; a DM of another campaign does not see them in the library or in the choices for a new campaign and is refused their entries.",
+        "Every import file validates with npm run content:check and imports through import_content_entries with every entry added and none refused; the stored entries of each kind have the MD5 of the local file in both environments.",
+        "No import file or line file is tracked: they stay under content-private/ and npm run check:private passes.",
+        "The owner can open each pack in the library as the super admin and fill an entry's text with the library's form."
+      ],
+      "validation": [
+        "npm run content:check on every import file",
+        "import reports and MD5 of stored entries per kind in PRE and production",
+        "hosted actor check (super admin and an unrelated DM) in a rolled-back transaction",
+        "npm run check:fast"
+      ],
+      "evidence": ["docs/evidence/RYT-187/validation.md"]
     }
   ]
 }

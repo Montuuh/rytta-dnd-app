@@ -56,6 +56,7 @@ export {
 export type { CatalogueItem, ImportItem, ImportResult } from './domain/catalogue'
 export { toImportItem } from './domain/catalogue'
 export { BasicImport } from './ui/basic-import'
+export { PackFinds } from './ui/pack-finds'
 export { MergeItems } from './ui/merge-items'
 export { ProposalReview } from './ui/proposal-review'
 export { GpInput, WeightFields } from './ui/amount-fields'

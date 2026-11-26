@@ -20,6 +20,8 @@ import { StaleLine } from '@/features/campaigns'
 import { PageHead } from '@/shared/ui/page-head'
 import { usePhone, useWide } from '@/shared/ui/use-viewport'
 import { ChevronLeft, Plus, Search, SlidersHorizontal } from 'lucide-react'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/shared/ui/kit/empty'
+import { useBasePackLabel } from '@/shared/ui/pack-origins-context'
 import { useDeferredValue, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
@@ -38,6 +40,7 @@ import { centreUntilSettled } from '@/shared/ui/centre-until-settled'
 import { EntryIndex, type IndexRowData } from './entry-index'
 import { useGlossary } from './glossary-context'
 import { headwordFocus } from './headword-focus'
+import { packNameOf } from './pack-mark'
 import {
   activeFilterCount,
   matchesSpellFilters,
@@ -73,8 +76,9 @@ let lastReaderEntry: string | null = null
 
 /** RYT-008 glossary: search, categories, alphabetical index and a reader for one entry. */
 export function GlossaryPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const glossary = useGlossary()
+  const baseLabel = useBasePackLabel('SRD')
   const { entryId: rawEntryId } = useParams()
   const entryId = rawEntryId ? decodeURIComponent(rawEntryId) : null
   const [params, setParams] = useSearchParams()
@@ -131,6 +135,18 @@ export function GlossaryPage() {
   const bodies = glossary?.bodies ?? null
 
   useEffect(() => requestBodies?.(), [requestBodies])
+  // Opening on the search: a keyboard or mouse reader types at once; touch keeps the keyboard down.
+  const hasCatalog = catalog !== null
+  const landedFocus = useRef(false)
+  useEffect(() => {
+    if (landedFocus.current || !hasCatalog) return
+    landedFocus.current = true
+    if (entryId || urlQuery || params.get('cat')) return
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
+    searchRef.current?.focus({ preventScroll: true })
+    // Opens once per visit: the live URL and entry at that moment decide.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasCatalog])
   useEffect(() => {
     if (entryId && catalog?.byId.has(entryId)) remember?.(entryId)
   }, [entryId, catalog, remember])
@@ -238,6 +254,14 @@ export function GlossaryPage() {
       for (const key of glossaryTabs) if (inTab(entry, key)) out[key]++
     return out
   }, [matches])
+  const language = i18n.resolvedLanguage === 'en' ? 'en' : 'es'
+  const packCount = glossary?.packs.length ?? 0
+  const packOf = useMemo(() => {
+    const packs = glossary?.packs ?? []
+    return packCount > 1
+      ? (entry: GlossaryEntry) => packNameOf(entry, packs, language, baseLabel)
+      : undefined
+  }, [glossary?.packs, packCount, language, baseLabel])
   const homebrewTotal = catalog?.entries.filter((e) => e.source === 'homebrew').length ?? 0
 
   if (!glossary) return null
@@ -251,10 +275,13 @@ export function GlossaryPage() {
   const pagePath = glossary.pagePath
   const keepParams = new URLSearchParams()
   if (query.trim()) keepParams.set('q', query)
-  if (tab !== 'all') keepParams.set('cat', tab)
+  if (isGlossaryTab(params.get('cat'))) keepParams.set('cat', tab)
   const keep = keepParams.toString()
   const hrefFor = (id: string) => `${pagePath}/${encodeURIComponent(id)}${keep ? `?${keep}` : ''}`
-  const indexHref = `${pagePath}${keep ? `?${keep}` : ''}`
+  // "All entries" from a reader opens the list, not the landing.
+  const indexParams = new URLSearchParams(keepParams)
+  if (!indexParams.has('cat')) indexParams.set('cat', 'all')
+  const indexHref = `${pagePath}?${indexParams.toString()}`
 
   const setParam = (key: string, value: string | null) => {
     const next = liveSearchParams()
@@ -316,6 +343,9 @@ export function GlossaryPage() {
     }
   }
 
+  // Nothing asked yet: the search is the way in, not a list of every entry.
+  const landing = !entryId && !query.trim() && !isGlossaryTab(params.get('cat'))
+
   const reader = selected ? (
     <EntryArticle
       key={selected.id}
@@ -328,7 +358,7 @@ export function GlossaryPage() {
   ) : entryId ? (
     <p className="gl-quiet-note">{t('glossary.notFound')}</p>
   ) : (
-    <Welcome hrefFor={hrefFor} />
+    <Welcome hrefFor={hrefFor} showRecent={!landing} />
   )
 
   const homebrewEmpty = tab === 'homebrew' && homebrewTotal === 0 && !query
@@ -427,14 +457,14 @@ export function GlossaryPage() {
             />
           </div>
           <Tabs
-            value={tab}
-            onChange={(value) => setParam('cat', value && value !== 'all' ? value : null)}
+            value={landing ? null : tab}
+            onChange={(value) => setParam('cat', value)}
             className="gl-rail"
             activateTabWithKeyboard
           >
             <Tabs.List aria-label={t('glossary.categories')}>
               {glossaryTabs
-                .filter((key) => key !== 'homebrew' || glossary.canEdit || homebrewTotal > 0)
+                .filter((key) => key === 'all' || key === tab || counts[key] > 0)
                 .map((key) => (
                   <Tabs.Tab key={key} value={key}>
                     {t(`glossary.tab.${key}`)}
@@ -445,39 +475,41 @@ export function GlossaryPage() {
                 ))}
             </Tabs.List>
           </Tabs>
-          <div className="gl-status">
-            <p aria-live="polite" className="gl-result-count">
-              {query.trim() && rows.length === 0
-                ? t('glossary.noResults', { query: query.trim() })
-                : t('glossary.resultCount', { count: rows.length })}
-            </p>
-            {tab === 'feature' && (
-              <Select
-                aria-label={t('glossary.filter.class')}
-                className="gl-feature-class"
-                data={[
-                  { value: '', label: t('glossary.feature.allClasses') },
-                  ...featureClasses.map((c) => ({ value: c, label: t(`srd.class.${c}`) })),
-                ]}
-                value={featureClass ?? ''}
-                onChange={(value) => setFeatureClass((value || null) as FeatureClass | null)}
-                allowDeselect={false}
-                comboboxProps={{ withinPortal: true }}
-              />
-            )}
-            {tab === 'spell' && (
-              <button
-                type="button"
-                className="gl-filter-toggle"
-                onClick={() => setFiltersOpen(true)}
-              >
-                <SlidersHorizontal size={16} aria-hidden="true" />
-                {filterCount
-                  ? t('glossary.filterCount', { count: filterCount })
-                  : t('glossary.filters')}
-              </button>
-            )}
-          </div>
+          {!landing && (
+            <div className="gl-status">
+              <p aria-live="polite" className="gl-result-count">
+                {query.trim() && rows.length === 0
+                  ? t('glossary.noResults', { query: query.trim() })
+                  : t('glossary.resultCount', { count: rows.length })}
+              </p>
+              {tab === 'feature' && (
+                <Select
+                  aria-label={t('glossary.filter.class')}
+                  className="gl-feature-class"
+                  data={[
+                    { value: '', label: t('glossary.feature.allClasses') },
+                    ...featureClasses.map((c) => ({ value: c, label: t(`srd.class.${c}`) })),
+                  ]}
+                  value={featureClass ?? ''}
+                  onChange={(value) => setFeatureClass((value || null) as FeatureClass | null)}
+                  allowDeselect={false}
+                  comboboxProps={{ withinPortal: true }}
+                />
+              )}
+              {tab === 'spell' && (
+                <button
+                  type="button"
+                  className="gl-filter-toggle"
+                  onClick={() => setFiltersOpen(true)}
+                >
+                  <SlidersHorizontal size={16} aria-hidden="true" />
+                  {filterCount
+                    ? t('glossary.filterCount', { count: filterCount })
+                    : t('glossary.filters')}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -489,6 +521,8 @@ export function GlossaryPage() {
                 <h2>{t('glossary.hb.emptyTitle')}</h2>
                 <p>{glossary.canEdit ? t('glossary.hb.emptyBody') : t('glossary.hb.demo')}</p>
               </div>
+            ) : landing ? (
+              <Landing hrefFor={hrefFor} />
             ) : query.trim() && rows.length === 0 ? (
               <div className="gl-empty">
                 <p>{t('glossary.noResultsHint')}</p>
@@ -504,6 +538,7 @@ export function GlossaryPage() {
                 revealId={wide ? null : lastReaderEntry}
                 hrefFor={hrefFor}
                 bodies={glossary.bodies}
+                packOf={packOf}
               />
             )}
           </div>
@@ -530,22 +565,69 @@ export function GlossaryPage() {
   )
 }
 
-function Welcome({ hrefFor }: { hrefFor: (id: string) => string }) {
+/** The index column before anything is asked: the entries read lately, or a prompt to search. */
+function Landing({ hrefFor }: { hrefFor: (id: string) => string }) {
   const { t } = useTranslation()
   const glossary = useGlossary()
   const catalog = glossary?.catalog
   if (!catalog) return null
   const recent = (glossary.recent ?? [])
     .map((id) => catalog.byId.get(id))
-    .filter(Boolean) as GlossaryEntry[]
+    .filter((entry): entry is GlossaryEntry => Boolean(entry) && !catalog.unlisted.includes(entry!))
+  if (recent.length > 0)
+    return (
+      <section className="gl-landing" aria-labelledby="gl-recent-landing">
+        <h2 id="gl-recent-landing">{t('glossary.recent')}</h2>
+        <ul className="gl-word-list">
+          {recent.map((entry) => (
+            <li key={entry.id}>
+              <Link to={hrefFor(entry.id)} state={{ fromIndex: true }}>
+                {entry.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  return (
+    <Empty className="tw:items-start tw:justify-start tw:rounded-none tw:border-0 tw:px-2 tw:py-6 tw:text-left">
+      <EmptyHeader className="tw:items-start">
+        <EmptyMedia className="tw:mb-0 tw:text-(--app-accent)">
+          <Search size={24} aria-hidden="true" />
+        </EmptyMedia>
+        <EmptyTitle role="heading" aria-level={2} className="gl-landing-title tw:text-(--app-text)">
+          {t('glossary.landingTitle')}
+        </EmptyTitle>
+        <EmptyDescription className="tw:text-(--app-muted)">
+          {t('glossary.landingHint')}
+        </EmptyDescription>
+      </EmptyHeader>
+    </Empty>
+  )
+}
+
+function Welcome({
+  hrefFor,
+  showRecent,
+}: {
+  hrefFor: (id: string) => string
+  showRecent: boolean
+}) {
+  const { t } = useTranslation()
+  const glossary = useGlossary()
+  const catalog = glossary?.catalog
+  if (!catalog) return null
+  const recent = (glossary.recent ?? [])
+    .map((id) => catalog.byId.get(id))
+    .filter((entry): entry is GlossaryEntry => Boolean(entry) && !catalog.unlisted.includes(entry!))
+  // An entry the campaign no longer offers stays readable, but is not suggested.
   const conditions = conditionsAtTheTable
     .map((id) => catalog.byId.get(id))
-    .filter(Boolean) as GlossaryEntry[]
+    .filter((entry): entry is GlossaryEntry => Boolean(entry) && !catalog.unlisted.includes(entry!))
   return (
     <div className="gl-welcome">
       <h2 className="gl-welcome-title">{t('glossary.welcomeTitle')}</h2>
-      <p>{t('glossary.welcomeBody')}</p>
-      {recent.length > 0 && (
+      {showRecent && recent.length > 0 && (
         <section aria-labelledby="gl-recent">
           <h3 id="gl-recent">{t('glossary.recent')}</h3>
           <ul className="gl-word-list">

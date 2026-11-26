@@ -285,11 +285,10 @@ test('empty hub creates a DM campaign, accepts a Player invitation and signs out
   await create.click()
   await page.getByLabel('Nombre de la campaña').fill('Our new table')
   const dialog = page.getByRole('dialog')
-  await dialog.getByRole('button', { name: 'Siguiente', exact: true }).click()
-  // RYT-167: the campaign's content, with the SRD and the Rytta basics ticked.
-  await expect(dialog.getByRole('heading', { name: 'Contenido de la campaña' })).toBeFocused()
+  // RYT-184: one content line; Cambiar shows the packs, with the SRD and the Rytta basics ticked.
+  await dialog.getByRole('button', { name: 'Cambiar', exact: true }).click()
   const creatures = dialog.getByRole('group', { name: 'Criaturas' })
-  await expect(creatures.getByRole('checkbox', { name: /Documento de referencia/ })).toBeChecked()
+  await expect(creatures.getByRole('checkbox', { name: /SRD/ })).toBeChecked()
   const basics = dialog
     .getByRole('group', { name: 'Objetos' })
     .getByRole('checkbox', { name: /Rytta · Objetos básicos/ })

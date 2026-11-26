@@ -33,6 +33,17 @@ const rows = (page: Page, name: string) =>
   page.locator('.bst-row').filter({ has: page.getByText(name, { exact: true }) })
 const content = `#/campaign/${campaignId}/members?panel=content`
 
+/** Picks a source by name: from the list when the sources are one, else from the segments. */
+async function chooseSource(page: Page, name: string) {
+  const list = page.getByRole('combobox', { name: /^(Origen|Source)$/ })
+  if (await list.count()) {
+    await list.click()
+    await page.getByRole('option', { name, exact: true }).click()
+  } else {
+    await page.locator('.bst-source label', { hasText: name }).click()
+  }
+}
+
 async function open(page: Page, info: TestInfo, query: string, name: string) {
   await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill(query)
   await rows(page, name).first().locator('.bst-row-main').click()
@@ -68,6 +79,7 @@ test('RYT-094 the bestiary reads the SRD pack, edits a creature in place and hid
     content,
   )
   await page.keyboard.press('Escape')
+  await expect(page.getByRole('menu')).toHaveCount(0)
   await audit(page)
   await evidence(page, info, 'list')
 
@@ -88,9 +100,9 @@ test('RYT-094 the bestiary reads the SRD pack, edits a creature in place and hid
   await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('lobo')
   await expect(rows(page, 'Lobo')).toHaveCount(1)
   // The version still belongs to its pack's source.
-  await page.locator('.bst-source label', { hasText: 'SRD' }).click()
+  await chooseSource(page, 'SRD')
   await expect(rows(page, 'Lobo')).toHaveCount(1)
-  await page.locator('.bst-source label', { hasText: 'Todas' }).click()
+  await chooseSource(page, 'Todas')
 
   // Back to the pack's version: the campaign version is deleted after a question.
   pane = await open(page, info, 'lobo', 'Lobo')
@@ -292,3 +304,38 @@ for (const [language, theme] of [
     await shot('no-packs')
   })
 }
+
+test('RYT-184 a creature of another pack is used by its `<pack ref>--<key>` reference, and rows keep their pack mark', async ({
+  page,
+}, info) => {
+  const server = combatServer()
+  server.official.north = true
+  // A bare key is the SRD's: it names no creature of the other pack.
+  server.used.references.push('abcdef12--yeti', 'yeti')
+  await start(page, server)
+  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+  await expect(page.getByText('1 criatura', { exact: true })).toBeVisible({ timeout: 15_000 })
+  const row = page.locator('[data-row-key="srd:abcdef12--yeti"]')
+  await expect(row).toBeVisible()
+  await expect(row).toContainText('en un encuentro')
+  // Several packs are enabled: the row names its pack, and the source is a list of them.
+  await expect(row.locator('.bst-row-pack')).toContainText(/\S/)
+  await chooseSource(page, 'Todas')
+  await expect(page.getByText('332 criaturas', { exact: true })).toBeVisible()
+  await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('trol')
+  await expect(
+    page.locator('[data-row-key="srd:abcdef12--snow-troll"] .bst-row-pack'),
+  ).toContainText('Bestias del Norte')
+  // The type and the numbers come first; a long pack name is what the row cuts.
+  await page.evaluate(() => document.fonts.ready)
+  const meta = page.locator('[data-row-key="srd:abcdef12--snow-troll"] .bst-row-meta')
+  if (await meta.isVisible()) {
+    await expect(meta.locator('.bst-row-kind')).toHaveText(/\S/)
+    expect(
+      await meta.locator('.bst-row-kind').evaluate((node) => node.scrollWidth <= node.clientWidth),
+    ).toBe(true)
+  }
+  const s = size(info.project.name)
+  if (s && process.env.RYT_EVIDENCE)
+    await page.screenshot({ path: `docs/evidence/RYT-184/bestiary/pack-mark-last-${s}.png` })
+})

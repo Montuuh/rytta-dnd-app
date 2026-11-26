@@ -5663,15 +5663,16 @@
       "title": "Campaign content the DM can read at a glance: packs first, one update digest, a lighter import",
       "priority": "P1",
       "owner": "frontend",
-      "status": "planned",
+      "status": "review",
       "dependsOn": ["RYT-183", "RYT-162", "RYT-181"],
       "sources": [
         "Owner request, 26 November 2026: improve how downloadable content is shown to the DM without overwhelming them with data they may not use.",
-        "Audit of 26 November 2026 (docs/evidence/RYT-184/audit.md): 24 findings in art, interface and information load."
+        "Audit of 26 November 2026 (docs/evidence/RYT-184/audit.md): 24 findings in art, interface and information load.",
+        "Owner answer to the options page, 26 November 2026: the recommended option (A) in each of its eight questions."
       ],
-      "scope": "Pending the owner's answers to the options page. Candidates from the audit: the content panel grouped by pack with one switch and the categories on demand; one update row per pack that leads with what affects the campaign; an entries browser with thumbnails, a fixed search and an \"only hidden\" filter; item import that starts empty or from a starter set; one summary line when creating a campaign; pack covers and a short name; landing views of the bestiary and the glossary. Built with the shadcn kit where Mantine lacks the widget (ADR 059). First, the kit fixes the RYT-183 review left for its first use: the scoped reset clears paragraph margins and link underlines inside kit parts, one focus ring on a focused Item, Skeleton still under reduced motion, 44px targets. Non-goals until decided: database changes beyond what a chosen option needs, the library manager for editors (RYT-093).",
+      "scope": "As chosen by the owner: (1) the content panel shows one card per pack with its cover, a short name, one line of what it brings and one switch, the categories and hidden entries behind Personalizar, and packs not in use folded; (2) one update notice per pack with one Actualizar for the whole pack, and a review that leads with what affects the campaign and counts the rest; (3) entries are browsed in a sheet with the bestiary rows (picture, name, kind), a search that stays in view and the views Todas and Ocultas; (4) nothing is imported into the storeroom in bulk by default: its search also finds the items of the active packs and adds them one at a time; (5) creating a campaign shows one content line with Cambiar; (6) a pack has a painted cover, set in the library and published with the pack, falling back to a picture of its content; (7) the bestiary opens on the campaign's own creatures when it has any, the glossary opens on its search and hides empty tabs, and list rows carry a pack mark when more than one pack is active; (8) the shadcn kit is used only in these screens. First, the kit fixes the RYT-183 review left for its first use: the scoped reset clears paragraph margins and link underlines inside kit parts, one focus ring on a focused Item, Skeleton still under reduced motion, 44px targets. Non-goals: the library manager for editors beyond the cover field (RYT-093), rebuilding the bestiary and storeroom rows of RYT-181 with the kit.",
       "acceptance": [
-        "The owner's chosen options are recorded in this ticket before any interface code is written.",
+        "The eight chosen options are built as described in the scope.",
         "Each audit finding is fixed, or recorded as out of scope with its reason.",
         "With five packs the content panel fits its packs in the first two phone screens at 390px.",
         "Loading, empty, error, forbidden and stale states are designed, in both themes and both languages.",
@@ -5682,7 +5683,12 @@
         "npm run test:e2e",
         "Captures at 390px and 820px in both themes and languages; keyboard, Escape, 150% text and reduced motion."
       ],
-      "evidence": ["docs/evidence/RYT-184/audit.md"]
+      "evidence": [
+        "docs/evidence/RYT-184/audit.md",
+        "docs/evidence/RYT-184/validation.md",
+        "docs/decisions/060-campaign-content-by-pack.md",
+        "supabase/migrations/20261228120000_campaign_content_by_pack.sql"
+      ]
     }
   ]
 }

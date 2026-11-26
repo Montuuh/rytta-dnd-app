@@ -88,6 +88,21 @@ export async function loadCreaturePacks(campaignId: string, signal: AbortSignal)
   return creaturePacksSchema.parse(result.data)
 }
 
+const usedCreaturesSchema = z.object({
+  references: z.array(z.string().max(80).regex(creatureReferencePattern)),
+  templates: z.array(z.uuid()),
+})
+
+/** RYT-184: the creatures this campaign's encounters used (DM only), for the bestiary's landing view. */
+export async function loadUsedCreatures(campaignId: string, signal: AbortSignal) {
+  const db = await client()
+  const result = await db
+    .rpc('get_campaign_used_creatures', { target_campaign: uuid(campaignId) })
+    .abortSignal(signal)
+  if (result.error) throw new Error(combatErrorCode(result.error.message))
+  return usedCreaturesSchema.parse(result.data)
+}
+
 async function loadCreaturePack(
   campaignId: string,
   pack: CreaturePack,

@@ -50,6 +50,17 @@ async function settledBox(locator: Locator) {
   return (await locator.boundingBox())!
 }
 
+/** Picks a source by name: from the list when the sources are one, else from the segments. */
+async function chooseSource(page: Page, name: string) {
+  const list = page.getByRole('combobox', { name: /^(Origen|Source)$/ })
+  if (await list.count()) {
+    await list.click()
+    await page.getByRole('option', { name, exact: true }).click()
+  } else {
+    await page.locator('.bst-source label', { hasText: name }).click()
+  }
+}
+
 async function openBestiary(page: Page) {
   await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
   await expect(page.getByRole('heading', { level: 2, name: 'Bestiario' })).toBeVisible({
@@ -137,11 +148,11 @@ for (const [language, theme] of [
     await expect(page).toHaveURL(new RegExp(`encounter=${encounterId}`))
     if (!es && theme === 'parchment') {
       await page.addStyleTag({ content: 'html { font-size: 150%; }' })
-      const favourites = page.locator('.bst-source label').getByText('Favourites', { exact: true })
-      await expect(favourites).toBeVisible()
-      const segment = (await page.locator('.bst-source').boundingBox())!
-      const label = (await favourites.boundingBox())!
-      expect(label.x + label.width).toBeLessThanOrEqual(segment.x + segment.width)
+      // Five sources do not fit a row at 150% text: they are one list, inside the screen.
+      const list = page.getByRole('combobox', { name: 'Source' })
+      await expect(list).toBeVisible()
+      const box = (await list.boundingBox())!
+      expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width)
     }
     const search = page.getByRole('searchbox', {
       name: es ? 'Buscar criatura' : 'Search creatures',
@@ -372,7 +383,7 @@ test('RYT-046 the DM searches the SRD catalogue and reads a full stat block', as
     await page.keyboard.press('Escape')
     await expect(page.locator('.bst-sheet')).toHaveCount(0)
   }
-  await page.locator('.bst-source label', { hasText: 'Favoritas' }).click()
+  await chooseSource(page, 'Favoritas')
   await expect(page.getByText('1 criatura', { exact: true })).toBeVisible()
   expect(errors).toEqual([])
 })
@@ -421,7 +432,7 @@ test('with large text and little room, the filters open in a side sheet', async 
   const filters = page.getByRole('dialog', { name: 'Filtros' })
   await expect(filters).toBeVisible()
   await expect(open).toHaveAttribute('aria-expanded', 'true')
-  await expect(page.locator('.mantine-Popover-dropdown')).toHaveCount(0)
+  await expect(page.locator('.bst-filter-dropdown')).toHaveCount(0)
   await filters.getByText('Muerto viviente', { exact: true }).click()
   await filters.getByRole('button', { name: /^Ver \d+ criaturas?$/ }).click()
   await expect(filters).toHaveCount(0)
@@ -1033,7 +1044,7 @@ test('RYT-181 a campaign creature without a picture gets its thumbnail from the 
     request_id: crypto.randomUUID(),
   })
   await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
-  await expect(page.getByText('331 criaturas', { exact: true })).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByText('1 criatura', { exact: true })).toBeVisible({ timeout: 15_000 })
   await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('sierpe')
   await page
     .locator('.bst-row', { has: page.getByText('Sierpe del pantano', { exact: true }) })
@@ -1599,6 +1610,8 @@ test('RYT-181 with no encounter the filled action opens the dialog and names the
   await page.locator('.bst-row-main', { hasText: /^Lobo/ }).first().click()
   const pane = detail(page, info)
   await pane.getByRole('button', { name: 'Más acciones para Lobo' }).click()
+  // Escape closes the menu only once it is open: before that it would reach the sheet behind it.
+  await expect(page.getByRole('menu')).toBeVisible()
   await expect(page.getByRole('menuitem', { name: 'Otro encuentro o uno nuevo' })).toHaveCount(0)
   await page.keyboard.press('Escape')
   await pane.getByRole('button', { name: 'Añadir a un encuentro' }).click()
@@ -1661,11 +1674,11 @@ test('RYT-181 a favourite carries a bookmark beside its name, and the empty list
   await openBestiary(page)
   // Nothing in the head describes the screen to the DM.
   await expect(page.getByText('Solo los DM ven esta sección.')).toHaveCount(0)
-  await page.locator('.bst-source label', { hasText: 'Favoritas' }).click()
+  await chooseSource(page, 'Favoritas')
   await expect(
     page.getByText('Añade criaturas a favoritas desde el menú ··· de su ficha.'),
   ).toBeVisible()
-  await page.locator('.bst-source label', { hasText: 'Todas' }).click()
+  await chooseSource(page, 'Todas')
   await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('wolf')
   const row = page.locator('[data-row-key="srd:wolf"]')
   await row.locator('.bst-row-main').click()
@@ -1776,25 +1789,32 @@ test('RYT-181 at 150% text the search row keeps its field, its controls share a 
     .locator('.bst-toolbar-search > *')
     .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().height))
   expect(Math.max(...heights) - Math.min(...heights)).toBeLessThan(2)
-  // Segments never hyphenate or break inside a word: a word wider than its segment would overflow.
-  const segments = await page
-    .locator('.bst-source .mantine-SegmentedControl-label')
-    .evaluateAll((labels) =>
-      labels.map((label) => {
-        const style = getComputedStyle(label)
-        return {
-          text: label.textContent,
-          hyphens: style.hyphens,
-          wrap: style.overflowWrap,
-          fits: label.scrollWidth <= label.clientWidth + 1,
-        }
-      }),
-    )
-  expect(segments.length).toBeGreaterThanOrEqual(4)
-  for (const segment of segments) {
-    expect(segment.hyphens, segment.text ?? '').toBe('manual')
-    expect(segment.wrap, segment.text ?? '').toBe('normal')
-    expect(segment.fits, segment.text ?? '').toBe(true)
+  // The sources are one row of segments that never break a word, or one list: never two rows.
+  const list = page.getByRole('combobox', { name: 'Origen' })
+  if (await list.count()) {
+    expect((await list.boundingBox())!.height).toBeLessThanOrEqual(56)
+  } else {
+    const segments = await page
+      .locator('.bst-source .mantine-SegmentedControl-label')
+      .evaluateAll((labels) =>
+        labels.map((label) => {
+          const style = getComputedStyle(label)
+          return {
+            text: label.textContent,
+            hyphens: style.hyphens,
+            wrap: style.overflowWrap,
+            fits: label.scrollWidth <= label.clientWidth + 1,
+            top: Math.round(label.getBoundingClientRect().top),
+          }
+        }),
+      )
+    expect(segments.length).toBeGreaterThanOrEqual(4)
+    for (const segment of segments) {
+      expect(segment.hyphens, segment.text ?? '').toBe('manual')
+      expect(segment.wrap, segment.text ?? '').toBe('normal')
+      expect(segment.fits, segment.text ?? '').toBe(true)
+      expect(segment.top, 'one row').toBe(segments[0]!.top)
+    }
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })
@@ -1901,4 +1921,186 @@ test('RYT-181 with no selection the laptop head lines up with the list', async (
   // The search row carries 4px of padding on each side; its content is the list's measure.
   expect(Math.abs(measure.row - 8 - measure.list)).toBeLessThanOrEqual(4)
   expect(Math.abs(measure.toolbar - measure.list)).toBeLessThanOrEqual(4)
+})
+
+// RYT-184: the bestiary opens on what the campaign has made its own.
+/** The source in force: the select's value, or the checked segment's label. */
+async function currentSource(page: Page) {
+  const select = page.getByRole('combobox', { name: 'Origen' })
+  if (await select.count()) return select.inputValue()
+  return page
+    .getByRole('radiogroup', { name: 'Origen' })
+    .locator('input:checked')
+    .evaluate((input) => (input.closest('div')?.querySelector('label')?.textContent ?? '').trim())
+}
+const homebrew = (server: ReturnType<typeof combatServer>, name: string) => {
+  const score = { score: 10, mod: 0, save: 0 }
+  return server.act('save_combatant_template', {
+    target_template: null,
+    expected_revision: null,
+    data: {
+      name,
+      side: 'enemy',
+      max_hp: 12,
+      armor_class: 11,
+      initiative_bonus: 0,
+      legendary_max: 0,
+      notes: '',
+      stat_block: {
+        name,
+        meta: 'Bestia Mediana, sin alineamiento',
+        ac: '11',
+        initiative: '+0 (10)',
+        hp: '12 (3d8)',
+        speed: '9 m',
+        abilities: { str: score, dex: score, con: score, int: score, wis: score, cha: score },
+        details: {},
+        cr: '1/2',
+        sections: [],
+      },
+    },
+  }) as { id: string }
+}
+async function favouriting(page: Page, favorites: string[]) {
+  await page.addInitScript(
+    ([key, list]) => localStorage.setItem(key!, list!),
+    [`rytta.bestiary.favorites.${campaignId}`, JSON.stringify(favorites)],
+  )
+}
+
+test('RYT-184 the bestiary opens on De la campaña with a favourite, a used creature and a campaign one', async ({
+  page,
+}, info) => {
+  test.setTimeout(90_000)
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await favouriting(page, ['srd:wolf'])
+  homebrew(server, 'Sierpe del pantano')
+  server.used.references.push('zombie')
+  await server.install(page)
+  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+  await expect(page.getByText('3 criaturas', { exact: true })).toBeVisible({ timeout: 15_000 })
+  // The search still says how large the whole bestiary is.
+  const search = page.getByRole('searchbox', { name: 'Buscar criatura' })
+  await expect(search).toHaveAttribute(
+    'placeholder',
+    sheet(info) ? 'Buscar en 331' : 'Buscar entre 331 criaturas',
+  )
+  const room = await placeholderRoom(search)
+  expect(room.text).toBeLessThanOrEqual(room.room)
+  expect(await currentSource(page)).toMatch(/campaña/i)
+  await expect(page.locator('[data-row-key="srd:wolf"]')).toBeVisible()
+  await expect(page.locator('[data-row-key="srd:zombie"]')).toContainText('en un encuentro')
+  await expect(page.locator('[data-row-key="srd:wolf"]')).not.toContainText('en un encuentro')
+  // The reason shows only where the row has room for it whole, and never at the cost of the kind.
+  const zombie = page.locator('[data-row-key="srd:zombie"]')
+  if (sheet(info)) await expect(zombie.locator('.bst-row-reason')).toBeHidden()
+  else
+    for (const part of ['.bst-row-reason', '.bst-row-kind'])
+      expect(
+        await zombie.locator(part).evaluate((node) => node.scrollWidth <= node.clientWidth),
+        part,
+      ).toBe(true)
+  await expect(page.locator('[data-row-key^="hb:"]')).toContainText('Sierpe del pantano')
+  await expect(page.locator('[data-row-key="srd:goblin"]')).toHaveCount(0)
+  // One line per row: the reason costs no height.
+  const heights = await page
+    .locator('.bst-row')
+    .evaluateAll((nodes) => nodes.map((n) => Math.round(n.getBoundingClientRect().height)))
+  expect(Math.max(...heights) - Math.min(...heights)).toBeLessThanOrEqual(24)
+  await expectTouchTargets(page, '.bst-row-main')
+  await audit(page)
+  await evidence(page, info, 'landing', 'RYT-184')
+})
+
+test('RYT-184 the bestiary opens on Todas when the campaign has made nothing its own', async ({
+  page,
+}, info) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await combatServer().install(page)
+  await openBestiary(page)
+  expect(await currentSource(page)).toMatch(/^(all|Todas)$/)
+  await expect(page.getByRole('searchbox', { name: 'Buscar criatura' })).toHaveAttribute(
+    'placeholder',
+    sheet(info) ? 'Buscar en 330' : 'Buscar entre 330 criaturas',
+  )
+  // At 150% text the placeholder gives way to a shorter form rather than being cut mid-word.
+  await page.addStyleTag({ content: 'html { font-size: 150%; }' })
+  const field = page.getByRole('searchbox', { name: 'Buscar criatura' })
+  await expect
+    .poll(async () => {
+      const room = await placeholderRoom(field)
+      return room.text <= room.room
+    })
+    .toBe(true)
+  expect(await currentSource(page)).toMatch(/^(all|Todas)$/)
+})
+
+test('RYT-184 a search with no match in the campaign can look in every creature', async ({
+  page,
+}, info) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await favouriting(page, ['srd:wolf'])
+  await combatServer().install(page)
+  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+  await expect(page.getByText('1 criatura', { exact: true })).toBeVisible({ timeout: 15_000 })
+  const search = page.getByRole('searchbox', { name: 'Buscar criatura' })
+  await search.fill('zombi')
+  await expect(page.getByText('Ninguna criatura de la campaña coincide.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Ver todas las criaturas' })).toHaveCount(0)
+  await evidence(page, info, 'no-match', 'RYT-184')
+  await page.getByRole('button', { name: 'Buscar en todas' }).click()
+  await expect(search).toHaveValue('zombi')
+  await expect(search).toBeFocused()
+  expect(await currentSource(page)).toMatch(/^(all|Todas)$/)
+  await expect(page.locator('[data-row-key="srd:zombie"]')).toBeVisible()
+  // The person's pick holds when the query is cleared.
+  await search.fill('')
+  expect(await currentSource(page)).toMatch(/^(all|Todas)$/)
+})
+
+test('RYT-184 a failed read of the used creatures never blocks the list', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  const server = combatServer()
+  server.used.references.push('zombie')
+  server.used.unavailable = true
+  await server.install(page)
+  await openBestiary(page)
+  // Nothing else is the campaign's: the whole bestiary shows, without an error banner.
+  expect(await currentSource(page)).toMatch(/^(all|Todas)$/)
+  await expect(page.getByRole('alert')).toHaveCount(0)
+})
+
+test('RYT-184 the source is reachable by keyboard and a picked source is kept', async ({
+  page,
+}, info) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await favouriting(page, ['srd:wolf'])
+  const server = combatServer()
+  server.used.references.push('zombie')
+  await server.install(page)
+  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+  await expect(page.getByText('2 criaturas', { exact: true })).toBeVisible({ timeout: 15_000 })
+  const select = page.getByRole('combobox', { name: 'Origen' })
+  if (await select.count()) {
+    await select.focus()
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('Enter')
+  } else {
+    await page.getByRole('radiogroup', { name: 'Origen' }).locator('input:checked').focus()
+    await page.keyboard.press('ArrowRight')
+  }
+  await expect(page.getByText('330 criaturas', { exact: true })).toBeVisible()
+  expect(await currentSource(page)).toMatch(/^(all|Todas)$/)
+  await expectTouchTargets(
+    page,
+    '.bst-source-select input, .bst-source .mantine-SegmentedControl-label',
+  )
+  await evidence(page, info, 'source', 'RYT-184')
 })

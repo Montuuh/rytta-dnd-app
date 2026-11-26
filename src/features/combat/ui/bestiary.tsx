@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useAuth } from '@/features/auth'
 import {
+  campaignCreatures,
   challengeRatings,
   emptyFilters,
   filterCreatures,
@@ -32,7 +33,7 @@ import { usePhone } from '@/shared/ui/use-viewport'
 import { useBasePackLabel } from '@/shared/ui/pack-origins-context'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { StatusRail } from '@/shared/ui/rail-line'
-import { encountersQuery } from '../api'
+import { encountersQuery, usedCreaturesQuery } from '../api'
 import type { CombatantTemplate } from '../domain/combat'
 import { searchCreatures } from '../domain/creature-search'
 import { AddToEncounterDialog } from './add-to-encounter'
@@ -176,7 +177,28 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
       t(saved ? 'bestiary.favorite.saved' : 'bestiary.favorite.unsaved', { name: item.name }),
     )
   }
-  const [filters, setFilters] = useState<CreatureFilters>(emptyFilters)
+  const [stored, setStored] = useState<CreatureFilters>(emptyFilters)
+  // RYT-184: the bestiary opens on what the campaign has made its own: favourites, its creatures,
+  // official ones it edited and the ones its encounters used. The read of the used ones never
+  // blocks the list; a failed read leaves them out. Once a source is picked it stays the person's.
+  const used = useQuery(usedCreaturesQuery(state.user!.id, campaignId))
+  const reasons = useMemo(() => {
+    return campaignCreatures(catalog.items, favorites, used.data)
+  }, [catalog.items, favorites, used.data])
+  const [picked, setPicked] = useState<CreatureFilters['source'] | null>(null)
+  const [landing, setLanding] = useState<'campaign' | 'all' | null>(null)
+  if (landing === null && !catalog.pending) {
+    // A typed query, a picked source or a creature named in the address keep every creature in view.
+    if (picked !== null || stored.query !== '' || selectedKey) setLanding('all')
+    else if (reasons.size > 0) setLanding('campaign')
+    else if (used.isSuccess || used.isError) setLanding('all')
+  }
+  const source = picked ?? (landing === 'campaign' ? 'campaign' : 'all')
+  const filters = useMemo<CreatureFilters>(() => ({ ...stored, source }), [stored, source])
+  const setFilters = (next: CreatureFilters) => {
+    if (next.source !== source) setPicked(next.source)
+    setStored(next)
+  }
   const [adding, setAdding] = useState<CreatureListItem | null>(null)
   const [editor, setEditor] = useState<EditorState | null>(null)
   const [creating, setCreating] = useState(false)
@@ -244,10 +266,16 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
   const results = useMemo(
     () =>
       searchCreatures(
-        filterCreatures(catalog.items, { ...filters, query: '' }, favorites, challengeRatings),
+        filterCreatures(
+          catalog.items,
+          { ...filters, query: '' },
+          favorites,
+          challengeRatings,
+          reasons,
+        ),
         deferredQuery,
       ),
-    [catalog.items, filters, deferredQuery, favorites],
+    [catalog.items, filters, deferredQuery, favorites, reasons],
   )
   // RYT-089: an official creature that gets a campaign version stays open as that version.
   const selected =
@@ -591,6 +619,7 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
           setFilters={setFilters}
           activeFilters={activeFilters}
           count={results.length}
+          total={catalog.items.length}
           menu={
             !encounterId ? (
               <Menu position="bottom-end" withinPortal zIndex={420}>
@@ -646,8 +675,18 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
       {!catalog.pending && !catalog.dataError && (catalog.items.length > 0 || !noPacks) && (
         <div className={wide ? 'bst-split' : undefined} data-pane={(wide && selected) || undefined}>
           <CreatureList
-            grouping={deferredQuery.trim() ? null : filters.sort === 'cr' ? 'cr' : 'letter'}
+            // A short list of the campaign's own creatures needs no letter headings or jump bar.
+            grouping={
+              deferredQuery.trim()
+                ? null
+                : filters.sort === 'cr'
+                  ? 'cr'
+                  : source === 'campaign' && results.length < 12
+                    ? null
+                    : 'letter'
+            }
             showPack={catalog.severalPacks}
+            reasons={source === 'campaign' ? reasons : undefined}
             favorites={favorites}
             items={results}
             selectedKey={selectedKey}
@@ -661,12 +700,16 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
             emptyText={
               catalog.items.length === 0
                 ? t('bestiary.empty')
-                : filters.source === 'favorites' && favorites.size === 0
-                  ? t('bestiary.noFavorites')
-                  : t('bestiary.noMatch')
+                : source === 'campaign'
+                  ? t(reasons.size === 0 ? 'bestiary.noCampaign' : 'bestiary.noMatchCampaign')
+                  : filters.source === 'favorites' && favorites.size === 0
+                    ? t('bestiary.noFavorites')
+                    : t('bestiary.noMatch')
             }
+            clearLabel={t(source === 'campaign' ? 'bestiary.searchAll' : 'bestiary.filter.reset')}
             clear={() => {
-              setFilters(emptyFilters)
+              // In the campaign's view the one action looks everywhere with the same query.
+              setFilters(source === 'campaign' ? { ...filters, source: 'all' } : emptyFilters)
               requestAnimationFrame(() => document.getElementById('bestiary-search')?.focus())
             }}
           />

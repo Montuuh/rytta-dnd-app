@@ -43,6 +43,7 @@ import {
   itemCategories,
   MergeItems,
   LootDrawer,
+  PackFinds,
   ProposalReview,
   rarities,
   rarityPips,
@@ -103,6 +104,8 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
   // RYT-104/105: basic catalogue import, proposal review and duplicate merges.
   const [importing, setImporting] = useState(false)
   const [reviewing, setReviewing] = useState(false)
+  // RYT-184: the group "In your packs" under the list, read only while the search has 2+ characters.
+  const [packsShown, setPackShown] = useState(false)
   const [merging, setMerging] = useState<ItemDefinition | null>(null)
   const pendingProposals = usePendingProposalCount(campaignId, true)
   const template = useItemTemplate(campaignId)
@@ -242,6 +245,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
     for (let at = 0; at < items.length; at += chunkSize) out.push(items.slice(at, at + chunkSize))
     return out
   }, [items])
+  const packSearch = search.trim().length >= 2 && Boolean(query.data)
   const sheetItem = sheetId ? (all.find((item) => item.id === sheetId) ?? null) : null
   const closeEditor = () => {
     setEditor(null)
@@ -469,7 +473,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
         </Alert>
       )}
       {query.data && all.length > 0 && <p className="store-count">{countText}</p>}
-      {query.data && items.length === 0 && (
+      {query.data && items.length === 0 && !(packSearch && packsShown) && (
         <Stack align="center" gap="xs" py="xl" className="store-empty">
           <ItemIcon icon="package" size={36} />
           <Text>
@@ -614,6 +618,18 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
             </Windowed>
           ))}
         </div>
+      )}
+      {packSearch && query.data && (
+        <PackFinds
+          campaignId={campaignId}
+          search={search}
+          definitions={query.data}
+          category={category}
+          storeroomEmpty={items.length === 0}
+          fallbackFocus={searchInput}
+          onShown={setPackShown}
+          onAdded={(message) => setNotice({ tone: 'ok', text: message })}
+        />
       )}
 
       {filtering && (

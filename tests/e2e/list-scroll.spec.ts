@@ -121,7 +121,8 @@ test('RYT-117 glossary: after a jump, scrolling up and down keeps the reader’s
   test.setTimeout(180_000)
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'glossary'] })
-  await page.goto(`./#/campaign/${campaignId}/glossary`)
+  // RYT-184: the glossary lands on its search; `cat=all` opens the whole list.
+  await page.goto(`./#/campaign/${campaignId}/glossary?cat=all`)
   await expect(page.getByText('838 entradas')).toBeVisible({ timeout: 30_000 })
   await page
     .getByRole('navigation', { name: 'Saltar a la letra' })

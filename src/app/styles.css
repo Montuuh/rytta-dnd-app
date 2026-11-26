@@ -324,6 +324,12 @@ a.brand-bar {
 .content-switch .mantine-Switch-input:not(:checked) + .mantine-Switch-track {
   box-shadow: inset 0 0 0 1.5px var(--app-muted);
 }
+/* The off thumb takes the same ink as the track's ring, so the switch reads as a whole on the
+   card and in the sheets (Mantine's thumb is near-white, 1.2:1 on a Parchment track). */
+.content-switch .mantine-Switch-input:not(:checked) + .mantine-Switch-track .mantine-Switch-thumb {
+  background-color: var(--app-muted);
+  border-color: var(--app-muted);
+}
 .preview-switch .mantine-Switch-label {
   font-weight: 600;
   font-size: var(--fs-meta);

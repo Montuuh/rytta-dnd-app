@@ -108,4 +108,11 @@ export const storeEs = {
   'forge.discardBody': 'Lo que has escrito no se guardará.',
   'forge.keepEditing': 'Seguir editando',
   'forge.discard': 'Descartar',
+  'store.packs.title': 'En tus paquetes',
+  'store.packs.add': 'Añadir',
+  'store.packs.addName': 'Añadir {{name}}',
+  'store.packs.added': '{{name}} añadido al almacén.',
+  'store.packs.none': 'Nada en tus paquetes.',
+  'store.packs.error': 'No se pudieron leer tus paquetes.',
+  'store.packs.addError': 'No se pudo añadir.',
 } satisfies Record<keyof typeof storeEn, string>

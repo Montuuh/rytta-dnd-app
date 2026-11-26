@@ -42,7 +42,8 @@
   --font-heading: Georgia, Cambria, serif;
 }
 
-/* The part of Preflight the kit's components assume, only on the kit's own elements. */
+/* The part of Preflight the kit's components assume, on the kit's parts (`data-slot`). Focus is
+ * the application's one outline (app/styles.css): kit components carry no ring of their own. */
 @layer base {
   [data-slot],
   [data-slot]::before,
@@ -60,5 +61,13 @@
   button[data-slot] {
     padding: 0;
     cursor: pointer;
+  }
+  /* Text parts keep the kit's spacing, not the browser's margins. */
+  :is(p, h1, h2, h3, h4, h5, h6, ul, ol)[data-slot] {
+    margin: 0;
+  }
+  a[data-slot] {
+    color: inherit;
+    text-decoration: inherit;
   }
 }

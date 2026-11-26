@@ -1713,7 +1713,12 @@ test('RYT-043 the DM adds and changes a creature image from its bestiary token',
   // ADR 028: the bestiary moved to the DM Command Center; old links land there.
   await page.goto(`./#/campaign/${campaignId}/combat?tab=bestiary`)
   await expect(page).toHaveURL(/members\?panel=bestiary/, { timeout: 15_000 })
-  await page.locator('.bst-source label', { hasText: 'Campaña' }).click()
+  // RYT-184: the campaign's own creatures are "Propias", in a list where the segments do not fit.
+  const sources = page.getByRole('combobox', { name: /^(Origen|Source)$/ })
+  if (await sources.count()) {
+    await sources.click()
+    await page.getByRole('option', { name: 'Propias', exact: true }).click()
+  } else await page.locator('.bst-source label', { hasText: 'Propias' }).click()
   await expect(page.locator('.bst-row', { hasText: 'Wolf' }).locator('.combat-token')).toHaveClass(
     /shape-ally/,
   )

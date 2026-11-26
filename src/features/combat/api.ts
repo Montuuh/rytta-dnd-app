@@ -14,6 +14,7 @@ import {
   loadPackIndex,
   loadSrdImages,
   loadTemplates,
+  loadUsedCreatures,
   subscribeEncounters,
   uploadCreatureImage,
   type ImageKind,
@@ -89,6 +90,15 @@ export const creaturePacksQuery = (userId: string, campaignId: string) =>
   queryOptions({
     queryKey: [...combatScope(userId, campaignId), 'creature-packs'],
     queryFn: ({ signal }) => loadCreaturePacks(campaignId, signal),
+    staleTime: 30_000,
+    retry: 1,
+  })
+
+/** RYT-184: the creatures used in the campaign's encounters. A failed read only leaves them out. */
+export const usedCreaturesQuery = (userId: string, campaignId: string) =>
+  queryOptions({
+    queryKey: [...combatScope(userId, campaignId), 'used-creatures'],
+    queryFn: ({ signal }) => loadUsedCreatures(campaignId, signal),
     staleTime: 30_000,
     retry: 1,
   })

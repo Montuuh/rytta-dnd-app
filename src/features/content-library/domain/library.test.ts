@@ -2,7 +2,15 @@ import { describe, expect, it } from 'vitest'
 import glossaryEn from '../../../../tests/fixtures/srd/glossary/en.json'
 import glossaryEs from '../../../../tests/fixtures/srd/glossary/es.json'
 import { batches, contentFile, parseContentFile } from './import-file'
-import { entryName, entryProblem, formFamily, keyFromName, libraryErrorCode } from './library'
+import {
+  contentCounts,
+  coverInput,
+  entryName,
+  entryProblem,
+  formFamily,
+  keyFromName,
+  libraryErrorCode,
+} from './library'
 import { blocksToText, textToBlocks } from './text'
 
 // RYT-167: the SRD lives in the library; its glossary bodies are test fixtures here.
@@ -150,5 +158,28 @@ describe('items as library entries (RYT-166)', () => {
     ).toBe('origin')
     expect(entryProblem(entry('feat', { category: 'general', level: 4 }))).toBeNull()
     expect(entryProblem(entry('feat', {}))).toBe('origin')
+  })
+
+  it('RYT-184 keeps the reserved cover entry valid and out of content', () => {
+    const image =
+      'pre/70000000-0000-4000-8000-000000000001/7a000000-0000-4000-8000-000000000001.webp'
+    expect(coverInput(image)).toEqual({
+      kind: 'pack',
+      key: 'cover',
+      name_en: 'Cover',
+      name_es: 'Portada',
+      data: { index: { image } },
+    })
+    expect(entryProblem(coverInput(image))).toBeNull()
+    expect(entryProblem(coverInput(null))).toBeNull()
+    expect(contentCounts({ creature: 3, pack: 1 })).toEqual({ creature: 3 })
+    const file = JSON.stringify({
+      format: 'rytta-content',
+      version: 1,
+      kind: 'pack',
+      entries: [{ key: 'cover', name_en: 'Cover', data: {} }],
+    })
+    const parsed = parseContentFile(file)
+    expect(typeof parsed === 'string' ? parsed : parsed.problems[0]?.reason).toBe('kind')
   })
 })

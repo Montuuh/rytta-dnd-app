@@ -10,7 +10,7 @@ import {
 import { Button, Text } from '@mantine/core'
 import { Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { searchKey, type CreatureListItem } from '@/features/bestiary'
+import { searchKey, type CampaignReason, type CreatureListItem } from '@/features/bestiary'
 import { centreUntilSettled } from '@/shared/ui/centre-until-settled'
 import { showTopOf } from '@/shared/ui/scroll-parent'
 import { Windowed } from '@/shared/ui/windowed'
@@ -70,7 +70,13 @@ export function CreatureList({
   clear,
   showPack,
   favorites,
+  reasons,
+  clearLabel,
 }: {
+  /** The campaign's own view says why a creature is in it, when that is not obvious. */
+  reasons?: ReadonlyMap<string, CampaignReason>
+  /** The label of the empty state's one action. */
+  clearLabel: string
   /** A favourite creature carries a small bookmark at the end of its name. */
   favorites: ReadonlySet<string>
   /** RYT-094: several creature packs are enabled: each pack creature names its pack. */
@@ -155,7 +161,7 @@ export function CreatureList({
         </span>
         <Text fw={600}>{emptyText}</Text>
         <Button variant="light" onClick={clear}>
-          {t('bestiary.filter.reset')}
+          {clearLabel}
         </Button>
       </div>
     )
@@ -229,13 +235,10 @@ export function CreatureList({
               {favorites.has(item.key) && <FavouriteMark size={14} />}
             </span>
             <RowMeta
-              kind={[
-                showPack ? item.pack : null,
-                item.type ? t(`bestiary.type.${item.type}`) : null,
-              ]
-                .filter(Boolean)
-                .join(' · ')}
+              kind={item.type ? t(`bestiary.type.${item.type}`) : ''}
+              pack={showPack ? (item.pack ?? '') : ''}
               numbers={t('bestiary.rowNumbers', { ac: item.ac, hp: item.hp })}
+              reason={reasons?.get(item.key) === 'used' ? t('bestiary.reason.used') : undefined}
             />
           </span>
           {item.cr !== null && (
@@ -326,8 +329,21 @@ export function CreatureList({
   )
 }
 
-/** The meta line of a row: the kind gives way with an ellipsis, the numbers always show whole. */
-function RowMeta({ kind, numbers }: { kind: string; numbers: string }) {
+/**
+ * The meta line of a row: kind, numbers, the reason, then the pack. The numbers always show whole;
+ * the pack mark, the longest and the least needed to tell creatures apart, gives way first.
+ */
+function RowMeta({
+  kind,
+  numbers,
+  reason,
+  pack,
+}: {
+  kind: string
+  numbers: string
+  reason?: string
+  pack?: string
+}) {
   return (
     <span className="bst-row-meta">
       {kind && <span className="bst-row-kind">{kind}</span>}
@@ -335,6 +351,8 @@ function RowMeta({ kind, numbers }: { kind: string; numbers: string }) {
         {kind ? ' · ' : ''}
         {numbers}
       </span>
+      {reason && <span className="bst-row-reason">{` · ${reason}`}</span>}
+      {pack && <span className="bst-row-pack">{` · ${pack}`}</span>}
     </span>
   )
 }

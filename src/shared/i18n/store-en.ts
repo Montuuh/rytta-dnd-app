@@ -103,4 +103,11 @@ export const storeEn = {
   'forge.discardBody': 'What you typed will not be saved.',
   'forge.keepEditing': 'Keep editing',
   'forge.discard': 'Discard',
+  'store.packs.title': 'In your packs',
+  'store.packs.add': 'Add',
+  'store.packs.addName': 'Add {{name}}',
+  'store.packs.added': '{{name}} added to the storeroom.',
+  'store.packs.none': 'Nothing in your packs.',
+  'store.packs.error': 'Your packs could not be read.',
+  'store.packs.addError': 'Could not add it.',
 } as const

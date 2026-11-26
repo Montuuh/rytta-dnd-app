@@ -112,8 +112,8 @@ export const glossaryEs = {
   'glossary.licenseLegacy':
     'Las reglas de 2014 incluyen material del documento de referencia del sistema 5.1 (“SRD 5.1”) de Wizards of the Coast LLC, con licencia Creative Commons Attribution 4.0 International. Las fichas rápidas y los resúmenes breves son adaptaciones de Rytta.',
   'glossary.welcomeTitle': 'Consulta una regla',
-  'glossary.welcomeBody':
-    'Busca arriba o elige una entrada. Las palabras subrayadas con puntos en cualquier parte de Rytta abren la misma definición.',
+  'glossary.landingTitle': 'Busca una regla',
+  'glossary.landingHint': 'Escribe un nombre, en español o en inglés.',
   'glossary.recent': 'Consultadas hace poco',
   'glossary.atTheTable': 'Estados en la mesa',
   'glossary.open': 'Abrir en el glosario',

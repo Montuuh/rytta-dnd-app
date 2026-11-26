@@ -10,6 +10,9 @@ import {
 import { localizeIndexes, ruleCategories, unlistedIds, type ClassRow } from '../domain/packs'
 import type { EntryBodies, GlossaryLanguage, IndexRow } from '../domain/types'
 
+/** What a list row needs to name the pack an entry comes from. */
+export type PackMark = { ref: string; srd: boolean; title_en: string; title_es: string }
+
 export type GlossarySource = {
   /** Undefined until every index part has loaded. */
   rows: IndexRow[] | undefined
@@ -17,6 +20,8 @@ export type GlossarySource = {
   unlisted: ReadonlySet<string>
   /** RYT-168: the classes and subclasses of the packs; undefined until the index loads. */
   classRows: ClassRow[] | undefined
+  /** The enabled packs of the campaign, one per pack (a pack may serve several categories). */
+  packs: PackMark[]
   bodies: EntryBodies | undefined
   indexError: boolean
   /** RYT-161: the first failed index load, kept for its cause; null when none failed. */
@@ -117,6 +122,13 @@ export function useGlossarySource(options: {
     return srdIndexes.flatMap((q) => q.data!.classRows)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inCampaign, packs.data, packList, localized, srdKey])
+  const markPacks = useMemo(() => {
+    const seen = new Map<string, PackMark>()
+    if (inCampaign)
+      for (const { ref, srd, title_en, title_es, enabled } of packList)
+        if (enabled && !seen.has(ref)) seen.set(ref, { ref, srd, title_en, title_es })
+    return [...seen.values()]
+  }, [inCampaign, packList])
   const unlisted = useMemo(
     () => (inCampaign && packs.data ? unlistedIds(packList, indexData) : none),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -138,6 +150,7 @@ export function useGlossarySource(options: {
     rows,
     unlisted,
     classRows,
+    packs: markPacks,
     bodies,
     indexError,
     error,

@@ -24,6 +24,7 @@ import { changesQuery, useImportEntries, useLibraryAction, type ImportProgress }
 import { parseContentFile, type ParsedFile } from '../domain/import-file'
 import {
   entryName,
+  isCoverKind,
   keyFromName,
   libraryErrorCode,
   packTitle,
@@ -569,7 +570,9 @@ export function PublishDialog({
                     <ul className="lib-problems">
                       {items.slice(0, 12).map((row) => (
                         <li key={row.id}>
-                          {entryName(row, language)} · {kindLabel(t, row.kind)}
+                          {isCoverKind(row.kind)
+                            ? t('library.cover.title')
+                            : `${entryName(row, language)} · ${kindLabel(t, row.kind)}`}
                         </li>
                       ))}
                     </ul>

@@ -41,14 +41,13 @@ export function ActionSheet({
     className: 'member-action-sheet',
     title: <span className="sheet-title user-copy">{title}</span>,
     closeButtonProps: { 'aria-label': t('panel.close'), size: 44 },
-    centered: true,
   }
   return phone ? (
     <Drawer {...shared} position="bottom" size="auto">
       {content}
     </Drawer>
   ) : (
-    <Modal {...shared} size="sm">
+    <Modal {...shared} centered size="sm">
       {content}
     </Modal>
   )

@@ -1,3 +1,4 @@
+import type { PackMark } from './glossary-source'
 import type { ClassRow } from '../domain/packs'
 import { createContext, useContext } from 'react'
 import type { Catalog } from '../domain/catalog'
@@ -23,6 +24,8 @@ export type GlossaryContextValue = {
   catalog: Catalog | null
   /** RYT-168: classes and subclasses of the packs, null until they load (none in the demo). */
   classRows: ClassRow[] | null
+  /** The enabled packs of the campaign; the list marks each row's pack when there are several. */
+  packs: PackMark[]
   linker: Linker | null
   /** Entry bodies of the current language; null until first needed (lazy chunk). */
   bodies: EntryBodies | null

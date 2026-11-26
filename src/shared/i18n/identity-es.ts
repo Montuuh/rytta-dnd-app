@@ -75,8 +75,6 @@ export const identityEs = {
   'auth.password.saved': 'Contraseña guardada.',
   'hub.title': 'Mis campañas',
   'hub.create': 'Crear campaña',
-  'hub.createNext': 'Siguiente',
-  'hub.createBack': 'Atrás',
   'hub.name': 'Nombre de la campaña',
   'hub.description': 'Descripción (opcional)',
   'hub.createHint': 'Serás el primer DM. Después podrás invitar jugadores y añadir otros DMs.',

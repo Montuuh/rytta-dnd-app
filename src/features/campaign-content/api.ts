@@ -4,10 +4,13 @@ import {
   getCampaignContent,
   getContentChanges,
   getContentChoices,
+  getPackChanges,
   listContentEntries,
   setCampaignContent,
+  setCampaignContentPack,
   setContentHidden,
   updateCampaignContent,
+  updateCampaignContentPack,
 } from './data/repository'
 import type { ContentCategory } from './domain/content'
 
@@ -42,11 +45,29 @@ export const contentEntriesQuery = (
   category: ContentCategory,
   search: string,
   page: number,
+  onlyHidden = false,
 ) =>
   queryOptions({
-    queryKey: [...contentScope(userId, campaignId), 'entries', packId, category, search, page],
-    queryFn: ({ signal }) => listContentEntries(campaignId, packId, category, search, page, signal),
+    queryKey: [
+      ...contentScope(userId, campaignId),
+      'entries',
+      packId,
+      category,
+      search,
+      page,
+      onlyHidden,
+    ],
+    queryFn: ({ signal }) =>
+      listContentEntries(campaignId, packId, category, search, page, onlyHidden, signal),
     placeholderData: keepPreviousData,
+    retry: 1,
+  })
+
+/** RYT-184: the digest of a pack's newer version, for its notice and its review. */
+export const packChangesQuery = (userId: string, campaignId: string, packId: string) =>
+  queryOptions({
+    queryKey: [...contentScope(userId, campaignId), 'pack-changes', packId],
+    queryFn: ({ signal }) => getPackChanges(campaignId, packId, signal),
     retry: 1,
   })
 
@@ -63,11 +84,17 @@ export function useContentAction(campaignId: string) {
       action:
         | { kind: 'enable'; packId: string; category: ContentCategory; enabled: boolean }
         | { kind: 'update'; packId: string; category: ContentCategory; version: number }
-        | { kind: 'hide'; packId: string; entryKind: string; key: string; hidden: boolean },
+        | { kind: 'hide'; packId: string; entryKind: string; key: string; hidden: boolean }
+        | { kind: 'enablePack'; packId: string; enabled: boolean }
+        | { kind: 'updatePack'; packId: string; version: number },
     ) => {
       if (!navigator.onLine || !same()) throw new Error('unavailable')
       if (action.kind === 'enable')
         return setCampaignContent(campaignId, action.packId, action.category, action.enabled)
+      if (action.kind === 'enablePack')
+        return setCampaignContentPack(campaignId, action.packId, action.enabled)
+      if (action.kind === 'updatePack')
+        return updateCampaignContentPack(campaignId, action.packId, action.version)
       if (action.kind === 'update')
         return updateCampaignContent(campaignId, action.packId, action.category, action.version)
       await setContentHidden(campaignId, action.packId, action.entryKind, action.key, action.hidden)

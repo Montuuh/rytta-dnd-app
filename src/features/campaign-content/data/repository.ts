@@ -6,6 +6,7 @@ import {
   contentChoicesSchema,
   contentEntriesSchema,
   contentError,
+  packChangesSchema,
   type ContentCategory,
 } from '../domain/content'
 
@@ -88,6 +89,7 @@ export async function listContentEntries(
   category: ContentCategory,
   search: string,
   page: number,
+  onlyHidden: boolean,
   signal: AbortSignal,
 ) {
   const { data, error } = await (
@@ -99,6 +101,7 @@ export async function listContentEntries(
       target_category: category,
       search: search.trim() || null,
       page,
+      only_hidden: onlyHidden,
     })
     .abortSignal(signal)
   if (error) throw new Error(contentError(error.message))
@@ -122,6 +125,50 @@ export async function setContentHidden(
     hidden,
   })
   if (error) throw new Error(contentError(error.message))
+}
+
+/** RYT-184: use a whole pack, or stop using it: every category it has at once. */
+export async function setCampaignContentPack(campaignId: string, packId: string, enabled: boolean) {
+  const { data, error } = await (
+    await client()
+  ).rpc('set_campaign_content_pack', {
+    target_campaign: uuid(campaignId),
+    target_pack: uuid(packId),
+    enabled,
+  })
+  if (error) throw new Error(contentError(error.message))
+  return campaignContentSchema.parse(data)
+}
+
+/** RYT-184: what the pack's newer version changes, across the categories in use. */
+export async function getPackChanges(campaignId: string, packId: string, signal: AbortSignal) {
+  const { data, error } = await (
+    await client()
+  )
+    .rpc('get_campaign_content_pack_changes', {
+      target_campaign: uuid(campaignId),
+      target_pack: uuid(packId),
+    })
+    .abortSignal(signal)
+  if (error) throw new Error(contentError(error.message))
+  return packChangesSchema.parse(data)
+}
+
+/** RYT-184: move every category in use to the pack's current version. */
+export async function updateCampaignContentPack(
+  campaignId: string,
+  packId: string,
+  version: number,
+) {
+  const { data, error } = await (
+    await client()
+  ).rpc('update_campaign_content_pack', {
+    target_campaign: uuid(campaignId),
+    target_pack: uuid(packId),
+    expected_version: version,
+  })
+  if (error) throw new Error(contentError(error.message))
+  return campaignContentSchema.parse(data)
 }
 
 /** RYT-167: the packs a new campaign can use (public ones and the caller's own private ones). */

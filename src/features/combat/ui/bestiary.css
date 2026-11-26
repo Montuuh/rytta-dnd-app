@@ -1112,14 +1112,39 @@ html:has(.bst:not([data-split])) {
   white-space: nowrap;
   overflow: hidden;
 }
+/* Almost no share of the shrinking: the reason and the pack mark give way first, so a sliver of
+   overflow never puts an ellipsis in a word of the kind. */
 .bst-row-kind {
-  flex: 0 1 auto;
+  flex: 0 0.01 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .bst-row-numbers {
   flex: none;
+  white-space: pre;
+}
+/* Why a creature is in the campaign's view. It shows only when the row has room for it beside the
+   kind, in em of the list so that larger text asks for a wider row; it never shortens the kind. */
+.bst-row-reason {
+  display: none;
+  flex: 0 100 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre;
+}
+@container (min-width: 28em) {
+  .bst-row-reason {
+    display: block;
+  }
+}
+/* The pack mark closes the line and is what is cut first (a row of several packs). */
+.bst-row-pack {
+  flex: 0 100 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: pre;
 }
 /* Challenge rating: text at the row's end, not a chip. */

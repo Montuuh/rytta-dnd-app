@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import {
   Button,
   CloseButton,
@@ -36,6 +36,7 @@ export function Toolbar({
   setFilters,
   activeFilters,
   count,
+  total,
   menu,
   onFirst,
   onEnter,
@@ -46,6 +47,8 @@ export function Toolbar({
   setFilters: (next: CreatureFilters) => void
   activeFilters: number
   count: number
+  /** How many creatures the whole bestiary has: the search says so, whatever the source. */
+  total: number
   /** The phone's `···` menu, at the end of the search row. */
   menu?: ReactNode
   onFirst: () => void
@@ -64,6 +67,57 @@ export function Toolbar({
     }
     setOpen(!open)
   }
+  // RYT-184: the sources are segments while they fit in one line, and a list when they do not
+  // (several packs, a phone, large text): a second row of segments is never an option.
+  const rowRef = useRef<HTMLDivElement>(null)
+  const [roomy, setRoomy] = useState(false)
+  const segments = packs.length + 4
+  useLayoutEffect(() => {
+    const node = rowRef.current
+    if (!node) return
+    const measure = () => {
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+      setRoomy(node.getBoundingClientRect().width >= segments * 6.5 * rem)
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [segments])
+  const sources = [
+    { value: 'campaign', label: t('bestiary.source.campaign') },
+    { value: 'all', label: t('bestiary.source.all') },
+    ...packs.map((pack) => ({
+      value: `pack:${pack.id}`,
+      label: packs.length === 1 ? pack.short : pack.title,
+    })),
+    { value: 'homebrew', label: t('bestiary.source.own') },
+    { value: 'favorites', label: t('bestiary.source.favorites') },
+  ]
+  // The search names how many creatures the whole bestiary has; a narrow field gets the short form
+  // rather than a placeholder cut mid-word.
+  const searchRef = useRef<HTMLInputElement>(null)
+  const [form, setForm] = useState<'long' | 'short' | 'plain'>('long')
+  const placeholderLong = t('bestiary.searchIn', { count: total })
+  const placeholderShort = t('bestiary.searchInShort', { count: total })
+  useLayoutEffect(() => {
+    const input = searchRef.current
+    if (!input) return
+    const measure = () => {
+      const style = getComputedStyle(input)
+      const context = document.createElement('canvas').getContext('2d')
+      if (!context) return
+      context.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`
+      const room =
+        input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
+      const fits = (text: string) => context.measureText(text).width <= room
+      setForm(fits(placeholderLong) ? 'long' : fits(placeholderShort) ? 'short' : 'plain')
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(input)
+    return () => observer.disconnect()
+  }, [placeholderLong, placeholderShort])
   const set = (patch: Partial<CreatureFilters>) => setFilters({ ...filters, ...patch })
   const range = filters.crRange ?? [0, crCount]
   // The filters in force as one muted line of words: "Dragón · VD 5–10 · por desafío". Each one is
@@ -218,7 +272,14 @@ export function Toolbar({
           type="search"
           label={t('bestiary.search')}
           classNames={{ label: 'visually-hidden' }}
-          placeholder={t('bestiary.searchPlaceholder')}
+          ref={searchRef}
+          placeholder={
+            form === 'long'
+              ? placeholderLong
+              : form === 'short'
+                ? placeholderShort
+                : t('bestiary.searchPlaceholder')
+          }
           leftSection={<Search size={18} aria-hidden="true" />}
           value={filters.query}
           onChange={(e) => set({ query: e.currentTarget.value })}
@@ -289,9 +350,16 @@ export function Toolbar({
         </div>
       </div>
       <div className="bst-toolbar">
-        <div className="bst-toolbar-row">
-          {packs.length > 1 ? (
-            // Several packs do not fit as segments on a phone: one list names each of them.
+        <div className="bst-toolbar-row" ref={rowRef}>
+          {roomy && packs.length <= 1 ? (
+            <SegmentedControl
+              className="bst-source ink-seg"
+              aria-label={t('bestiary.source.label')}
+              value={filters.source}
+              onChange={(v) => set({ source: v as CreatureFilters['source'] })}
+              data={sources}
+            />
+          ) : (
             <Select
               className="bst-source-select"
               aria-label={t('bestiary.source.label')}
@@ -299,25 +367,7 @@ export function Toolbar({
               onChange={(v) => v && set({ source: v as CreatureFilters['source'] })}
               allowDeselect={false}
               comboboxProps={{ zIndex: 420 }}
-              data={[
-                { value: 'all', label: t('bestiary.source.all') },
-                ...packs.map((pack) => ({ value: `pack:${pack.id}`, label: pack.title })),
-                { value: 'homebrew', label: t('bestiary.source.homebrew') },
-                { value: 'favorites', label: t('bestiary.source.favorites') },
-              ]}
-            />
-          ) : (
-            <SegmentedControl
-              className="bst-source ink-seg"
-              aria-label={t('bestiary.source.label')}
-              value={filters.source}
-              onChange={(v) => set({ source: v as CreatureFilters['source'] })}
-              data={[
-                { value: 'all', label: t('bestiary.source.all') },
-                ...packs.map((pack) => ({ value: `pack:${pack.id}`, label: pack.short })),
-                { value: 'homebrew', label: t('bestiary.source.homebrew') },
-                { value: 'favorites', label: t('bestiary.source.favorites') },
-              ]}
+              data={sources}
             />
           )}
         </div>

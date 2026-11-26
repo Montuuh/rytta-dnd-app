@@ -30,6 +30,7 @@ function Row({
   selected,
   summary,
   first,
+  pack,
 }: {
   row: IndexRowData
   query: string
@@ -37,6 +38,7 @@ function Row({
   selected: boolean
   summary: string | null
   first?: boolean
+  pack: string | null
 }) {
   const { t } = useTranslation()
   const { entry, matched } = row
@@ -68,17 +70,24 @@ function Row({
           )}
         </span>
         <span className="gl-row-meta">
-          {entry.feature
-            ? t('glossary.spell.levelShort', { level: entry.feature.level })
-            : spell
-              ? spell.level === 0
-                ? t('glossary.spell.cantripShort')
-                : t('glossary.spell.levelShort', { level: spell.level })
-              : entry.edition === 'homebrew'
-                ? t('glossary.homebrewTag')
-                : entry.edition === '2014'
-                  ? '2014'
-                  : null}
+          <span>
+            {entry.feature
+              ? t('glossary.spell.levelShort', { level: entry.feature.level })
+              : spell
+                ? spell.level === 0
+                  ? t('glossary.spell.cantripShort')
+                  : t('glossary.spell.levelShort', { level: spell.level })
+                : entry.edition === 'homebrew'
+                  ? t('glossary.homebrewTag')
+                  : entry.edition === '2014'
+                    ? '2014'
+                    : null}
+          </span>
+          {pack && (
+            <span className="gl-row-pack" title={pack}>
+              {pack}
+            </span>
+          )}
         </span>
       </Link>
     </li>
@@ -96,6 +105,8 @@ type EntryIndexProps = {
   revealId?: string | null
   hrefFor: (id: string) => string
   bodies: EntryBodies | null
+  /** The pack of an entry, shown quietly on its row; null (or absent) draws nothing. */
+  packOf?: (entry: GlossaryEntry) => string | null
 }
 
 /** RYT-117: rows per windowed chunk of a ranked (searched) list. */
@@ -105,7 +116,7 @@ const firstRowEstimate = () => (window.innerWidth < 600 ? 88 : 74)
 
 /** The dictionary column: alphabetical groups with a thumb index, or ranked search results. */
 export const EntryIndex = forwardRef<HTMLDivElement, EntryIndexProps>(function EntryIndex(
-  { rows, grouped, query, selectedId, revealId = null, hrefFor, bodies, onLeave },
+  { rows, grouped, query, selectedId, revealId = null, hrefFor, bodies, onLeave, packOf },
   ref,
 ) {
   const { t } = useTranslation()
@@ -281,6 +292,7 @@ export const EntryIndex = forwardRef<HTMLDivElement, EntryIndexProps>(function E
                   href={hrefFor(row.entry.id)}
                   selected={row.entry.id === selectedId}
                   summary={summaryOf(row.entry)}
+                  pack={packOf?.(row.entry) ?? null}
                   first={sectionIndex === 0 && index === 0}
                 />
               ))}
@@ -326,6 +338,7 @@ export const EntryIndex = forwardRef<HTMLDivElement, EntryIndexProps>(function E
                   href={hrefFor(row.entry.id)}
                   selected={row.entry.id === selectedId}
                   summary={summaryOf(row.entry)}
+                  pack={packOf?.(row.entry) ?? null}
                   first={groupIndex === 0 && index === 0}
                 />
               ))}

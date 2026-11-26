@@ -997,6 +997,9 @@ test('RYT-104 and RYT-166 the DM updates imported items from their packs and imp
   await open.click()
   await expect(drawer.getByRole('button', { name: 'Actualizar 1 objeto' })).toBeVisible()
   // The import itself only sends what is missing and creates it.
+  // Nothing is ticked on opening: the action says what to do and waits.
+  await expect(drawer.getByRole('button', { name: 'Elige una categoría' })).toBeDisabled()
+  await drawer.getByRole('checkbox', { name: 'Todo lo que falta por importar' }).check()
   const submit = drawer.getByRole('button', { name: /^Importar \d+ objetos$/ })
   const count = Number((await submit.textContent())!.match(/(\d+)/)![1])
   await submit.click()
@@ -1032,8 +1035,10 @@ test('RYT-166 the import filters by pack, leaves hidden items out and sends the 
     const drawer = page.getByRole('dialog', { name: 'Importar objetos' })
     const source = drawer.getByLabel('Fuente')
     await source.selectOption({ label: 'Libros del dueño' })
-    await expect(drawer.getByRole('button', { name: 'Importar 1 objeto' })).toBeVisible()
+    await expect(drawer.getByRole('button', { name: 'Elige una categoría' })).toBeDisabled()
     await audit(page, info.outputPath('import-source.png'))
+    await drawer.getByRole('checkbox', { name: 'Todo lo que falta por importar' }).check()
+    await expect(drawer.getByRole('button', { name: 'Importar 1 objeto' })).toBeVisible()
     await drawer.getByRole('button', { name: 'Importar 1 objeto' }).click()
     await expect(
       page.getByRole('status').filter({ hasText: '1 objeto añadido al almacén.' }),
@@ -1042,6 +1047,7 @@ test('RYT-166 the import filters by pack, leaves hidden items out and sends the 
     // The hidden SRD longsword is never offered.
     await storeAction(page, 'manage')
     await page.getByRole('button', { name: 'Importar objetos' }).click()
+    await drawer.getByRole('checkbox', { name: 'Todo lo que falta por importar' }).check()
     await drawer.getByRole('button', { name: /^Importar \d+ objetos$/ }).click()
     await expect(page.getByRole('status').filter({ hasText: /añadidos al almacén/ })).toBeVisible()
     expect(keys).not.toContain('longsword')
@@ -1734,4 +1740,105 @@ test('RYT-181 at 150% text the storeroom search keeps room and its controls shar
     .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().height))
   expect(Math.max(...heights) - Math.min(...heights)).toBeLessThan(2)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+})
+
+test('RYT-184 the storeroom search finds the items of the packs and adds them one at a time', async ({
+  page,
+}, info) => {
+  const fixture = await identityFixture(page, { inventory: true, catalogue: true })
+  const sent: string[][] = []
+  let packReads = 0
+  await page.route('**/rpc/get_campaign_item_packs', (route) => {
+    packReads++
+    return route.fallback()
+  })
+  await page.route('**/rpc/import_basic_items', (route) => {
+    sent.push(
+      route
+        .request()
+        .postDataJSON()
+        .items.map((item: { key: string }) => item.key),
+    )
+    return route.fallback()
+  })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(url)
+  const search = page.getByRole('searchbox', { name: 'Buscar objetos' })
+  const group = page.getByRole('region', { name: 'En tus paquetes' })
+  await expect(page.locator('.store-row').first()).toBeVisible()
+  // One character reads nothing from the packs.
+  await search.fill('d')
+  await expect(group).toHaveCount(0)
+  expect(packReads).toBe(0)
+  await search.fill('daga')
+  await expect(group.getByRole('listitem')).toHaveCount(1)
+  expect(packReads).toBe(1)
+  await expect(group.getByRole('button', { name: 'Añadir Daga' })).toBeVisible()
+  await expect(page.locator('.store-row').filter({ hasText: 'Daga' })).toHaveCount(0)
+  await audit(page, info.outputPath('storeroom-pack-finds.png'))
+  await group.getByRole('button', { name: 'Añadir Daga' }).click()
+  // One item, one request; it moves to the storeroom and the status says so.
+  await expect(page.locator('.store-row').filter({ hasText: 'Daga' })).toHaveCount(1)
+  await expect(group.getByRole('listitem')).toHaveCount(0)
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Daga añadido al almacén.' }),
+  ).toBeVisible()
+  expect(sent).toEqual([['dagger']])
+  expect(fixture.inventory.definitions.filter((d) => d.basic_key === 'dagger')).toHaveLength(1)
+  // The last find is gone: focus returns to the search instead of falling to the page.
+  await expect(search).toBeFocused()
+  // Items the storeroom holds are never offered again.
+  await search.fill('cuerda')
+  await expect(group.getByRole('listitem').filter({ hasText: 'Cuerda' })).toHaveCount(0)
+})
+
+test('RYT-184 the pack group names its pack with several packs, fails with a retry and leaves one empty state', async ({
+  page,
+}) => {
+  itemPackState.books = true
+  try {
+    await identityFixture(page, { inventory: true, catalogue: true })
+    let fail = true
+    await page.route('**/rpc/import_basic_items', (route) =>
+      fail ? route.fulfill({ status: 503, json: { message: 'Unavailable' } }) : route.fallback(),
+    )
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto(url)
+    const search = page.getByRole('searchbox', { name: 'Buscar objetos' })
+    const group = page.getByRole('region', { name: 'En tus paquetes' })
+    await search.fill('hoja lunar')
+    const row = group.getByRole('listitem').filter({ hasText: 'Hoja lunar' })
+    await expect(row).toContainText('Libros del dueño')
+    await row.getByRole('button', { name: 'Añadir Hoja lunar' }).click()
+    await expect(row.getByRole('alert')).toHaveText('No se pudo añadir.')
+    fail = false
+    await row.getByRole('button', { name: 'Añadir Hoja lunar' }).press('Enter')
+    await expect(page.locator('.store-row').filter({ hasText: 'Hoja lunar' })).toHaveCount(1)
+    // The storeroom matches but the packs do not: the group says so.
+    await search.fill('cuerda')
+    await expect(group.getByText('Nada en tus paquetes.')).toBeVisible()
+    // Neither matches: the storeroom's one empty state, no group.
+    await search.fill('zzzz')
+    await expect(page.getByText('Ningún objeto coincide con la búsqueda.')).toBeVisible()
+    await expect(group).toHaveCount(0)
+  } finally {
+    resetItemPacks()
+  }
+})
+
+test('RYT-184 an unreachable library shows the group error with a retry', async ({ page }) => {
+  itemPackState.unreachable = true
+  try {
+    await identityFixture(page, { inventory: true, catalogue: true })
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto(url)
+    await page.getByRole('searchbox', { name: 'Buscar objetos' }).fill('daga')
+    const group = page.getByRole('region', { name: 'En tus paquetes' })
+    await expect(group.getByRole('alert')).toContainText('No se pudieron leer tus paquetes.')
+    itemPackState.unreachable = false
+    await group.getByRole('button', { name: 'Reintentar' }).click()
+    await expect(group.getByRole('button', { name: 'Añadir Daga' })).toBeVisible()
+  } finally {
+    resetItemPacks()
+  }
 })

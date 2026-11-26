@@ -58,7 +58,19 @@ export function entryOriginById(origins: PackOrigins, id: string): EntryOrigin |
  */
 export function basePackLabel(origins: PackOrigins, language: 'en' | 'es', fallback: string) {
   const title = origins.title?.[language]
-  return title && title.length <= 18 ? title : fallback
+  return title ? shortPackName(title, true, fallback) : fallback
+}
+
+/** The longest base pack title that is already short enough for a row mark or a segment. */
+export const shortPackNameLimit = 18
+
+/**
+ * RYT-184: the one name a pack answers to wherever it is named in a few words (cards, creation
+ * line and checkboxes, row marks). Any pack keeps its title; the base pack, whose own title may be
+ * the SRD's long one, falls back to `fallback` ("SRD") past the limit.
+ */
+export function shortPackName(title: string, isBase: boolean, fallback: string) {
+  return isBase && title.length > shortPackNameLimit ? fallback : title
 }
 
 async function client() {

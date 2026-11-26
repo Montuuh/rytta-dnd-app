@@ -140,6 +140,8 @@ export function combatServer() {
   /** RYT-118: SRD class key per character (character_sheets.build.classKey). */
   const classes: Record<string, string> = {}
   const requests = new Map<string, unknown>()
+  /** RYT-184: what `get_campaign_used_creatures` answers; `unavailable` makes the read fail. */
+  const used = { references: [] as string[], templates: [] as string[], unavailable: false }
   /** RYT-137: the roll store of the same table, wired by `useDice`. Without it nothing is limited. */
   let dice: DiceStore | null = null
   const liveFight = () => encounters.find((x) => ['initiative', 'active'].includes(x.status))
@@ -421,6 +423,12 @@ export function combatServer() {
     }
     if (method === 'list_combatant_templates') return dm ? templates : fail('Forbidden')
     if (method === 'get_campaign_creature_packs') return dm ? creaturePacks() : fail('Forbidden')
+    // RYT-184: the creatures the campaign's encounters used (DM only).
+    if (method === 'get_campaign_used_creatures') {
+      if (!dm) return fail('Forbidden')
+      if (used.unavailable) return fail('Library unavailable')
+      return { references: [...used.references], templates: [...used.templates] }
+    }
     if (method === 'get_campaign_creature_pack') {
       if (!dm) return fail('Forbidden')
       const pack = creaturePacks().find((p) => p.id === body.target_pack)
@@ -1148,6 +1156,7 @@ export function combatServer() {
   return {
     encounters,
     templates,
+    used,
     portraits,
     classes,
     uploads,
@@ -1266,7 +1275,7 @@ export function combatServer() {
         /* Realtime unavailable: the combat screens fall back to polling. */
       })
       await page.route(
-        /\/rest\/v1\/rpc\/(get_encounter_plan|save_encounter_plan|duplicate_encounter_plan|list_encounters|get_combat_state|list_combatant_templates|create_encounter|rename_encounter|delete_encounter|set_encounter_status|add_combatants|update_combatant|remove_combatant|set_initiative|reset_initiative_roll|roll_npc_initiative|set_turn_order|advance_turn|set_active_turn|apply_combat_hp|set_combat_condition|set_concentration|record_death_save|add_combat_effect|remove_combat_effect|undo_combat_event|save_combatant_template|delete_combatant_template|set_combatant_template_image|set_combatant_tracker|list_creature_srd_images|set_creature_srd_image|get_campaign_creature_packs|get_campaign_creature_pack|set_campaign_content_hidden)$/,
+        /\/rest\/v1\/rpc\/(get_encounter_plan|save_encounter_plan|duplicate_encounter_plan|list_encounters|get_combat_state|list_combatant_templates|create_encounter|rename_encounter|delete_encounter|set_encounter_status|add_combatants|update_combatant|remove_combatant|set_initiative|reset_initiative_roll|roll_npc_initiative|set_turn_order|advance_turn|set_active_turn|apply_combat_hp|set_combat_condition|set_concentration|record_death_save|add_combat_effect|remove_combat_effect|undo_combat_event|save_combatant_template|delete_combatant_template|set_combatant_template_image|set_combatant_tracker|list_creature_srd_images|set_creature_srd_image|get_campaign_creature_packs|get_campaign_creature_pack|get_campaign_used_creatures|set_campaign_content_hidden)$/,
         async (route) => {
           const request = route.request()
           const method = new URL(request.url()).pathname.split('/').at(-1)!

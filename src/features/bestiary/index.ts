@@ -2,13 +2,16 @@ export { bestiaryLanguage, creatureArtQuery, monsterBodiesQuery, monsterIndexQue
 export { creatureArtUrl } from './data/content'
 export { StatBlockView } from './ui/stat-block'
 export {
+  campaignCreatures,
   emptyFilters,
   filterCreatures,
   searchKey,
   srdItems,
+  type CampaignReason,
   type CreatureFilters,
   type CreatureListItem,
   type CreatureSort,
+  type UsedCreatures,
 } from './domain/catalog'
 export {
   abilityModifier,

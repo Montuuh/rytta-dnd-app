@@ -175,3 +175,26 @@ html:has(.item-store) {
 .store-empty {
   text-align: center;
 }
+
+/* RYT-184 "In your packs": a continuation of the list, not a box. A muted serif heading like the
+   command centre's sub-headings, hairlines between rows, no card. */
+.store-packs {
+  margin-top: 20px;
+}
+.store-packs-heading {
+  margin: 0 0 4px;
+  color: var(--app-muted);
+  font-size: var(--fs-h3);
+  font-weight: 500;
+}
+.item-store .pack-find-meta {
+  display: block;
+  line-height: 1.4;
+  /* A larger text size wraps the line instead of cutting it; the parts break at their spaces. */
+  white-space: normal;
+  overflow-wrap: anywhere;
+  color: var(--app-muted);
+}
+.item-store .pack-find-meta .store-meta-part {
+  display: inline;
+}

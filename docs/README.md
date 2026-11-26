@@ -154,3 +154,7 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
 72. [ADR 059: a shadcn kit beside Mantine](decisions/059-shadcn-kit-beside-mantine.md):
     shadcn components in `src/shared/ui/kit` for widgets Mantine lacks, Tailwind without
     Preflight and with the `tw:` prefix, one set of tokens (RYT-183).
+73. [ADR 060: campaign content is read by pack](decisions/060-campaign-content-by-pack.md):
+    one card and one switch per pack, one update notice, entries in a sheet, items added one at a
+    time, one-step campaign creation, pack covers and lists that open on what the campaign uses
+    (RYT-184).

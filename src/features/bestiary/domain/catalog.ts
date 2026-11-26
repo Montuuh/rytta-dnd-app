@@ -78,8 +78,11 @@ export function srdItems(
 export type CreatureSort = 'name' | 'cr'
 export type CreatureFilters = {
   query: string
-  /** RYT-094: `pack:<id>` lists one content pack's creatures (and campaign versions of them). */
-  source: 'all' | 'homebrew' | 'favorites' | `pack:${string}`
+  /**
+   * RYT-094: `pack:<id>` lists one content pack's creatures (and campaign versions of them).
+   * RYT-184: `campaign` lists the ones this campaign has touched (see `campaignCreatures`).
+   */
+  source: 'all' | 'campaign' | 'homebrew' | 'favorites' | `pack:${string}`
   types: CreatureType[]
   sizes: CreatureSize[]
   /** Inclusive CR range by index in `challengeRatings`. */
@@ -104,6 +107,7 @@ export function filterCreatures(
   filters: CreatureFilters,
   favorites: ReadonlySet<string>,
   crOrder: readonly string[],
+  campaign: ReadonlyMap<string, unknown> = new Map(),
 ): CreatureListItem[] {
   const query = searchKey(filters.query)
   const words = query ? query.split(' ') : []
@@ -113,6 +117,7 @@ export function filterCreatures(
     if (filters.source.startsWith('pack:') && item.packId !== filters.source.slice(5)) continue
     if (filters.source === 'homebrew' && item.source !== 'homebrew') continue
     if (filters.source === 'favorites' && !favorites.has(item.key)) continue
+    if (filters.source === 'campaign' && !campaign.has(item.key)) continue
     if (filters.types.length && (!item.type || !filters.types.includes(item.type))) continue
     if (filters.sizes.length && !item.size.some((s) => filters.sizes.includes(s))) continue
     if (filters.crRange) {
@@ -140,4 +145,49 @@ export function filterCreatures(
         (filters.sort === 'cr' ? byCr(a.item, b.item) : byName(a.item, b.item)),
     )
     .map((x) => x.item)
+}
+
+/** RYT-184: the creatures the campaign used in encounters (the `get_campaign_used_creatures` read). */
+export type UsedCreatures = {
+  /**
+   * Stored creature references, as a pack creature's `id` in the list: a bare SRD key, or
+   * `<pack ref>--<key>` for another pack.
+   */
+  references: readonly string[]
+  /** Campaign creature (template) ids. */
+  templates: readonly string[]
+}
+
+/** Why a creature is in the campaign's view; `own` covers its creatures and its edited pack ones. */
+export type CampaignReason = 'favorite' | 'used' | 'own'
+
+/**
+ * RYT-184: the creatures a campaign has made its own: favourites, its own creatures, pack creatures
+ * it edited, and the ones used in its encounters. The map names the first reason, favourite before
+ * used before own.
+ */
+export function campaignCreatures(
+  items: readonly CreatureListItem[],
+  favorites: ReadonlySet<string>,
+  used: UsedCreatures | null | undefined,
+): Map<string, CampaignReason> {
+  const references = new Set(used?.references ?? [])
+  const templates = new Set(used?.templates ?? [])
+  const reasons = new Map<string, CampaignReason>()
+  for (const item of items) {
+    const inFight =
+      item.source === 'homebrew'
+        ? templates.has(item.id) ||
+          (item.version === true && !!item.srdId && references.has(item.srdId))
+        : references.has(item.id)
+    const reason: CampaignReason | null = favorites.has(item.key)
+      ? 'favorite'
+      : inFight
+        ? 'used'
+        : item.source === 'homebrew' || item.version
+          ? 'own'
+          : null
+    if (reason) reasons.set(item.key, reason)
+  }
+  return reasons
 }

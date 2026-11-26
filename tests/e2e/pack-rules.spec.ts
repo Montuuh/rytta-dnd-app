@@ -60,7 +60,7 @@ test('RYT-165 a hidden rule leaves the glossary search but keeps its definition 
   rulePackState.hidden = ['condition.grappled']
   await identityFixture(page, { player: true, modules: ['party', 'glossary'], sheet: 'complete' })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(`./#/campaign/${campaignId}/glossary`)
+  await page.goto(`./#/campaign/${campaignId}/glossary?cat=all`)
   // One entry fewer than the 838 of the SRD.
   await expect(page.getByText('837 entradas')).toBeVisible({ timeout: 15_000 })
   const search = page.getByRole('searchbox').first()
@@ -70,6 +70,31 @@ test('RYT-165 a hidden rule leaves the glossary search but keeps its definition 
   await search.fill('cegado')
   await expect(page.getByRole('link', { name: /^Cegado/ }).first()).toBeVisible()
   await audit(page)
+})
+
+test('with more than one pack the glossary rows name their pack, with one pack they do not', async ({
+  page,
+}) => {
+  rulePackState.books = true
+  try {
+    await identityFixture(page, { player: true, modules: ['party', 'glossary'], sheet: 'complete' })
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto(`./#/campaign/${campaignId}/glossary?cat=feature&q=pendenciero`)
+    const own = page.locator('.gl-row', { hasText: 'Pendenciero' })
+    await expect(own.locator('.gl-row-pack')).toHaveText('Libros del dueño', { timeout: 15_000 })
+    // The entry name is still whole next to the mark.
+    await expect(own.locator('.gl-row-name')).toContainText('Pendenciero')
+    // The SRD's own entries name the base pack.
+    await page.goto(`./#/campaign/${campaignId}/glossary?cat=condition`)
+    await expect(page.locator('.gl-row-pack').filter({ hasText: 'SRD' }).first()).toBeVisible()
+    await audit(page)
+    rulePackState.books = false
+    await page.reload()
+    await expect(page.locator('.gl-row').first()).toBeVisible({ timeout: 15_000 })
+    await expect(page.locator('.gl-row-pack')).toHaveCount(0)
+  } finally {
+    rulePackState.books = false
+  }
 })
 
 test('RYT-164 without the library the sheet keeps working and rule texts offer a retry', async ({

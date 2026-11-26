@@ -259,6 +259,18 @@
   color: var(--app-muted);
   font-size: var(--fs-tag);
   white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
+}
+/* The pack is a quiet word under the level; it truncates before the entry name does. */
+.gl-row-pack {
+  max-width: 9ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--fs-tag);
 }
 
 /* Reader */
@@ -557,6 +569,24 @@
   font-size: 1.125rem;
   text-decoration: underline dotted var(--app-accent);
   text-underline-offset: 0.22em;
+}
+/* Landing: the search is the way in; recents, when there are any, stand in its place. */
+.gl-landing {
+  max-width: 60ch;
+  padding: 16px 0 8px;
+}
+.gl-landing-title {
+  margin: 0;
+  font-family: Georgia, Cambria, serif;
+  font-size: var(--fs-h1);
+  font-weight: 400;
+  color: var(--app-text);
+}
+.gl-landing h2 {
+  margin: 0 0 4px;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  color: var(--app-muted);
 }
 .gl-empty {
   padding: 24px 8px;

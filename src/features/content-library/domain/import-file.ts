@@ -1,5 +1,11 @@
 import { z } from 'zod'
-import { entryProblem, kindPattern, type EntryInput, type EntryProblem } from './library'
+import {
+  entryProblem,
+  isCoverKind,
+  kindPattern,
+  type EntryInput,
+  type EntryProblem,
+} from './library'
 
 /**
  * A Rytta content file: `{ "format": "rytta-content", "version": 1, "kind"?: string, "entries": [...] }`.
@@ -60,7 +66,9 @@ export function parseContentFile(source: string): ParsedFile | FileError {
       ? 'data'
       : seen.has(id)
         ? 'duplicate'
-        : entryProblem(entry)
+        : isCoverKind(entry.kind)
+          ? 'kind'
+          : entryProblem(entry)
     if (reason) {
       problems.push({ position, key: entry.key || null, reason })
       return

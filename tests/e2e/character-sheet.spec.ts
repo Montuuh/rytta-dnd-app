@@ -3,7 +3,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { identityFixture, campaignId, characterId, sampleSheet } from './fixtures/identity.ts'
 import { expectTouchTargets, capture, limitMatrix } from './fixtures/audit.ts'
 
-const sheetUrl = `./#/campaign/${campaignId}/party/${characterId}`
+const sheetUrl = `./campaign/${campaignId}/party/${characterId}`
 async function audit(page: Page, path: string) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   expect(
@@ -22,7 +22,7 @@ test('the assigned Player creates a 5.5e character through the full wizard', asy
 }, info) => {
   await identityFixture(page, { player: true })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   // RYT-072: the sheet action opens the three doors over the party list (RYT-097 wording).
   const create = page.getByRole('button', { name: 'Terminar ficha' })
   await create.click()
@@ -110,7 +110,7 @@ test('the assigned Player creates a 5.5e character through the full wizard', asy
 test('RYT-072 quick sheet: class, species and name, then the sheet', async ({ page }, info) => {
   await identityFixture(page, { player: true })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await page.getByRole('button', { name: 'Terminar ficha' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Empezar' }).click()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Clase')
@@ -149,7 +149,7 @@ test('RYT-072 quick sheet: class, species and name, then the sheet', async ({ pa
 test('RYT-072 blank sheet: name, class and level only', async ({ page }, info) => {
   await identityFixture(page, { player: true })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await page.getByRole('button', { name: 'Terminar ficha' }).click()
   await page.getByRole('dialog').getByText('En blanco', { exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Empezar' }).click()
@@ -259,7 +259,7 @@ test('DM sees every sheet and Party summaries, edits in place; unknown character
   page,
 }, info) => {
   await identityFixture(page, { sheet: 'complete' })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await expect(page.getByText('Bardo de nivel 5')).toBeVisible()
   // RYT-097: the DM plate reads HP as one meter and its name opens the sheet.
   await expect(
@@ -278,7 +278,7 @@ test('DM sees every sheet and Party summaries, edits in place; unknown character
   await bar.getByRole('button', { name: 'Guardar cambios' }).click()
   await expect(bar).toHaveCount(0)
   await expect(page.getByText('Bardo de nivel 6', { exact: false })).toBeVisible()
-  await page.goto(`./#/campaign/${campaignId}/party/40000000-0000-4000-8000-000000000099`)
+  await page.goto(`./campaign/${campaignId}/party/40000000-0000-4000-8000-000000000099`)
   await expect(page.getByText('Este personaje no existe o no tienes acceso.')).toBeVisible()
 })
 
@@ -722,7 +722,7 @@ test('RYT-101 blank sheet keeps species and background optional and lets the pla
 }, info) => {
   await identityFixture(page, { player: true })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await page.getByRole('button', { name: 'Terminar ficha' }).click()
   await page.getByRole('dialog').getByText('En blanco', { exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Empezar' }).click()
@@ -1120,7 +1120,7 @@ const tapTwice = (button: ReturnType<Page['getByRole']>) =>
 async function openFullWizard(page: Page) {
   await identityFixture(page, { player: true })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await page.getByRole('button', { name: 'Terminar ficha' }).click()
   const doors = page.getByRole('dialog', { name: 'Nueva ficha para Arin' })
   await doors.getByText('Completa', { exact: true }).click()
@@ -1137,7 +1137,7 @@ test('RYT-124 a double tap on Create sends one save, and Back does not reopen th
   await identityFixture(page, { player: true })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   const saves = savesOf(page)
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await page.getByRole('button', { name: 'Terminar ficha' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Empezar' }).click()
   await page.getByRole('radiogroup', { name: 'Clase' }).getByText('Monje', { exact: true }).click()
@@ -1312,6 +1312,30 @@ test('RYT-124 leaving the wizard with an unsaved change asks first', async ({ pa
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Clase y nivel')
 })
 
+test('RYT-186 discarding on the way out opens the link in the app, without a reload', async ({
+  page,
+}) => {
+  await openFullWizard(page)
+  await pickClass(page, /Mago/)
+  const prompts: string[] = []
+  page.on('dialog', (prompt) => {
+    prompts.push(prompt.type())
+    void prompt.dismiss()
+  })
+  await page.evaluate(() => ((window as { rytta186?: boolean }).rytta186 = true))
+  await page.getByRole('link', { name: 'Ficha de personaje' }).click()
+  const dialog = page.getByRole('dialog', { name: '¿Salir sin guardar?' })
+  await dialog.getByRole('button', { name: 'Descartar y salir' }).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(page).toHaveURL(
+    new RegExp(`/rytta-dnd-app/campaign/${campaignId}/party(/${characterId})?$`),
+  )
+  await expect(page.getByRole('heading', { level: 1 })).not.toHaveText('Clase y nivel')
+  // Same document: no full load and no browser "leave site" prompt after the person agreed.
+  expect(await page.evaluate(() => (window as { rytta186?: boolean }).rytta186)).toBe(true)
+  expect(prompts).toEqual([])
+})
+
 test('RYT-124 notes are written in play with their own save', async ({ page }) => {
   await identityFixture(page, { player: true, sheet: 'complete' })
   const saves = savesOf(page)
@@ -1412,7 +1436,7 @@ test('RYT-124 the creation wizard reads in a class theme', async ({ page }, info
   await page.addInitScript(() => localStorage.setItem('rytta-theme', 'warlock'))
   await identityFixture(page, { player: true })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await page.getByRole('button', { name: 'Terminar ficha' }).click()
   const doors = page.getByRole('dialog', { name: 'Nueva ficha para Arin' })
   await doors.getByText('Completa', { exact: true }).click()

@@ -43,6 +43,7 @@ import { PackCoverField } from './pack-cover-field'
 import { EntryEditor } from './entry-editor'
 import { entryMeta, kindLabel, originFilterLabel, originLabel, packLine } from './labels'
 import { hasKeptEdits, keepEdits, useKeptEditsVersion } from './unsaved'
+import { routeOf } from '@/shared/lib/app-path'
 import './library.css'
 
 type Dialog =
@@ -125,7 +126,8 @@ export function LibraryPage() {
   )
   const guard: Guard = {
     link: (event) => {
-      const to = (event.currentTarget.getAttribute('href') ?? '').replace(/^#/, '')
+      const to =
+        routeOf(event.currentTarget.href, window.location.origin, import.meta.env.BASE_URL) ?? ''
       // The open screen itself: nothing to leave.
       if (to === location.pathname) return event.preventDefault()
       if (!dirty.current) return

@@ -6,7 +6,7 @@ import { expectTouchTargets, placeholderRoom } from './fixtures/audit.ts'
 
 // RYT-179: the DM's quick switcher (Ctrl+K, "/", the header control) and the deep-link actions
 // (`?do=new`, `?do=loot`) that the pages consume once.
-const home = `./#/campaign/${campaignId}`
+const home = `./campaign/${campaignId}`
 const membersUrl = `${home}/members`
 const base = `/campaign/${campaignId}`
 
@@ -25,7 +25,10 @@ const switcher = (page: Page) => page.getByRole('dialog', { name: 'Ir a' })
 const field = (page: Page) => page.getByRole('combobox', { name: 'Buscar panel o acción' })
 const trigger = (page: Page) =>
   page.locator('header').getByRole('button', { name: 'Buscar panel o acción' })
-const hash = (page: Page) => new URL(page.url()).hash
+const route = (page: Page) => {
+  const url = new URL(page.url())
+  return url.pathname + url.search
+}
 /** The shortcut needs the campaign shell: wait for the header control, then press it. */
 async function openByKeyboard(page: Page) {
   await expect(trigger(page)).toBeVisible()
@@ -84,7 +87,7 @@ test('Escape returns focus to the control that was focused, and Back closes it',
   await expect(switcher(page)).toBeVisible()
   await page.goBack()
   await expect(switcher(page)).toHaveCount(0)
-  expect(hash(page)).toContain('/members')
+  expect(route(page)).toContain('/members')
 })
 
 test('"/" does not open while typing in a field and the bestiary keeps it for its search', async ({
@@ -165,7 +168,7 @@ test('filters both groups ignoring case and accents, and announces the active op
 })
 
 const destinations: [string, string, RegExp][] = [
-  ['resumen', 'Resumen', new RegExp(`#${base}$`)],
+  ['resumen', 'Resumen', new RegExp(`${base}$`)],
   ['bestiario', 'Bestiario', /\/members\?panel=bestiary$/],
   ['almacen', 'Almacén de objetos', /\/members\?panel=items$/],
   ['miembros', 'Miembros', /\/members$/],
@@ -255,7 +258,7 @@ test('?do=new opens the item editor once and the parameter leaves the address', 
   await expect(editor).toBeVisible()
   await expect(editor.getByRole('heading', { name: 'Forjar objeto' })).toBeVisible()
   await expect.poll(() => page.url()).not.toContain('do=')
-  expect(hash(page)).toContain('panel=items')
+  expect(route(page)).toContain('panel=items')
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toHaveCount(0)
   // Reload and Back never repeat it.
@@ -288,7 +291,7 @@ test('?do=new starts a new creature once', async ({ page }) => {
   await expect(start).toBeVisible()
   await expect(start.getByRole('heading', { name: '¿Cómo quieres empezar?' })).toBeVisible()
   await expect.poll(() => page.url()).not.toContain('do=')
-  expect(hash(page)).toContain('panel=bestiary')
+  expect(route(page)).toContain('panel=bestiary')
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await page.reload()

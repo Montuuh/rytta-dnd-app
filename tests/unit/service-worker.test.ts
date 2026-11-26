@@ -15,6 +15,17 @@ describe('offline shell routing (RYT-128)', () => {
     expect(route(get('https://rytta.app/?auth=callback', 'navigate'), scope)).toBe('navigation')
   })
 
+  it('answers app routes from the network, then the cached shell without storing them (RYT-186)', () => {
+    expect(route(get('https://rytta.app/campaign/abc/party', 'navigate'), scope)).toBe('route')
+    expect(route(get('https://rytta.app/glossary/rule.long-rest', 'navigate'), scope)).toBe('route')
+    expect(route(get('https://rytta.app/settings', 'navigate'), scope)).toBe('route')
+    expect(route(get('https://rytta.app/privacy', 'navigate'), scope)).toBe('network')
+    expect(route(get('https://rytta.app/en/terms/', 'navigate'), scope)).toBe('network')
+    expect(route(get('https://rytta.app/google8b8d6f9672d29973.html', 'navigate'), scope)).toBe(
+      'network',
+    )
+  })
+
   it('leaves other pages, other origins, writes and queries to the network', () => {
     expect(route(get('https://rytta.app/privacy/', 'navigate'), scope)).toBe('network')
     expect(route(get('https://abc.supabase.co/rest/v1/campaigns'), scope)).toBe('network')
@@ -34,6 +45,8 @@ describe('offline shell routing (RYT-128)', () => {
   it('keeps to the production subpath', () => {
     const sub = { ...scope, base: '/rytta-dnd-app/' }
     expect(route(get('https://rytta.app/rytta-dnd-app/', 'navigate'), sub)).toBe('navigation')
+    expect(route(get('https://rytta.app/rytta-dnd-app/campaign/a', 'navigate'), sub)).toBe('route')
+    expect(route(get('https://rytta.app/campaign/a', 'navigate'), sub)).toBe('network')
     expect(route(get('https://rytta.app/assets/a.js'), sub)).toBe('network')
     expect(route(get('https://rytta.app/rytta-dnd-app/assets/a.js'), sub)).toBe('asset')
   })

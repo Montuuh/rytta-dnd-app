@@ -1,0 +1,6 @@
+# RYT-185 evidence
+
+- PGlite: tests/database/super-admin.test.ts (DM parity on campaigns, characters, members, sheets, rest requests, tabletop live, roll and encounter signals, item definitions; rolls; denial for anon, outsider, Player and other DM; exit ends the reads; a removed member's rolls go with the seat) and the auth.users foreign key inventory in tests/database/account-deletion.test.ts; npm run check passed (1349 tests).
+- Security review: no blockers. Recorded decisions: roller_id stays readable as an opaque account id, as a co-DM's is (the interface shows the roll as the DM's); a super admin's rolls in campaigns they never joined are not removed by delete_my_account when the Auth user is kept (PRE, or the production fallback), the same pre-existing gap as private.campaign_requests and the admin tables.
+- Hosted 26 November 2026: applied to rytta-staging, then to production (public and PRE through the remap); the stored statement matches the committed file (md5 c01cd34dde6ed7b20cf67814e6217f1f, 4486 bytes). Self-rolling-back actor checks: a super admin read 0 characters of the busiest campaign before entering and 6 after, the same as its DM, 0 in other campaigns, logged a roll on staging, and its Player read no member row of the super admin.
+- Not tested: realtime postgres_changes for the super admin and the signed-in interface in the browser.

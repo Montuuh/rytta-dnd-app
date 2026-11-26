@@ -65,7 +65,7 @@ async function chooseSource(page: Page, name: string) {
 }
 
 async function openBestiary(page: Page) {
-  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+  await page.goto(`./campaign/${campaignId}/members?panel=bestiary`)
   await expect(page.getByRole('heading', { level: 2, name: 'Bestiario' })).toBeVisible({
     timeout: 15_000,
   })
@@ -144,7 +144,7 @@ for (const [language, theme] of [
       })
     }
 
-    await page.goto(`./#/campaign/${campaignId}/combat/${encounterId}`)
+    await page.goto(`./campaign/${campaignId}/combat/${encounterId}`)
     await page
       .getByRole('link', { name: es ? 'Añadir desde el bestiario' : 'Add from the bestiary' })
       .click()
@@ -1046,7 +1046,7 @@ test('RYT-181 a campaign creature without a picture gets its thumbnail from the 
     },
     request_id: crypto.randomUUID(),
   })
-  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+  await page.goto(`./campaign/${campaignId}/members?panel=bestiary`)
   await expect(page.getByText('1 criatura', { exact: true })).toBeVisible({ timeout: 15_000 })
   await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('sierpe')
   await page
@@ -1087,7 +1087,7 @@ test('RYT-046 Players never reach the bestiary', async ({ page }) => {
   page.on('request', (r) => {
     if (r.url().includes('list_combatant_templates')) templateRequests.push(r.url())
   })
-  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+  await page.goto(`./campaign/${campaignId}/members?panel=bestiary`)
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 15_000 })
   await expect(page.getByRole('navigation', { name: 'Centro de mando DM' })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'Bestiario' })).toHaveCount(0)
@@ -1135,7 +1135,7 @@ test('RYT-117 a deep link to a late creature scrolls its row into view and opens
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
   await combatServer().install(page)
-  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary&creature=srd:zombie`)
+  await page.goto(`./campaign/${campaignId}/members?panel=bestiary&creature=srd:zombie`)
   await expect(detail(page, info).getByRole('heading', { name: 'Zombi' }).first()).toBeVisible({
     timeout: 30_000,
   })
@@ -1260,7 +1260,7 @@ test('RYT-117 closing a creature opened by a deep link focuses its row', async (
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
   await combatServer().install(page)
-  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary&creature=srd:zombie`)
+  await page.goto(`./campaign/${campaignId}/members?panel=bestiary&creature=srd:zombie`)
   await expect(detail(page, info).getByRole('heading', { name: 'Zombi' }).first()).toBeVisible({
     timeout: 30_000,
   })
@@ -1842,7 +1842,7 @@ test('RYT-181 the search placeholder fits its field at the default size', async 
   expect(room.placeholder.length).toBeGreaterThan(3)
   expect(room.text).toBeLessThanOrEqual(room.room)
   // The storeroom field is as narrow: same short placeholder, same room.
-  await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+  await page.goto(`./campaign/${campaignId}/members?panel=items`)
   const items = page.getByRole('searchbox', { name: 'Buscar objetos' })
   await expect(items).toBeVisible()
   const itemRoom = await placeholderRoom(items)
@@ -1986,7 +1986,7 @@ test('RYT-184 the bestiary opens on De la campaña with a favourite, a used crea
   homebrew(server, 'Sierpe del pantano')
   server.used.references.push('zombie')
   await server.install(page)
-  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+  await page.goto(`./campaign/${campaignId}/members?panel=bestiary`)
   await expect(page.getByText('3 criaturas', { exact: true })).toBeVisible({ timeout: 15_000 })
   // The search still says how large the whole bestiary is, where its field has room for that.
   const search = page.getByRole('searchbox', { name: 'Buscar criatura' })
@@ -2049,7 +2049,7 @@ test('RYT-184 a search with no match in the campaign can look in every creature'
   await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
   await favouriting(page, ['srd:wolf'])
   await combatServer().install(page)
-  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+  await page.goto(`./campaign/${campaignId}/members?panel=bestiary`)
   await expect(page.getByText('1 criatura', { exact: true })).toBeVisible({ timeout: 15_000 })
   const search = page.getByRole('searchbox', { name: 'Buscar criatura' })
   await search.fill('zombi')
@@ -2088,7 +2088,7 @@ test('RYT-184 the source is reachable by keyboard and a picked source is kept', 
   const server = combatServer()
   server.used.references.push('zombie')
   await server.install(page)
-  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+  await page.goto(`./campaign/${campaignId}/members?panel=bestiary`)
   await expect(page.getByText('2 criaturas', { exact: true })).toBeVisible({ timeout: 15_000 })
   const select = page.getByRole('combobox', { name: 'Origen' })
   if (await select.count()) {

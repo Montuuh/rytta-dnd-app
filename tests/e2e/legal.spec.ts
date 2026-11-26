@@ -3,7 +3,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { identityFixture } from './fixtures/identity.ts'
 import { capture } from './fixtures/audit.ts'
 
-/** RYT-115: the privacy policy and terms are public hash routes. Demo projects run the page
+/** RYT-115: the privacy policy and terms are public routes. Demo projects run the page
  * checks; the identity projects add the signed-out landing and the signed-in account. */
 const identity = (name: string) => name.startsWith('identity')
 const noOverflow = (page: Page) =>
@@ -30,7 +30,7 @@ for (const language of ['es', 'en'] as const)
         language,
       )
       if (identity(testInfo.project.name)) await identityFixture(page, { signedIn: false })
-      await page.goto(`./#/${doc.route}`)
+      await page.goto(`./${doc.route}`)
       const [title, heading, text] = doc[language]
       await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible()
       await expect(page.getByRole('heading', { level: 2, name: heading })).toBeVisible()
@@ -54,13 +54,13 @@ for (const language of ['es', 'en'] as const)
     })
 
 test('the terms quote the SRD licence string the glossary uses', async ({ page }) => {
-  await page.goto('./#/terms')
+  await page.goto('./terms')
   await expect(page.locator('.legal blockquote')).toContainText('SRD 5.2.1')
   await expect(page.locator('.legal blockquote')).toContainText('Creative Commons')
 })
 
 test('the privacy page links to the terms and back', async ({ page }) => {
-  await page.goto('./#/privacy')
+  await page.goto('./privacy')
   await page.getByRole('link', { name: /Leer las condiciones de uso/ }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Condiciones de uso' })).toBeVisible()
   await page.getByRole('link', { name: 'Volver' }).click()
@@ -80,7 +80,7 @@ test('Settings links to both pages and leaves the drawer behind', async ({ page 
   await expect(settings).toHaveCSS('opacity', '1')
   await expect(settings.getByRole('link', { name: 'Condiciones de uso' })).toBeVisible()
   await settings.getByRole('link', { name: 'Política de privacidad' }).click()
-  await expect(page).toHaveURL(/#\/privacy$/)
+  await expect(page).toHaveURL(/\/rytta-dnd-app\/privacy$/)
   await expect(
     page.getByRole('heading', { level: 1, name: 'Política de privacidad' }),
   ).toBeVisible()
@@ -92,7 +92,7 @@ test('Settings links to both pages and leaves the drawer behind', async ({ page 
 })
 
 test('the approved text shows the effective date, not a draft', async ({ page }) => {
-  await page.goto('./#/privacy')
+  await page.goto('./privacy')
   await expect(page.locator('.legal-date')).toContainText(
     'En vigor desde el 26 de noviembre de 2026',
   )
@@ -108,10 +108,10 @@ test('the approved text shows the effective date, not a draft', async ({ page })
 })
 
 test('both documents state the minimum age of 14', async ({ page }) => {
-  await page.goto('./#/privacy')
+  await page.goto('./privacy')
   await expect(page.getByRole('heading', { level: 2, name: 'Edad mínima' })).toBeVisible()
   await expect(page.locator('#legal-age + p')).toContainText('14 años')
-  await page.goto('./#/terms')
+  await page.goto('./terms')
   await expect(page.locator('#legal-age + p')).toContainText('al menos 14 años')
   await expect(page.locator('#legal-law + p')).toContainText('ley española')
 })
@@ -143,7 +143,7 @@ test('a signed-in account reads the policy and the title follows the page', asyn
 }, testInfo) => {
   test.skip(!identity(testInfo.project.name), 'Signed-in accounts exist only in the identity build')
   await identityFixture(page)
-  await page.goto('./#/privacy')
+  await page.goto('./privacy')
   await expect(
     page.getByRole('heading', { level: 1, name: 'Política de privacidad' }),
   ).toBeVisible()

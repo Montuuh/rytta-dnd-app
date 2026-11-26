@@ -12,7 +12,7 @@ import {
 import { capture, expectTouchTargets } from './fixtures/audit.ts'
 
 // RYT-079 to RYT-082: group rest with a vote, absence, the new-character card and dice (ADR 037).
-const party = `./#/campaign/${campaignId}/party`
+const party = `./campaign/${campaignId}/party`
 const sheetUrl = `${party}/${characterId}`
 
 async function audit(page: Page, path: string) {

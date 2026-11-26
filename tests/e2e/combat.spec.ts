@@ -84,7 +84,7 @@ test('RYT-007 DM and Player run a shared encounter', async ({ browser }, info) =
   await server.install(arin)
 
   // 1. The DM prepares an encounter: the party in one tap and a group of goblins.
-  await dm.goto(`./#/campaign/${campaignId}/combat`)
+  await dm.goto(`./campaign/${campaignId}/combat`)
   await expect(dm.getByRole('heading', { level: 1, name: 'Combate' })).toBeVisible()
   await dm.getByLabel('Nuevo encuentro').fill('Emboscada en el puente')
   await dm.getByRole('button', { name: 'Crear' }).click()
@@ -106,7 +106,7 @@ test('RYT-007 DM and Player run a shared encounter', async ({ browser }, info) =
 
   // 2. RYT-042: the Player's only screen is the table view; the own row opens into the initiative
   // entry (with the sheet bonus) and the d20 total is typed on its keypad.
-  await arin.goto(`./#/campaign/${campaignId}/combat`)
+  await arin.goto(`./campaign/${campaignId}/combat`)
   const entry = arin.getByRole('region', { name: 'Tu iniciativa' })
   await expect(entry).toBeVisible({ timeout: 15_000 })
   await expect(row(arin, 'Arin')).toContainText('Tu iniciativa')
@@ -251,7 +251,7 @@ test('RYT-007 Player combat screen passes axe in English and light theme', async
   await server.install(page)
   // The DM side is driven straight through the fixture: an active encounter on Arin's turn.
   server.seedActive()
-  await page.goto(`./#/campaign/${campaignId}/combat`)
+  await page.goto(`./campaign/${campaignId}/combat`)
   await expect(page.locator('.combat-table-now')).toContainText('Your turn!', { timeout: 15_000 })
   // RYT-042: the table view is the Player's only combat screen, without hit point controls;
   // RYT-045: on the own turn it hands the turn on.
@@ -283,7 +283,7 @@ test('RYT-007 action errors stay in view next to the action and floating ones le
       body: JSON.stringify({ message: 'Service unavailable' }),
     }),
   )
-  await page.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
+  await page.goto(`./campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
   const message = 'No se pudo guardar. Revisa tu conexión y vuelve a intentarlo.'
 
   // 1. Without a dialog the error floats, clears the turn bar and leaves on its own.
@@ -368,7 +368,7 @@ test('RYT-007 Players reach combat only when the DM opened the module', async ({
   server.seedActive()
   const id = server.encounters[0]!.id
   for (const path of ['combat', `combat/${id}`, `combat/${id}/table`]) {
-    await page.goto(`./#/campaign/${campaignId}/${path}`)
+    await page.goto(`./campaign/${campaignId}/${path}`)
     await expect(page.getByText('El DM todavía no ha abierto el combate.')).toBeVisible()
     await expect(page.getByText('¡Te toca!')).toHaveCount(0)
     await expect(page.locator('.combat-rail')).toHaveCount(0)
@@ -391,7 +391,7 @@ test('RYT-039 combat conditions open their glossary definition in place', async 
   })
   await server.install(page)
   server.seedActive()
-  await page.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
+  await page.goto(`./campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
 
   // The DM marks Goblin 1 as prone and closes the picker: the condition becomes a reference.
   await openLiveDetail(page, 'Goblin 1', info)
@@ -446,7 +446,7 @@ test("RYT-039 an effect's condition opens its definition and removing the effect
   })
   await server.install(page)
   server.seedActive()
-  await page.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
+  await page.goto(`./campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
 
   // The DM adds a web that restrains Goblin 1.
   await openLiveDetail(page, 'Goblin 1', info)
@@ -497,7 +497,7 @@ test('RYT-041 the DM changes the roster mid-combat and the detail follows the tu
   await server.install(page)
   // Arin 20, Bea 19, Goblin 1 18, Goblin 2 17; Arin acts. Cato is not in the fight.
   server.seedActive()
-  await page.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
+  await page.goto(`./campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
   const wide = info.project.name === 'identity-desktop'
   const bar = page.getByRole('region', { name: 'Controles de turno' })
   const detailName = page.locator('.combat-detail-name')
@@ -630,7 +630,7 @@ test('RYT-041 Players stay on the table view: no exit and no full screen', async
   })
   await server.install(page)
   server.seedActive()
-  await page.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}/table`)
+  await page.goto(`./campaign/${campaignId}/combat/${server.encounters[0]!.id}/table`)
   // RYT-042 F3: on the Player's own turn the display line is the turn itself.
   await expect(page.locator('.combat-table-active')).toHaveText('¡Te toca!')
   await expect(page.getByRole('link', { name: 'Salir de la vista de mesa' })).toHaveCount(0)
@@ -654,7 +654,7 @@ test('RYT-041 roster dialogs pass axe in English and light theme', async ({ page
   })
   await server.install(page)
   server.seedActive()
-  await page.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
+  await page.goto(`./campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
   await page.getByRole('tab', { name: 'Add combatants' }).click()
   await page.getByRole('button', { name: 'Add Cato' }).click()
   const join = page.getByRole('dialog', { name: 'Cato joins the fight' })
@@ -686,7 +686,7 @@ test('RYT-041 dialogs from menus return focus to the menu; the sheet to its open
   })
   await server.install(page)
   server.seedActive()
-  await page.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
+  await page.goto(`./campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
   const options = page.getByRole('button', { name: 'Opciones de Goblin 1' })
   // Removal and initiative, each cancelled with Escape and with the Cancel button.
   for (const [item, dialogName] of [
@@ -747,7 +747,7 @@ test('RYT-041 a real touch long press keeps the row menu open after lifting the 
   })
   await server.install(page)
   server.seedActive()
-  await page.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
+  await page.goto(`./campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
   const bea = row(page, 'Bea').getByRole('button').first()
   await bea.scrollIntoViewIfNeeded()
   const box = (await bea.boundingBox())!
@@ -785,7 +785,7 @@ test('RYT-145 DM row actions keep their named target through a remote turn chang
   await server.install(page)
   server.seedActive()
   const encounter = server.encounters[0]!
-  await page.goto(`./#/campaign/${campaignId}/combat/${encounter.id}?view=console`)
+  await page.goto(`./campaign/${campaignId}/combat/${encounter.id}?view=console`)
 
   await openLiveDetail(page, 'Goblin 1', info)
   if (info.project.name !== 'identity-desktop') await page.keyboard.press('Escape')
@@ -855,7 +855,7 @@ test('RYT-041 dialog actions share a row or stack full width, also with 150% tex
   })
   await server.install(page)
   server.seedActive()
-  await page.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
+  await page.goto(`./campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
   /** Either one row (same top) or stacked full width with the action above Cancel. */
   const expectDeliberate = async (dialog: Locator, action: string) => {
     const actions = dialog.locator('.combat-dialog-actions')
@@ -940,7 +940,7 @@ test('RYT-042 Players only have the table view: own initiative, nobody else, the
   })
   await server.install(page)
   const id = server.seedInitiative()
-  await page.goto(`./#/campaign/${campaignId}/combat`)
+  await page.goto(`./campaign/${campaignId}/combat`)
   await expect(page.getByRole('heading', { level: 1, name: 'Bridge ambush' })).toBeVisible({
     timeout: 15_000,
   })
@@ -1087,7 +1087,7 @@ test('RYT-042 Players only have the table view: own initiative, nobody else, the
   await evidence(page, info.project.name, 'player-summary', 'RYT-042')
 
   // Every combat route is the table view for a Player; the old table link lands on it too.
-  await page.goto(`./#/campaign/${campaignId}/combat/${id}/table`)
+  await page.goto(`./campaign/${campaignId}/combat/${id}/table`)
   await expect(page).toHaveURL(new RegExp(`/combat/${id}$`))
   await expect(page.getByRole('region', { name: 'Resumen del combate' })).toBeVisible()
   await expect(page.getByRole('radio', { name: 'Consola del DM' })).toHaveCount(0)
@@ -1118,7 +1118,7 @@ test('RYT-042 the DM opens the table view and switches to the console without lo
     hits: [{ combatant_id: combatantId(server, 'Goblin 1'), amount: 7 }],
     request_id: 'dm-hit',
   })
-  await page.goto(`./#/campaign/${campaignId}/combat/${id}`)
+  await page.goto(`./campaign/${campaignId}/combat/${id}`)
   // The table view is the default: the table projection, no console controls.
   const tableRadio = page.getByRole('radio', { name: 'Orden' })
   const consoleRadio = page.getByRole('radio', { name: 'Consola del DM' })
@@ -1205,7 +1205,7 @@ test('RYT-042 table view entry and summary pass axe in English and light theme',
   })
   await server.install(page)
   const id = server.seedInitiative()
-  await page.goto(`./#/campaign/${campaignId}/combat`)
+  await page.goto(`./campaign/${campaignId}/combat`)
   const entry = page.getByRole('region', { name: 'Your initiative' })
   await expect(entry).toBeVisible({ timeout: 15_000 })
   await expect(entry).toContainText('Roll d20 + 2')
@@ -1338,7 +1338,7 @@ test('RYT-098 portraits open the viewer from the table banner and the detail, no
     if (path.includes('/storage/v1/object/sign/')) signs.push(path.split('/object/sign/')[1]!)
   })
   const art = seedArt(server)
-  await page.goto(`./#/campaign/${campaignId}/combat/${art.id}`)
+  await page.goto(`./campaign/${campaignId}/combat/${art.id}`)
   await expect(page.locator('.combat-table-active')).toHaveText('Arin', { timeout: 15_000 })
   // The table's "Now" token is a picture of its own.
   const now = page
@@ -1404,7 +1404,7 @@ test('RYT-043 Players read enemy health as named bands and see tokens, never num
   })
   await server.install(page)
   const art = seedArt(server)
-  await page.goto(`./#/campaign/${campaignId}/combat`)
+  await page.goto(`./campaign/${campaignId}/combat`)
   await expect(page.locator('.combat-table-active')).toHaveText('¡Te toca!', { timeout: 15_000 })
 
   // Bands: a seal and a word for every creature, never a bar or a number.
@@ -1528,7 +1528,7 @@ test('RYT-118 Players see teammates’ class emblems on the Table view, never be
   })
   await server.install(page)
   seedClasses(server)
-  await page.goto(`./#/campaign/${campaignId}/combat`)
+  await page.goto(`./campaign/${campaignId}/combat`)
   await expect(page.locator('.combat-table-active')).toHaveText('¡Te toca!', { timeout: 15_000 })
   // Bea (no portrait) wears the bard emblem in the order and on the own turn's hand-off.
   await expect(row(page, 'Bea').locator('.combat-token img')).toHaveAttribute(
@@ -1575,7 +1575,7 @@ test('RYT-118 the DM’s Table view shows the same class emblems as the console'
   })
   await server.install(page)
   const art = seedClasses(server)
-  await page.goto(`./#/campaign/${campaignId}/combat/${art.id}`)
+  await page.goto(`./campaign/${campaignId}/combat/${art.id}`)
   await expect(page.getByRole('radio', { name: 'Orden' })).toBeChecked()
   await expect(page.locator('.combat-table-active')).toHaveText('Arin', { timeout: 15_000 })
   await expect(row(page, 'Bea').locator('.combat-token img')).toHaveAttribute(
@@ -1610,7 +1610,7 @@ test('RYT-043 the DM keeps exact hit points and sees hidden creatures on a broke
   })
   await server.install(page)
   const art = seedArt(server)
-  await page.goto(`./#/campaign/${campaignId}/combat/${art.id}`)
+  await page.goto(`./campaign/${campaignId}/combat/${art.id}`)
   // The table view: the same bands as the Players, without the hidden ogre.
   await expect(page.locator('.combat-table-active')).toHaveText('Arin', { timeout: 15_000 })
   await expect(row(page, 'Goblin 3')).toContainText('A punto de caer')
@@ -1711,7 +1711,7 @@ test('RYT-043 the DM adds and changes a creature image from its bestiary token',
     },
   })
   // ADR 028: the bestiary moved to the DM Command Center; old links land there.
-  await page.goto(`./#/campaign/${campaignId}/combat?tab=bestiary`)
+  await page.goto(`./campaign/${campaignId}/combat?tab=bestiary`)
   await expect(page).toHaveURL(/members\?panel=bestiary/, { timeout: 15_000 })
   // RYT-184: the campaign's own creatures are "Propias", in a list where the segments do not fit.
   // The toolbar measures its width before it picks segments or a list: wait for one of them.
@@ -1832,7 +1832,7 @@ test('RYT-042 R2-2/R2-3: the end of a fight moves focus to the recap and refresh
   server.seedActive()
   const first = server.encounters[0]!.id
   // R2-2: the damage dialog is open when the fight ends elsewhere; focus lands on the recap.
-  await page.goto(`./#/campaign/${campaignId}/combat/${first}?view=console`)
+  await page.goto(`./campaign/${campaignId}/combat/${first}?view=console`)
   await page.getByRole('button', { name: 'Elegir objetivos' }).click()
   await page.getByRole('checkbox', { name: 'Elegir a Goblin 2' }).check()
   await page.locator('.combat-multi-bar').getByRole('button', { name: 'Daño' }).click()
@@ -1847,7 +1847,7 @@ test('RYT-042 R2-2/R2-3: the end of a fight moves focus to the recap and refresh
   // R2-3: switching back to the console after the fight ended behind the table refetches at once.
   server.seedActive()
   const second = server.encounters[1]!.id
-  await page.goto(`./#/campaign/${campaignId}/combat/${second}?view=console`)
+  await page.goto(`./campaign/${campaignId}/combat/${second}?view=console`)
   await expect(page.getByRole('button', { name: 'Siguiente turno' })).toBeVisible({
     timeout: 15_000,
   })
@@ -1888,7 +1888,7 @@ test('RYT-043 bands and tokens pass axe in English and light theme', async ({ pa
   })
   await server.install(page)
   const art = seedArt(server)
-  await page.goto(`./#/campaign/${campaignId}/combat`)
+  await page.goto(`./campaign/${campaignId}/combat`)
   await expect(page.locator('.combat-table-active')).toHaveText('Your turn!', { timeout: 15_000 })
   await expect(row(page, 'Goblin 1')).toContainText('Wounded')
   await expect(row(page, 'Goblin 2')).toContainText('Bloodied')
@@ -1969,7 +1969,7 @@ async function playerPage(
     diceMode,
   })
   await server.install(page)
-  await page.goto(`./#/campaign/${campaignId}/combat`)
+  await page.goto(`./campaign/${campaignId}/combat`)
   await expect(page.getByRole('heading', { level: 1, name: 'Bridge ambush' })).toBeVisible({
     timeout: 15_000,
   })
@@ -2056,7 +2056,7 @@ test('RYT-045 death saves at 0 HP: marks, natural 1 and 20, outcomes for the who
   await dm.emulateMedia({ reducedMotion: 'reduce' })
   await identityFixture(dm, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
   await server.install(dm)
-  await dm.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}`)
+  await dm.goto(`./campaign/${campaignId}/combat/${server.encounters[0]!.id}`)
   await expect(dm.locator('.combat-table-active')).toHaveText('Arin', { timeout: 15_000 })
 
   // Arin's own turn at 0 HP: two tracks of notches and the naturals, between "Your turn!" and
@@ -2234,7 +2234,7 @@ test('RYT-045 death saves pass axe in English and light theme, and fit 150% text
   })
   await server.install(page)
   seedTurns(server, ['Arin'])
-  await page.goto(`./#/campaign/${campaignId}/combat`)
+  await page.goto(`./campaign/${campaignId}/combat`)
   const saves = page.getByRole('region', { name: 'Death saves' })
   await expect(saves).toBeVisible({ timeout: 15_000 })
   await expect(
@@ -2269,7 +2269,7 @@ test('RYT-088 the DM opens a creature in a fight on its portrait, which opens th
   // An SRD creature: the DM's projection carries srd_id, so its bundled art stands in.
   const owlbear = encounter.combatants.find((c) => c.name === 'Goblin 1')!
   Object.assign(owlbear, { name: 'Oso lechuza', srd_id: 'owlbear' })
-  await page.goto(`./#/campaign/${campaignId}/combat/${encounter.id}?view=console`)
+  await page.goto(`./campaign/${campaignId}/combat/${encounter.id}?view=console`)
   await openLiveDetail(page, 'Oso lechuza', info)
   const detail = page.locator('.combat-detail:visible')
   const portrait = detail.getByRole('button', { name: 'Ver la imagen de Oso lechuza' })
@@ -2440,7 +2440,7 @@ test('RYT-141 reopening a menu with Enter after Escape moves focus inside every 
   })
   await server.install(page)
   server.seedActive()
-  await page.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
+  await page.goto(`./campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
   const trigger = page.getByRole('button', { name: 'Opciones de Bea' })
   await trigger.focus()
   for (let run = 0; run < 25; run++) {

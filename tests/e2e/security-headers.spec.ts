@@ -8,7 +8,7 @@ import { tabletopServer } from './fixtures/tabletop.ts'
 // scripts/serve-with-headers.mjs and the third web server in playwright.config.ts), is walked
 // through the app's media, worker and lazy-chunk paths. Zero CSP violations is the bar; the
 // controls at the end prove the policy actually blocks what it should.
-const party = `./#/campaign/${campaignId}/party`
+const party = `./campaign/${campaignId}/party`
 const modules = ['party', 'inventory', 'shops', 'combat', 'glossary', 'tabletop']
 
 /** Every `securitypolicyviolation` event (and CSP console error) of the page and its workers. */
@@ -88,9 +88,9 @@ test('signed out: landing, privacy, language and theme, and the update notice', 
   await page.goto('./')
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   await expect(page.getByRole('status').filter({ hasText: 'Hay una versión nueva' })).toBeVisible()
-  await page.goto('./#/privacy')
+  await page.goto('./privacy')
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-  await page.goto('./#/settings')
+  await page.goto('./settings')
   const settings = page.getByRole('dialog', { name: 'Ajustes' })
   // The English catalogue is a lazy chunk; a theme change swaps the colour tokens.
   await settings
@@ -180,7 +180,7 @@ test('a Player: sheet, rest with 3D dice, portrait upload, inventory and shop pi
   })
 
   await test.step('inventory picture opens the viewer', async () => {
-    await page.goto(`./#/campaign/${campaignId}/inventory`)
+    await page.goto(`./campaign/${campaignId}/inventory`)
     await page.getByRole('button', { name: /Espada larga, cantidad 1/ }).click()
     await page.getByRole('button', { name: 'Ver la imagen de Espada larga' }).click()
     await expect.poll(() => shows(page, 'Espada larga', 'Imagen de Espada larga')).toBe(true)
@@ -188,7 +188,7 @@ test('a Player: sheet, rest with 3D dice, portrait upload, inventory and shop pi
   })
 
   await test.step('shop banner picture opens the viewer', async () => {
-    await page.goto(`./#/campaign/${campaignId}/shops`)
+    await page.goto(`./campaign/${campaignId}/shops`)
     const banner = page.locator('.shop-banner')
     await expect(banner).toContainText('Tienda de abastos')
     await banner
@@ -216,7 +216,7 @@ test('the DM: party, bestiary art, glossary, combat, tabletop map and table view
   await page.goto(party)
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 
-  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+  await page.goto(`./campaign/${campaignId}/members?panel=bestiary`)
   await expect(page.getByText('330 criaturas', { exact: true })).toBeVisible({ timeout: 20_000 })
   await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('lobo')
   await page.locator('.bst-row', { hasText: /^Lobo/ }).first().locator('.bst-row-main').click()
@@ -230,11 +230,11 @@ test('the DM: party, bestiary art, glossary, combat, tabletop map and table view
     .toBe(true)
   await page.keyboard.press('Escape')
 
-  await page.goto(`./#/campaign/${campaignId}/glossary/rule.long-rest`)
+  await page.goto(`./campaign/${campaignId}/glossary/rule.long-rest`)
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   await expect(page.getByText('Descanso largo').first()).toBeVisible({ timeout: 20_000 })
 
-  await page.goto(`./#/campaign/${campaignId}/combat`)
+  await page.goto(`./campaign/${campaignId}/combat`)
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 
   // A scene with a painted prop and a textured ground on the table.
@@ -267,7 +267,7 @@ test('the DM: party, bestiary art, glossary, combat, tabletop map and table view
       screen: { diagonal_in: 32, px_w: 1920, px_h: 1080, base_mm: 25.4, fine: 1, flip: false },
     },
   })
-  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  await page.goto(`./campaign/${campaignId}/tabletop`)
   await expect(page.getByRole('heading', { level: 1, name: 'Mesa' })).toBeVisible({
     timeout: 20_000,
   })
@@ -277,7 +277,7 @@ test('the DM: party, bestiary art, glossary, combat, tabletop map and table view
     .click({ timeout: 5_000 })
     .catch(() => undefined)
 
-  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page.goto(`./campaign/${campaignId}/tabletop-table`)
   const start = page.getByRole('dialog', { name: 'Pantalla de mesa' })
   await expect(start).toBeVisible({ timeout: 20_000 })
   await start.getByRole('button', { name: 'Empezar' }).click()

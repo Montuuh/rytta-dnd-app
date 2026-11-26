@@ -15,6 +15,7 @@ TypeScript/Vite/React/Supabase. Preferred static host: Pages. Scope: architectur
 3. TanStack Query for server state, React for interaction, Zod for external boundaries.
    No duplicate state/form toolkit or full offline engine.
 4. HashRouter and configurable Vite base for Pages. PKCE callback belongs to the auth slice.
+   Changed by [ADR 061](061-path-routing.md): routes are plain paths under the base.
 5. Supabase Auth/Postgres/RLS and SQL RPC transactions; Edge Functions only for secrets/integrations.
 6. Minimal relational foundation, later tables per ticket. No mutable whole-campaign blob.
 7. Explicit demo adapter; backend errors never silently switch to samples.

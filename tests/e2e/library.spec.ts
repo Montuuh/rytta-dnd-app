@@ -189,7 +189,7 @@ test('RYT-166 the SRD items and classes edit in their own forms', async ({ page 
   expect(items()).toHaveLength(197)
 
   // An item opens in its own form; the price is saved in copper.
-  await page.goto(`./#/library/${srdLibraryPackId}/item`)
+  await page.goto(`./library/${srdLibraryPackId}/item`)
   await page.getByRole('searchbox').fill('espada larga')
   await page.getByRole('link', { name: /^Espada larga/ }).click()
   await expect(page.getByRole('heading', { level: 2, name: 'Espada larga' })).toBeFocused()
@@ -208,7 +208,7 @@ test('RYT-166 the SRD items and classes edit in their own forms', async ({ page 
   })
 
   // RYT-168: a class opens in its own form with its table.
-  await page.goto(`./#/library/${srdLibraryPackId}/class`)
+  await page.goto(`./library/${srdLibraryPackId}/class`)
   await page.getByRole('link', { name: /^Guerrero/ }).click()
   await expect(page.getByRole('heading', { level: 2, name: 'Guerrero' })).toBeFocused()
   await expect(page.getByRole('combobox', { name: 'Dado de golpe' })).toHaveValue('d10')
@@ -232,7 +232,7 @@ test('RYT-166 the SRD items and classes edit in their own forms', async ({ page 
   expect(fighter.data).toMatchObject({ index: { hitDie: 10, improvementLevels: [4, 8] } })
 
   // A new class without spells saves with what its form asks for; nothing is marked before.
-  await page.goto(`./#/library/${srdLibraryPackId}/class`)
+  await page.goto(`./library/${srdLibraryPackId}/class`)
   await page.getByRole('button', { name: 'Nueva entrada' }).click()
   await expect(page.getByText('Elige uno')).toHaveCount(0)
   await page.getByRole('textbox', { name: 'Nombre (español)' }).fill('Caballero rúnico')
@@ -260,7 +260,7 @@ test('RYT-171 species, backgrounds and feats edit in their own forms', async ({ 
   await server.install(page)
 
   // An SRD species opens with its table.
-  await page.goto(`./#/library/${srdLibraryPackId}/species`)
+  await page.goto(`./library/${srdLibraryPackId}/species`)
   await page.getByRole('link', { name: /^Goliat/ }).click()
   await expect(page.getByRole('heading', { level: 2, name: 'Goliat' })).toBeFocused()
   await expect(page.getByRole('textbox', { name: 'Velocidad (pies)' })).toHaveValue('35')
@@ -270,7 +270,7 @@ test('RYT-171 species, backgrounds and feats edit in their own forms', async ({ 
   await audit(page)
 
   // A new species with a trait whose option the player picks.
-  await page.goto(`./#/library/${homebrewPackId}/species`)
+  await page.goto(`./library/${homebrewPackId}/species`)
   await page.getByRole('button', { name: 'Nueva entrada' }).click()
   await page.getByRole('textbox', { name: 'Nombre (español)' }).fill('Tritón')
   await page.getByRole('textbox', { name: 'Nombre (inglés)' }).fill('Triton')
@@ -305,7 +305,7 @@ test('RYT-171 species, backgrounds and feats edit in their own forms', async ({ 
   })
 
   // A feat names its category; a save without one is refused on its field.
-  await page.goto(`./#/library/${homebrewPackId}/feat`)
+  await page.goto(`./library/${homebrewPackId}/feat`)
   await page.getByRole('button', { name: 'Nueva entrada' }).click()
   await page.getByRole('textbox', { name: 'Nombre (español)' }).fill('Pendenciero')
   await page.getByRole('textbox', { name: 'Nombre (inglés)' }).fill('Brawler')
@@ -328,7 +328,7 @@ test('RYT-171 species, backgrounds and feats edit in their own forms', async ({ 
   })
 
   // A background names its three abilities, its skills and an origin feat from the list.
-  await page.goto(`./#/library/${homebrewPackId}/background`)
+  await page.goto(`./library/${homebrewPackId}/background`)
   await page.getByRole('button', { name: 'Nueva entrada' }).click()
   await page.getByRole('textbox', { name: 'Nombre (español)' }).fill('Marinero')
   await page.getByRole('textbox', { name: 'Nombre (inglés)' }).fill('Sailor')
@@ -362,7 +362,7 @@ test('RYT-163 the owner of a private pack chooses the campaigns that see it', as
   await identityFixture(page)
   const server = libraryServer({ sample: true })
   await server.install(page)
-  await page.goto(`./#/library/${homebrewPackId}/spell`)
+  await page.goto(`./library/${homebrewPackId}/spell`)
   await page.getByRole('button', { name: 'Campañas' }).click()
   const dialog = page.getByRole('dialog', { name: 'Campañas de «Homebrew de la mesa»' })
   await expect(dialog.getByText('Ninguna campaña lo ve todavía.')).toBeVisible()
@@ -388,7 +388,7 @@ test('glossary entries change as drafts: text, JSON, leave guard, discard, delet
   await identityFixture(page)
   const server = libraryServer({ sample: true })
   await server.install(page)
-  await page.goto(`./#/library/${homebrewPackId}/spell`)
+  await page.goto(`./library/${homebrewPackId}/spell`)
   await page.getByRole('link', { name: /^Lanza de escarcha/ }).click()
   const name = page.getByRole('textbox', { name: 'Nombre (español)' })
   await expect(name).toHaveValue('Lanza de escarcha')
@@ -548,7 +548,7 @@ test('a new subclass and a content file land as drafts after a report', async ({
   await identityFixture(page)
   const server = libraryServer({ sample: true })
   await server.install(page)
-  await page.goto(`./#/library/${homebrewPackId}/subclass`)
+  await page.goto(`./library/${homebrewPackId}/subclass`)
   // Changing the kind keeps focus on its select.
   const kindSelect = page.getByRole('combobox', { name: 'Tipo' })
   await kindSelect.click()
@@ -642,7 +642,7 @@ test('a new pack names itself, and a published pack keeps its identifier', async
   await identityFixture(page)
   const server = libraryServer({ sample: true })
   await server.install(page)
-  await page.goto('./#/library')
+  await page.goto('./library')
   await page.getByRole('button', { name: 'Nuevo paquete' }).click()
   const dialog = page.getByRole('dialog', { name: 'Nuevo paquete' })
   await expect(dialog.getByRole('textbox', { name: 'Título (español)' })).toBeFocused()
@@ -670,7 +670,7 @@ test('a new pack names itself, and a published pack keeps its identifier', async
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toHaveCount(0)
 
-  await page.goto(`./#/library/${homebrewPackId}/spell`)
+  await page.goto(`./library/${homebrewPackId}/spell`)
   const editButton = page.getByRole('button', { name: 'Editar paquete' })
   await editButton.click()
   const edit = page.getByRole('dialog', { name: 'Editar Homebrew de la mesa' })
@@ -710,7 +710,7 @@ test('accounts that are not editors see neither the menu item nor the library', 
   await expect(page.getByRole('menuitem', { name: 'Mis campañas' })).toBeVisible()
   await expect(page.getByRole('menuitem', { name: 'Biblioteca de contenido' })).toHaveCount(0)
   await page.keyboard.press('Escape')
-  await page.goto('./#/library')
+  await page.goto('./library')
   await expect(page.getByRole('heading', { name: 'Solo para cuentas editoras' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Nuevo paquete' })).toHaveCount(0)
   // RYT-184: nobody who cannot write the library reaches the cover control.
@@ -728,7 +728,7 @@ test('RYT-174 the base pack tells where each entry comes from and keeps what the
   await server.install(page)
 
   // The origin filter counts the SRD entries, the changed one and the pack's own.
-  await page.goto(`./#/library/${srdLibraryPackId}/creature`)
+  await page.goto(`./library/${srdLibraryPackId}/creature`)
   await expect(page.getByRole('heading', { level: 2, name: 'Rytta' })).toBeVisible()
   const filter = page.getByRole('radiogroup', { name: 'Origen' })
   await expect(filter.getByRole('radio', { name: 'Todas 331' })).toBeChecked()
@@ -764,7 +764,7 @@ test('RYT-174 the base pack tells where each entry comes from and keeps what the
 
   // An entry the app's code relies on keeps its form and has no Delete. A kind that is all
   // SRD has no origin filter.
-  await page.goto(`./#/library/${srdLibraryPackId}/class`)
+  await page.goto(`./library/${srdLibraryPackId}/class`)
   await expect(page.getByRole('link', { name: /^Guerrero/ })).toBeVisible()
   await expect(page.getByRole('radiogroup', { name: 'Origen' })).toHaveCount(0)
   await page.getByRole('link', { name: /^Guerrero/ }).click()
@@ -775,7 +775,7 @@ test('RYT-174 the base pack tells where each entry comes from and keeps what the
   await audit(page)
   await capture(page, `docs/evidence/ui-review/ryt-174/protected-${info.project.name}.png`)
   // An unprotected entry of the same pack still offers it.
-  await page.goto(`./#/library/${srdLibraryPackId}/creature`)
+  await page.goto(`./library/${srdLibraryPackId}/creature`)
   await page.getByRole('searchbox').fill('lobo de ceniza')
   await page.getByRole('link', { name: /^Lobo de ceniza/ }).click()
   await expect(page.getByRole('button', { name: 'Borrar', exact: true })).toBeVisible()
@@ -792,7 +792,7 @@ test('RYT-174 the origin filter and the original read in English and the light t
   await identityFixture(page)
   const server = libraryServer({ srd: true, origins: true })
   await server.install(page)
-  await page.goto(`./#/library/${srdLibraryPackId}/creature`)
+  await page.goto(`./library/${srdLibraryPackId}/creature`)
   const filter = page.getByRole('radiogroup', { name: 'Origin' })
   await expect(filter.getByRole('radio', { name: 'All 331' })).toBeChecked()
   await expect(page.locator('html')).toHaveAttribute('data-mantine-color-scheme', 'light')
@@ -828,7 +828,7 @@ test('RYT-174 the origin filter and the original read in English and the light t
     page,
     `docs/evidence/ui-review/ryt-174/origin-original-en-light-${info.project.name}.png`,
   )
-  await page.goto(`./#/library/${srdLibraryPackId}/class`)
+  await page.goto(`./library/${srdLibraryPackId}/class`)
   await page.getByRole('link', { name: /^Fighter/ }).click()
   await expect(page.getByText('The app uses this entry.')).toBeVisible()
   await audit(page)
@@ -838,7 +838,7 @@ test('a subclass can give spellcasting to its class', async ({ page }, info) => 
   await identityFixture(page)
   const server = libraryServer({ sample: true })
   await server.install(page)
-  await page.goto(`./#/library/${homebrewPackId}/subclass`)
+  await page.goto(`./library/${homebrewPackId}/subclass`)
   await page.getByRole('link', { name: /^Círculo de las Brasas/ }).click()
   await expect(page.getByRole('heading', { level: 2, name: 'Círculo de las Brasas' })).toBeFocused()
   const caster = page.getByRole('combobox', { name: 'Progresión de espacios' })
@@ -892,7 +892,7 @@ for (const [language, scheme] of [
     await identityFixture(page)
     const server = libraryServer({ sample: true })
     await server.install(page)
-    await page.goto(`./#/library/${homebrewPackId}/spell`)
+    await page.goto(`./library/${homebrewPackId}/spell`)
     const cover = page.getByRole('region', { name: es ? 'Portada' : 'Cover' })
     const none = cover.getByText(es ? /Sin portada: la app muestra/ : /No cover: the app shows/)
     await expect(none).toBeVisible()
@@ -977,7 +977,7 @@ test('RYT-184 a published cover is saved without its picture when removed, and a
     revision: 1,
     updated_at: '2026-11-20T10:00:00Z',
   })
-  await page.goto(`./#/library/${homebrewPackId}/spell`)
+  await page.goto(`./library/${homebrewPackId}/spell`)
   const cover = page.getByRole('region', { name: 'Portada' })
   await expect(cover.getByRole('button', { name: 'Cambiar', exact: true })).toBeVisible()
   // A save the server refuses is reported where the control is, and the cover stays.

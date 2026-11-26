@@ -4,6 +4,8 @@
  * Auth or Storage response (those are other origins) or anything private.
  *
  * - Navigations to the app's base path: network first; offline, the cached index.html.
+ * - Navigations to an app route under the base (RYT-186: `/campaign/x/party`): network first;
+ *   offline, the same cached index.html. Only the base path's response is stored.
  * - Hashed build files under `<base>assets/`, and the brand, icon and empty-state images: cache
  *   first. Each build has its own cache, so a changed image arrives with the next build.
  * - The shell files listed at build time: precached on install; the build files the page loaded
@@ -25,7 +27,7 @@ export function shellUrls(html: string, base: string): string[] {
   return [...found]
 }
 
-export type Route = 'navigation' | 'asset' | 'shell' | 'network'
+export type Route = 'navigation' | 'route' | 'asset' | 'shell' | 'network'
 
 /**
  * How the worker answers one request. Plain data in, a decision out, so it can be tested here
@@ -38,10 +40,17 @@ export function route(
   if (request.method !== 'GET') return 'network'
   const url = new URL(request.url)
   if (url.origin !== scope.origin) return 'network'
-  if (request.mode === 'navigate')
-    return url.pathname === scope.base || url.pathname === `${scope.base}index.html`
-      ? 'navigation'
-      : 'network'
+  if (request.mode === 'navigate') {
+    if (url.pathname === scope.base || url.pathname === `${scope.base}index.html`)
+      return 'navigation'
+    const rest = url.pathname.startsWith(scope.base) ? url.pathname.slice(scope.base.length) : null
+    // Static files and the static legal pages are not app routes. Glossary ids carry dots
+    // (`rule.long-rest`), so only known file extensions count as files.
+    const file = /\.(?:html?|js|css|json|webmanifest|png|jpe?g|webp|svg|ico|txt|xml|wasm|mp3)$/i
+    const legal = /^(?:en\/)?(?:privacy|terms)(?:\/|$)|^en(?:\/|$)/
+    if (rest === null || file.test(rest) || legal.test(rest)) return 'network'
+    return 'route'
+  }
   if (url.search) return 'network'
   // Hashed build files, and the few images every screen shows (brand, icons, empty states).
   if (
@@ -113,11 +122,11 @@ self.addEventListener('fetch', (event) => {
     { origin: self.location.origin, base: BASE, shell: SHELL },
   )
   if (kind === 'network') return
-  if (kind === 'navigation') {
+  if (kind === 'navigation' || kind === 'route') {
     event.respondWith(
       fetch(request).then(
         (response) => {
-          if (response.ok) {
+          if (response.ok && kind === 'navigation') {
             const copy = response.clone()
             void caches.open(CACHE).then((cache) => cache.put(BASE, copy))
           }

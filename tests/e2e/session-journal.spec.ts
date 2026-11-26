@@ -7,7 +7,7 @@ test('RYT-145 the DM can skip combat, grant loot, and carry private and publishe
   page,
   browser,
 }, info) => {
-  const url = `./#/campaign/${campaignId}/session`
+  const url = `./campaign/${campaignId}/session`
   let saved = {
     lastEncounter: null,
     privateNote: '',
@@ -107,7 +107,7 @@ test('RYT-145 the DM can skip combat, grant loot, and carry private and publishe
 test('RYT-145 a stale close keeps the DM draft and offers the current saved version', async ({
   page,
 }) => {
-  const url = `./#/campaign/${campaignId}/session?close=1`
+  const url = `./campaign/${campaignId}/session?close=1`
   const server = {
     lastEncounter: null,
     privateNote: 'Mesa anterior',
@@ -143,7 +143,7 @@ test('RYT-145 the DM can read the published recap in player preview', async ({ p
   await page.route('**/rpc/get_shared_session_recap', (r) =>
     r.fulfill({ json: 'Resumen publicado' }),
   )
-  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.goto(`./campaign/${campaignId}/members`)
   await page.getByRole('switch', { name: 'Vista jugador', exact: true }).click()
   const picker = page.getByRole('dialog', { name: 'Ver como jugador' })
   const banner = page.getByText('Viendo como jugador · Arin')
@@ -177,7 +177,7 @@ test('RYT-145 a failed save can be retried with the same request and private not
     expect(payload.request_id).toBe(attempt)
     return r.fulfill({ json: { revision: 1 } })
   })
-  await page.goto(`./#/campaign/${campaignId}/session?close=1`)
+  await page.goto(`./campaign/${campaignId}/session?close=1`)
   await page.getByRole('button', { name: 'Siguiente' }).click()
   await page.getByRole('button', { name: 'Siguiente' }).click()
   await page.getByLabel('Cabo suelto privado').fill('Llave oculta')

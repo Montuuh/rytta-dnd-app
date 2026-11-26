@@ -5689,6 +5689,61 @@
         "docs/decisions/060-campaign-content-by-pack.md",
         "supabase/migrations/20261228120000_campaign_content_by_pack.sql"
       ]
+    },
+    {
+      "id": "RYT-185",
+      "title": "Admin access reads and rolls in a campaign as its DM does",
+      "priority": "P1",
+      "owner": "backend",
+      "status": "review",
+      "dependsOn": ["RYT-153"],
+      "sources": [
+        "Owner request, 26 November 2026: inside a campaign entered from Administration the super admin cannot see the characters; the super admin must have the same permissions as the campaign DM, and the other players must not see that a super admin is inside."
+      ],
+      "scope": "private.my_campaign_ids() includes the campaigns of the caller's open admin access, so the read policies that require it (campaigns, characters, campaign_members, rest requests, tabletop live state, roll and encounter signals, item definitions) grant admin access what they grant the campaign DM. campaign_rolls.roller_id references the account instead of the membership, so a super admin can log rolls as the DM; a removed member's rolls still go with the seat (trigger). Nothing player-visible names the super admin: no member row, character history and campaign events show the DM without a name, inventory and rolls read as the DM's. Non-goals: membership management through admin access, a super admin owning or claiming a character.",
+      "acceptance": [
+        "While admin access is open the super admin reads the campaign, its roster, members and sheets exactly as the campaign DM does, and logs rolls; after exit, expiry or role withdrawal nothing is readable.",
+        "anon, outsider, a Player of the campaign and the DM of another campaign read nothing new; the Player still reads only their own member row and never the super admin.",
+        "Removing a member removes that member's rolls in the campaign, as before.",
+        "PGlite denial tests pass; the migration is applied to staging, then production and PRE, with the stored statement matching the committed file."
+      ],
+      "validation": [
+        "tests/database/super-admin.test.ts",
+        "npm run check",
+        "hosted staging then production apply with md5 comparison"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-185/verification.md",
+        "tests/database/super-admin.test.ts",
+        "supabase/migrations/20261229120000_admin_access_campaign_reads.sql"
+      ]
+    },
+    {
+      "id": "RYT-186",
+      "title": "Clean addresses: routes without the #/ prefix",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "review",
+      "dependsOn": ["RYT-116", "RYT-128"],
+      "sources": [
+        "Owner question and request, 26 November 2026: why the routing has a /#/, and remove it if it is no longer needed, reviewing Cloudflare, Supabase and Google sign-in."
+      ],
+      "scope": "Hash routing (ADR 001) existed because the first host could not serve index.html for deep paths. Cloudflare Pages serves rytta.app at the site root with its single-page fallback (no top-level 404.html), so the router moves to browser paths under the Vite base. Old #/ links (invitations, bookmarks, the rytta.pages.dev redirect) are rewritten to the same path on load. The offline shell answers every navigation under the base offline with the cached app. Sign-in still returns to the base URL, so the Supabase Auth redirect allowlist and the Google client are unchanged. Non-goals: new routes, server-side rendering.",
+      "acceptance": [
+        "Every in-app address is a plain path under the base (rytta.app/campaign/<id>/party); no screen, link or test builds a #/ address.",
+        "Opening an old #/ address, with or without its own query, lands on the same route as a path and keeps the history entry count.",
+        "Reloading or opening any deep path works in the preview server, the Cloudflare-like header server and production; the static privacy and terms pages still answer crawlers.",
+        "Google sign-in, email confirmation and password reset still return to the base URL and restore the page the visitor started from; implicit-flow fragments are still rejected.",
+        "Offline, a reload on a deep path opens the cached app; only the base path response is stored.",
+        "npm run check and npm run test:e2e pass."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "npm run check:supabase",
+        "curl of rytta.app deep paths after deploy"
+      ],
+      "evidence": ["docs/evidence/RYT-186/verification.md", "docs/decisions/061-path-routing.md"]
     }
   ]
 }

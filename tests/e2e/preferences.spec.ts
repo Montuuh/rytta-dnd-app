@@ -3,7 +3,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { capture, expectTouchTargets, limitMatrix } from './fixtures/audit.ts'
 
 const html = (page: Page) => page.locator('html')
-/** RYT-069: Settings is a right-hand drawer; `#/settings` links still open it. */
+/** RYT-069: Settings is a right-hand drawer; `/settings` links still open it. */
 const drawer = (page: Page, name = 'Ajustes') => page.getByRole('dialog', { name })
 
 test('fresh visits default to Spanish, dark and the default theme despite browser preferences', async ({
@@ -26,7 +26,7 @@ test('the gear opens the Settings drawer over the page; toggles live there', asy
   const settings = drawer(page)
   await expect(settings).toBeVisible()
   // The page stays underneath: same route, same heading, and the panel sits on the right.
-  await expect(page).toHaveURL(/#\/glossary$/)
+  await expect(page).toHaveURL(/\/rytta-dnd-app\/glossary$/)
   await expect(page.getByRole('heading', { name: 'Glosario', exact: true })).toBeAttached()
   // Measure once the panel has slid in, against the veil: both are fixed to the same box (the
   // viewport minus the stable scrollbar gutter that desktop browsers keep).
@@ -72,7 +72,7 @@ test('the gear opens the Settings drawer over the page; toggles live there', asy
 test('theme (with its scheme) and language persist across navigation and reload', async ({
   page,
 }) => {
-  await page.goto('./#/settings')
+  await page.goto('./settings')
   const themes = drawer(page).getByRole('radiogroup', { name: 'Tema' })
   const accent = () =>
     page.evaluate(() =>
@@ -115,7 +115,7 @@ test('theme (with its scheme) and language persist across navigation and reload'
   await expect(page.getByRole('heading', { name: 'Glosario', exact: true })).toBeVisible()
   await expect(html(page)).toHaveAttribute('data-mantine-color-scheme', 'dark')
   await expect(html(page)).toHaveAttribute('data-rytta-theme', 'default')
-  await page.goto('./#/settings')
+  await page.goto('./settings')
   await expect(drawer(page).getByRole('radio', { name: 'Español' })).toBeChecked()
 })
 
@@ -131,9 +131,9 @@ test('a legacy light preference becomes Parchment; classes keep their class', as
   await page.reload()
   await expect(html(page)).toHaveAttribute('data-rytta-theme', 'parchment')
   await expect(html(page)).toHaveAttribute('data-mantine-color-scheme', 'light')
-  // Wait for the app to mount (the router must be listening) before changing the hash.
+  // Wait for the app to mount (the router must be listening) before changing the address.
   await expect(page.getByRole('heading', { name: 'Glosario', exact: true })).toBeVisible()
-  await page.goto('./#/settings')
+  await page.goto('./settings')
   await expect(drawer(page).getByRole('radio', { name: 'Pergamino' })).toBeChecked()
   // An explicit choice retires the legacy key, so Hearth stays Hearth after a reload.
   await drawer(page)
@@ -153,7 +153,7 @@ test('a legacy light preference becomes Parchment; classes keep their class', as
 test('theme picker is one keyboard radio group across both schemes, with visible focus', async ({
   page,
 }) => {
-  await page.goto('./#/settings')
+  await page.goto('./settings')
   const picker = drawer(page).getByRole('radiogroup', { name: 'Tema' })
   await expect(picker.getByRole('radio')).toHaveCount(14)
   // The drawer places its initial focus on the close button once it has opened; start after it.
@@ -193,7 +193,7 @@ for (const language of ['es', 'en'] as const) {
         { language, theme },
       )
       const scheme = theme === 'parchment' || theme === 'warlock' ? 'light' : 'dark'
-      for (const route of ['', '#/settings']) {
+      for (const route of ['', 'settings']) {
         await page.goto(`./${route}`)
         await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
         // Audit once the drawer has finished sliding in (its opacity animates from 0).
@@ -246,7 +246,7 @@ test('every theme passes axe on the settings drawer in its own scheme', async ({
   // Tiles cross-fade their colors on change; reduced motion removes the fade so axe reads the
   // settled colors.
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('./#/settings')
+  await page.goto('./settings')
   await expect(drawer(page)).toHaveCSS('opacity', '1')
   const picker = drawer(page).getByRole('radiogroup', { name: 'Tema' })
   await expect(picker).toBeVisible()
@@ -280,7 +280,7 @@ test('invalid preferences recover to defaults', async ({ page }) => {
     localStorage.setItem('rytta-color-scheme', 'unknown')
     localStorage.setItem('rytta-theme', 'artificer')
   })
-  await page.goto('./#/missing')
+  await page.goto('./missing')
   await expect(
     page.getByRole('heading', { name: 'Página no encontrada', exact: true }),
   ).toBeVisible()
@@ -300,7 +300,7 @@ test('blocked storage does not prevent changing language or theme', async ({ pag
       throw new DOMException('Blocked', 'SecurityError')
     }
   })
-  await page.goto('./#/settings')
+  await page.goto('./settings')
   await drawer(page)
     .getByRole('radiogroup', { name: 'Tema' })
     .getByText('Mago', { exact: true })
@@ -327,7 +327,7 @@ test('the second language loads only when it is chosen, without untranslated key
   await page.goto('./')
   await expect(page.getByRole('heading', { name: 'Glosario', exact: true })).toBeVisible()
   expect(chunks).toEqual(['es'])
-  await page.goto('./#/settings')
+  await page.goto('./settings')
   await drawer(page)
     .getByRole('radiogroup', { name: 'Idioma' })
     .getByText('English', { exact: true })
@@ -346,7 +346,7 @@ test('a catalogue that cannot be fetched keeps the current language and offers a
   page,
 }) => {
   await page.route('**/catalogue-en-*.js', (route) => route.abort())
-  await page.goto('./#/settings')
+  await page.goto('./settings')
   const group = drawer(page).getByRole('radiogroup', { name: 'Idioma' })
   await group.getByText('English', { exact: true }).click()
   // Still Spanish everywhere, the choice not saved, and the failure said in Spanish with a retry.
@@ -372,7 +372,7 @@ test('a slow catalogue shows a busy language control and switches in one step', 
     await gate
     await route.continue()
   })
-  await page.goto('./#/settings')
+  await page.goto('./settings')
   const group = drawer(page).getByRole('radiogroup', { name: 'Idioma' })
   await group.getByText('English', { exact: true }).click()
   await expect(group).toHaveAttribute('aria-busy', 'true')
@@ -405,7 +405,7 @@ test('changing your mind while a language loads keeps the latest choice', async 
     await gate
     await route.continue()
   })
-  await page.goto('./#/settings')
+  await page.goto('./settings')
   const group = drawer(page).getByRole('radiogroup', { name: 'Idioma' })
   await group.getByText('English', { exact: true }).click()
   await expect(group).toHaveAttribute('aria-busy', 'true')
@@ -422,7 +422,7 @@ test('Retry keeps keyboard focus on its control, in Settings and on the first-lo
   page,
 }) => {
   await page.route('**/catalogue-en-*.js', (route) => route.abort())
-  await page.goto('./#/settings')
+  await page.goto('./settings')
   const group = drawer(page).getByRole('radiogroup', { name: 'Idioma' })
   await group.getByText('English', { exact: true }).click()
   const retry = drawer(page).getByRole('button', { name: 'Reintentar' })
@@ -466,7 +466,7 @@ test('a successful keyboard retry of a failed language switch focuses the checke
   page,
 }) => {
   await page.route('**/catalogue-en-*.js', (route) => route.abort())
-  await page.goto('./#/settings')
+  await page.goto('./settings')
   const group = drawer(page).getByRole('radiogroup', { name: 'Idioma' })
   // Keyboard only: arrow to English, which cannot load, then Tab to the retry.
   await group.getByRole('radio', { name: 'Español' }).focus()

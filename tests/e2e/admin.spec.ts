@@ -100,7 +100,7 @@ test('RYT-153 inside a campaign the super admin sees until when and leaves it', 
   await identityFixture(page)
   const server = adminServer({ access: [campaignId] })
   await server.install(page)
-  await page.goto(`./#/campaign/${campaignId}`)
+  await page.goto(`./campaign/${campaignId}`)
   const banner = page.locator('.admin-banner')
   await expect(banner).toContainText('Administración · eres DM de esta campaña hasta las')
   await expectTouchTargets(banner, 'button:visible')
@@ -135,7 +135,7 @@ test('RYT-153 favourites are Supervised in My campaigns, apart from my own', asy
 test('RYT-153 usage, audit and account lookup tabs', async ({ page }, info) => {
   await identityFixture(page)
   await adminServer().install(page)
-  await page.goto('./#/admin?tab=usage')
+  await page.goto('./admin?tab=usage')
   await expect(page.getByRole('region', { name: 'Uso' }).getByRole('table')).toBeVisible()
   await audit(page)
   await capture(page, info.outputPath('admin-usage.png'))
@@ -162,8 +162,8 @@ test('RYT-153 anyone else never sees Administration', async ({ page }) => {
   await page.getByRole('button', { name: /Perfil/ }).click()
   await expect(page.getByRole('menuitem', { name: 'Administración' })).toHaveCount(0)
   await page.keyboard.press('Escape')
-  await page.goto('./#/admin')
-  await expect(page).not.toHaveURL(/#\/admin/)
+  await page.goto('./admin')
+  await expect(page).not.toHaveURL(/\/admin/)
   await expect(page.getByRole('heading', { level: 1, name: 'Administración' })).toHaveCount(0)
 })
 
@@ -172,7 +172,7 @@ test('RYT-153 every tab stays in view and a campaign far down the list opens its
 }) => {
   await identityFixture(page)
   await adminServer({ extra: 24 }).install(page)
-  await page.goto('./#/admin')
+  await page.goto('./admin')
   for (const name of ['Campañas', 'Biblioteca', 'Uso', 'Auditoría', 'Cuentas'])
     await expect(page.getByRole('tab', { name })).toBeInViewport({ ratio: 1 })
   const list = page.getByRole('list', { name: 'Campañas' })
@@ -193,7 +193,7 @@ test('RYT-153 a failed load offers to try again', async ({ page }) => {
       ? route.fulfill({ status: 500, contentType: 'application/json', body: '{"message":"boom"}' })
       : route.fallback(),
   )
-  await page.goto('./#/admin')
+  await page.goto('./admin')
   const alert = page.getByRole('alert')
   await expect(alert).toContainText('No se pudo cargar.')
   fail = false

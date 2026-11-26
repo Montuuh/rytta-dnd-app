@@ -17,7 +17,7 @@ async function audit(page: Page, scope = 'body') {
   expect(result.violations).toEqual([])
 }
 async function openWizard(page: Page, door: string, es: boolean) {
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await page.getByRole('button', { name: es ? 'Terminar ficha' : 'Finish sheet' }).click()
   // The quick door comes chosen.
   if (door !== 'Rápida') await page.getByRole('dialog').getByText(door, { exact: true }).click()

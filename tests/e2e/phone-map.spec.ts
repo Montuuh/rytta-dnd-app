@@ -4,6 +4,7 @@ import { beaId, campaignId, characterId, dmId, identityFixture } from './fixture
 import { expectTouchTargets } from './fixtures/audit.ts'
 import { combatServer } from './fixtures/combat.ts'
 import { tabletopServer } from './fixtures/tabletop.ts'
+import { openInApp } from './fixtures/navigate.ts'
 
 // RYT-132 (ADR 046): on a phone the Player's map is the page. At 820px the page layout stays.
 const evidenceDir = 'docs/evidence/ui-review/ryt-132'
@@ -226,7 +227,7 @@ async function audit(page: Page) {
 }
 
 const open = async (page: Page) => {
-  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  await page.goto(`./campaign/${campaignId}/tabletop`)
   await expect(page.locator('.tt-pm, .tt-player-board')).toBeVisible({ timeout: 15_000 })
 }
 
@@ -561,8 +562,8 @@ test('RYT-132 Back closes the measure and the effects sheet before it leaves the
   test.setTimeout(90_000)
   const { server } = await prepare(page)
   seedScene(server, { effects: true })
-  await page.goto(`./#/campaign/${campaignId}`)
-  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  await page.goto(`./campaign/${campaignId}`)
+  await page.goto(`./campaign/${campaignId}/tabletop`)
   await expect(page.locator('.tt-pm')).toBeVisible({ timeout: 15_000 })
   const url = page.url()
   const measure = page.getByRole('button', { name: 'Medir' })
@@ -690,10 +691,10 @@ for (const view of [{ width: 390, height: 844 }, landscape])
     const { server, fixture } = await prepare(page, { player: false, party: false })
     seedScene(server)
     fixture.openRest('long', { user: dmId, character: null })
-    await page.goto(`./#/campaign/${campaignId}/party`)
+    await page.goto(`./campaign/${campaignId}/party`)
     await page.getByRole('switch', { name: 'Vista jugador', exact: true }).click()
     await expect(page.getByText('Viendo como jugador · Arin')).toBeVisible()
-    await page.goto(`./#/campaign/${campaignId}/tabletop`)
+    await openInApp(page, `campaign/${campaignId}/tabletop`)
     await expect(page.locator('.tt-pm')).toBeVisible({ timeout: 15_000 })
     const preview = page.locator('.preview-banner')
     const rest = page.getByRole('region', { name: 'Descanso del grupo' })
@@ -753,10 +754,10 @@ test('RYT-132 a DM in the Player view can still leave it from the phone map', as
   test.setTimeout(90_000)
   const { server } = await prepare(page, { player: false, party: false })
   seedScene(server)
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await page.getByRole('switch', { name: 'Vista jugador', exact: true }).click()
   await expect(page.getByText('Viendo como jugador · Arin')).toBeVisible()
-  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  await openInApp(page, `campaign/${campaignId}/tabletop`)
   await expect(page.locator('.tt-pm')).toBeVisible({ timeout: 15_000 })
   const leave = page.getByRole('button', { name: 'Volver a vista DM' })
   await expect(leave).toBeVisible()
@@ -963,10 +964,10 @@ test('RYT-135 on its side the update notice stacks above the measure readout and
   )
   const { server } = await prepare(page, { player: false, party: false })
   seedScene(server)
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.goto(`./campaign/${campaignId}/party`)
   await page.getByRole('switch', { name: 'Vista jugador', exact: true }).click()
   await expect(page.getByText('Viendo como jugador · Arin')).toBeVisible()
-  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  await openInApp(page, `campaign/${campaignId}/tabletop`)
   await expect(page.locator('.tt-pm')).toBeVisible({ timeout: 15_000 })
   const update = page.locator('.update-notice')
   await expect(update).toBeVisible()

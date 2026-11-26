@@ -10,6 +10,12 @@ import './app/styles.css'
 import './app/class-themes.css'
 import { App } from './app/app'
 import { registerOfflineShell } from './shared/lib/offline-shell'
+import { legacyHashAddress } from './shared/lib/app-path'
+
+// RYT-186: old `#/` addresses (invitations, bookmarks, the previous host) open the same route;
+// the bare subpath base gets its trailing slash.
+const legacy = legacyHashAddress(window.location.href, import.meta.env.BASE_URL)
+if (legacy) window.history.replaceState(window.history.state, '', legacy)
 
 // The saved language's catalogue is one lazy chunk: render only once it is in, so no key shows
 // raw. When it cannot be fetched a fixed bilingual screen offers a retry instead.

@@ -50,7 +50,7 @@ for (const [language, theme] of [
       await identityFixture(page, { inventory: true, catalogue: true })
       await page.emulateMedia({ reducedMotion: 'reduce' })
       // The storeroom import: a source filter and the items that differ from their pack.
-      await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+      await page.goto(`./campaign/${campaignId}/members?panel=items`)
       await storeAction(page, 'manage', es)
       await page.getByRole('button', { name: es ? 'Importar objetos' : 'Import items' }).click()
       const drawer = page.getByRole('dialog', { name: es ? 'Importar objetos' : 'Import items' })
@@ -90,7 +90,7 @@ for (const [language, theme] of [
       // The library item form.
       const server = libraryServer({ srd: true, sample: true })
       await server.install(page)
-      await page.goto(`./#/library/${srdLibraryPackId}/item`)
+      await page.goto(`./library/${srdLibraryPackId}/item`)
       await page.getByRole('searchbox').fill(es ? 'espada larga' : 'longsword')
       await page.getByRole('link', { name: es ? /^Espada larga/ : /^Longsword/ }).click()
       await expect(
@@ -101,7 +101,7 @@ for (const [language, theme] of [
       await capture(page, shot('item-form'))
 
       // The campaigns of a private pack.
-      await page.goto(`./#/library/${homebrewPackId}/spell`)
+      await page.goto(`./library/${homebrewPackId}/spell`)
       await page.getByRole('button', { name: es ? 'Campañas' : 'Campaigns' }).click()
       const offers = page.getByRole('dialog', {
         name: es ? 'Campañas de «Homebrew de la mesa»' : 'Campaigns of “Table homebrew”',
@@ -145,7 +145,7 @@ for (const [language, theme] of [
     try {
       await identityFixture(page, { inventory: true, catalogue: true })
       await page.emulateMedia({ reducedMotion: 'reduce' })
-      await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+      await page.goto(`./campaign/${campaignId}/members?panel=items`)
       const search = page.getByRole('searchbox', { name: es ? 'Buscar objetos' : 'Search items' })
       await search.fill(es ? 'esp' : 'sword')
       const group = page.getByRole('region', { name: es ? 'En tus paquetes' : 'In your packs' })

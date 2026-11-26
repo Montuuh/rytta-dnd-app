@@ -103,7 +103,7 @@ test('RYT-117 bestiary: after a jump, scrolling up and down keeps the reader’s
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
   await combatServer().install(page)
-  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+  await page.goto(`./campaign/${campaignId}/members?panel=bestiary`)
   await expect(page.getByText('330 criaturas', { exact: true })).toBeVisible({ timeout: 30_000 })
   await page
     .getByRole('navigation', { name: 'Saltar a un grupo' })
@@ -122,7 +122,7 @@ test('RYT-117 glossary: after a jump, scrolling up and down keeps the reader’s
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'glossary'] })
   // RYT-184: the glossary lands on its search; `cat=all` opens the whole list.
-  await page.goto(`./#/campaign/${campaignId}/glossary?cat=all`)
+  await page.goto(`./campaign/${campaignId}/glossary?cat=all`)
   await expect(page.getByText('838 entradas')).toBeVisible({ timeout: 30_000 })
   await page
     .getByRole('navigation', { name: 'Saltar a la letra' })
@@ -141,7 +141,7 @@ test('RYT-117 holding ArrowDown through the whole bestiary never drops focus to 
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
   await combatServer().install(page)
-  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+  await page.goto(`./campaign/${campaignId}/members?panel=bestiary`)
   await expect(page.getByText('330 criaturas', { exact: true })).toBeVisible({ timeout: 30_000 })
   await page.locator('.bst-row-main').first().focus()
   // Key repeat: no waiting between presses.

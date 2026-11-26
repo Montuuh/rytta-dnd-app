@@ -11,7 +11,7 @@ import {
 
 // RYT-162, RYT-184: the DM chooses the packs the campaign uses, one card per pack, reads one notice
 // when a pack has news, and hides single entries from a sheet.
-const panel = `./#/campaign/${campaignId}/members?panel=content`
+const panel = `./campaign/${campaignId}/members?panel=content`
 
 type Look = { language: 'es' | 'en'; theme: 'default' | 'parchment' }
 async function open(

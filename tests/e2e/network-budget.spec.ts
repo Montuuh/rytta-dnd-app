@@ -7,8 +7,8 @@ import { realtimeFixture } from './fixtures/realtime.ts'
  * page clock is faked, and each request to the project is counted per endpoint family.
  */
 const origin = 'https://rytta-test.supabase.co'
-const inventoryUrl = `./#/campaign/${campaignId}/inventory`
-const membersUrl = `./#/campaign/${campaignId}/members`
+const inventoryUrl = `./campaign/${campaignId}/inventory`
+const membersUrl = `./campaign/${campaignId}/members`
 
 const families: Record<string, RegExp> = {
   campaigns: /^rpc\/list_my_campaigns/,

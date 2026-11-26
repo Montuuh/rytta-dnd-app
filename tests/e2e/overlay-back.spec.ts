@@ -7,7 +7,7 @@ import { tradeServer } from './fixtures/trades.ts'
 
 // Phone and browser Back closes the open overlay and leaves the page where it is (useBackToClose).
 // One journey per feature area; the overlays come from `@/shared/ui/overlays`.
-const base = `./#/campaign/${campaignId}`
+const base = `./campaign/${campaignId}`
 
 /** Back closes `overlay`; the URL and the page behind it stay. */
 async function backCloses(page: Page, overlay: Locator, urlBefore: string) {

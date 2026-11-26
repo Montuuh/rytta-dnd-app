@@ -6,7 +6,7 @@ import { expectTouchTargets } from './fixtures/audit.ts'
 // RYT-134: casting from the sheet. "Lanzar" on each prepared spell, the slot to spend, the
 // concentration marker in the hero, rituals, the manual way out, and what a failed, repeated
 // or stale save says.
-const sheetUrl = `./#/campaign/${campaignId}/party/${characterId}`
+const sheetUrl = `./campaign/${campaignId}/party/${characterId}`
 
 const spell = (id: string, name: string, level: number, extra: Record<string, unknown> = {}) => ({
   id,

@@ -88,7 +88,7 @@ export async function verifyCharacterBrowsers({ Client, config, db, dm }) {
     const campaign = (
       await db.query("select public.create_campaign('Browser integration table') id")
     ).rows[0].id
-    const route = `${base}#/campaign/${campaign}/party`
+    const route = `${base}campaign/${campaign}/party`
     const first = await pageFor(dm, 'dm@example.com')
     await first.goto(route)
     await first.getByRole('button', { name: 'Crear personaje', exact: true }).click()

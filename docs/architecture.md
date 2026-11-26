@@ -44,7 +44,8 @@ when implementation starts; navigation entries do not justify empty module scaff
 ## State and lifecycle
 
 React owns interaction state; TanStack Query owns remote state; the server owns truth.
-Mantine Form is available for upcoming forms. No second global state store is needed yet.
+Mantine Form is available for upcoming forms. Mantine and the shadcn kit in `shared/ui/kit` share
+the interface (ADR 059); Base UI is imported only inside the kit. No second global state store is needed yet.
 Zod validates external data at adapter boundaries.
 
 The campaign adapter is selected by explicit configuration. Demo mode loads samples and

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25",
+  "updatedAt": "2026-11-26",
   "items": [
     {
       "id": "RYT-000",
@@ -5628,6 +5628,61 @@
         "Captures of each fixed state; independent UI review"
       ],
       "evidence": ["docs/evidence/RYT-182/validation.md"]
+    },
+    {
+      "id": "RYT-183",
+      "title": "A shadcn kit beside Mantine: Tailwind without Preflight, tokens and the first components",
+      "priority": "P1",
+      "owner": "frontend",
+      "status": "done",
+      "dependsOn": [],
+      "sources": [
+        "Owner request, 26 November 2026: put shadcn/ui (https://ui.shadcn.com/) in the project and use it in the flows that need it.",
+        "ADR 059 (docs/decisions/059-shadcn-kit-beside-mantine.md), which changes decision 2 of ADR 001."
+      ],
+      "scope": "The foundation only: Tailwind 4 through its Vite plugin without Preflight and with the tw: prefix (src/app/kit.css), the kit colours mapped to the application tokens, components.json for the shadcn command line (style base-nova, Lucide), the prefixed cn helper, the first components (Item, Empty, Skeleton, Separator) in src/shared/ui/kit, the architecture check that keeps Base UI inside the kit, ADR 059 and the design system text. Non-goals: using the kit in a screen (RYT-184), rewriting existing stylesheets into utilities, replacing any Mantine control.",
+      "acceptance": [
+        "npx shadcn add <name> writes a component into src/shared/ui/kit with tw: utilities.",
+        "A kit component renders with the Hearth and Parchment tokens without a second palette.",
+        "No existing screen changes: the unit, build and browser suites pass as before.",
+        "npm run check:architecture fails when a file outside the kit imports Base UI.",
+        "The stylesheet growth is recorded."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "Render Item, Empty and Skeleton in both themes and read their computed border, radius and colours."
+      ],
+      "evidence": [
+        "docs/evidence/RYT-183/validation.md",
+        "docs/decisions/059-shadcn-kit-beside-mantine.md"
+      ]
+    },
+    {
+      "id": "RYT-184",
+      "title": "Campaign content the DM can read at a glance: packs first, one update digest, a lighter import",
+      "priority": "P1",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-183", "RYT-162", "RYT-181"],
+      "sources": [
+        "Owner request, 26 November 2026: improve how downloadable content is shown to the DM without overwhelming them with data they may not use.",
+        "Audit of 26 November 2026 (docs/evidence/RYT-184/audit.md): 24 findings in art, interface and information load."
+      ],
+      "scope": "Pending the owner's answers to the options page. Candidates from the audit: the content panel grouped by pack with one switch and the categories on demand; one update row per pack that leads with what affects the campaign; an entries browser with thumbnails, a fixed search and an \"only hidden\" filter; item import that starts empty or from a starter set; one summary line when creating a campaign; pack covers and a short name; landing views of the bestiary and the glossary. Built with the shadcn kit where Mantine lacks the widget (ADR 059). First, the kit fixes the RYT-183 review left for its first use: the scoped reset clears paragraph margins and link underlines inside kit parts, one focus ring on a focused Item, Skeleton still under reduced motion, 44px targets. Non-goals until decided: database changes beyond what a chosen option needs, the library manager for editors (RYT-093).",
+      "acceptance": [
+        "The owner's chosen options are recorded in this ticket before any interface code is written.",
+        "Each audit finding is fixed, or recorded as out of scope with its reason.",
+        "With five packs the content panel fits its packs in the first two phone screens at 390px.",
+        "Loading, empty, error, forbidden and stale states are designed, in both themes and both languages.",
+        "An independent UI review passes."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "Captures at 390px and 820px in both themes and languages; keyboard, Escape, 150% text and reduced motion."
+      ],
+      "evidence": ["docs/evidence/RYT-184/audit.md"]
     }
   ]
 }

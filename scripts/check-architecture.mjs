@@ -36,6 +36,8 @@ for (const file of (await walk('src')).filter((f) => /\.[jt]sx?$/.test(f))) {
       !/^\/index(?:\.ts)?$/.test(targetFeature[2])
     )
       failures.push(`${file}: use the ${targetFeature[1]} public entrypoint`)
+    if (source.startsWith('@base-ui/') && !normalized.startsWith('src/shared/ui/kit/'))
+      failures.push(`${file}: Base UI belongs in the kit (src/shared/ui/kit)`)
     if (
       source === '@supabase/supabase-js' &&
       !normalized.startsWith('src/shared/api/') &&

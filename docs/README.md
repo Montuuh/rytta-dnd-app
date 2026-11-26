@@ -151,3 +151,6 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     scanning rows, ranked search, a stat block that opens on the numbers, a pane beside the list,
     direct add with Undo, the item sheet and giving, loot as lines and proposals accepted as
     written (RYT-181).
+72. [ADR 059: a shadcn kit beside Mantine](decisions/059-shadcn-kit-beside-mantine.md):
+    shadcn components in `src/shared/ui/kit` for widgets Mantine lacks, Tailwind without
+    Preflight and with the `tw:` prefix, one set of tokens (RYT-183).

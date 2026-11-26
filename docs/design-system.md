@@ -44,9 +44,15 @@ Use src/shared/i18n catalogs and typed keys for visible text, accessible names, 
 empty/error states and route titles. Update the document language. Never machine-translate
 user campaign content. Sample campaign copy is localized because it is application-owned.
 
-Mantine is the single component kit: accessible dialogs/drawers, forms, menus, tabs,
-notifications and layout. Lucide supplies icons. Reuse official patterns rather than
-maintaining duplicate widgets or adding Tailwind/shadcn alongside Mantine.
+Two kits, one owner per job ([ADR 059](decisions/059-shadcn-kit-beside-mantine.md)). Mantine
+owns the shell, forms and inputs, modals, menus, tabs and notifications. The shadcn kit in
+`src/shared/ui/kit` (added with `npx shadcn add <name>`, then edited as our own source) is for
+widgets Mantine lacks: rich list rows (`Item`), designed empty states (`Empty`), content-shaped
+skeletons, sheets that follow the finger, command lists and carousels. Never show two versions
+of one control on a screen: buttons, switches, text inputs and modals are Mantine's. Kit
+utilities carry the `tw:` prefix and read the same semantic tokens (`tw:bg-card` is
+`--app-surface`); adjust every kit component to 44px targets and the gold focus ring before
+use. Lucide supplies icons.
 
 Theme tokens: src/app/theme.ts. Layout: src/app/styles.css. Keep campaign art optional;
 the compass is decorative. Self-host future fonts and document licenses.

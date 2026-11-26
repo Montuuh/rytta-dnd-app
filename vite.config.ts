@@ -1,4 +1,5 @@
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 import { defineConfig, loadEnv, runnerImport, type Plugin } from 'vite'
 import { fileURLToPath, URL } from 'node:url'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -153,6 +154,7 @@ export default defineConfig(({ mode, command }) => {
   return {
     plugins: [
       react(),
+      tailwindcss(),
       buildVersion(buildId),
       offlineShell(buildId),
       securityHeaders(env.VITE_SUPABASE_URL),

@@ -1961,6 +1961,10 @@ const homebrew = (server: ReturnType<typeof combatServer>, name: string) => {
     },
   }) as { id: string }
 }
+/** The whole bestiary's size in the placeholder; the phone field takes the short form or, on a
+ *  wider font, the plain word, since the longest form that fits is chosen by measuring. */
+const sizedPlaceholder = (info: TestInfo, total: number) =>
+  sheet(info) ? new RegExp(`^Buscar(?: en ${total})?$`) : `Buscar entre ${total} criaturas`
 async function favouriting(page: Page, favorites: string[]) {
   await page.addInitScript(
     ([key, list]) => localStorage.setItem(key!, list!),
@@ -1981,12 +1985,9 @@ test('RYT-184 the bestiary opens on De la campaña with a favourite, a used crea
   await server.install(page)
   await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
   await expect(page.getByText('3 criaturas', { exact: true })).toBeVisible({ timeout: 15_000 })
-  // The search still says how large the whole bestiary is.
+  // The search still says how large the whole bestiary is, where its field has room for that.
   const search = page.getByRole('searchbox', { name: 'Buscar criatura' })
-  await expect(search).toHaveAttribute(
-    'placeholder',
-    sheet(info) ? 'Buscar en 331' : 'Buscar entre 331 criaturas',
-  )
+  await expect(search).toHaveAttribute('placeholder', sizedPlaceholder(info, 331))
   const room = await placeholderRoom(search)
   expect(room.text).toBeLessThanOrEqual(room.room)
   expect(await currentSource(page)).toMatch(/campaña/i)
@@ -2024,7 +2025,7 @@ test('RYT-184 the bestiary opens on Todas when the campaign has made nothing its
   expect(await currentSource(page)).toMatch(/^(all|Todas)$/)
   await expect(page.getByRole('searchbox', { name: 'Buscar criatura' })).toHaveAttribute(
     'placeholder',
-    sheet(info) ? 'Buscar en 330' : 'Buscar entre 330 criaturas',
+    sizedPlaceholder(info, 330),
   )
   // At 150% text the placeholder gives way to a shorter form rather than being cut mid-word.
   await page.addStyleTag({ content: 'html { font-size: 150%; }' })

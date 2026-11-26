@@ -71,7 +71,37 @@ Talisman, 7 maneuvers, 2 metamagic options; Xanathar's 8 arcane shots and 14 inv
   entry names them), pictures.
 - Nothing was looked at in the library screen.
 
+## Tasha texts (2026-11-26)
+
+Second slice, owner's go-ahead the same day ("Sí, empieza por Tasha"): every Tasha entry that
+carries text now has `data.en` and `data.es`.
+
+| Kind       | With text | Notes                                                                                   |
+| ---------- | --------- | --------------------------------------------------------------------------------------- |
+| `feature`  | 276 / 276 | Artificer and subclass features, optional class features, options and the feat texts     |
+| `spell`    | 21 / 21   | Casting time, range, components, material, duration, save and damage types              |
+| `item`     | 47 / 47   | Description with type, rarity and attunement on its first line, as the base pack's      |
+| `creature` | 15 / 15   | Summon spirits and class companions as stat blocks; values that scale say so in the text |
+| `rule`     | 11 / 11   | Chapter 1 rules in full; the chapter 4 DM tools as marked summaries                     |
+
+`class` (1), `subclass` (30) and `feat` (20) keep their index only, as in the base pack: their
+text lives in their features.
+
+- **Source.** The English text comes from the book's text layer, cleaned by hand; the stat block
+  table of the Teeth of Dahlver-Nar was read from the page image. The Spanish is a working
+  translation with metric units, not the Spanish edition's.
+- **Route.** Six import files built from text modules under the ignored `content-private/`, each
+  checked with the library's parser (and the creature stat blocks with the bestiary schema), then
+  imported with the library's own Import dialog as the super admin: PRE from the local app,
+  production on rytta.app. Every dry run reported 0 new, all updated, 0 refused.
+- **Stored content.** After the last file, the MD5 of each kind's stored data (key and data
+  ordered by key) is the same in PRE, in production and in the local files.
+- **Not verified.** The texts were not compared word by word with the book; the Spanish was not
+  reviewed by a person. Item descriptions that exceed the reader's limit were shortened (one
+  Spanish paragraph of the Teeth of Dahlver-Nar). Nothing was published: the pack stays at
+  version 0 and private.
+
 ## Still to do
 
-- Texts and stat blocks (owner), then publishing a version, then offering the packs to the
+- Xanathar's texts, then publishing a version of each pack, then offering the packs to the
   owner's campaigns.

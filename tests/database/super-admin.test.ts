@@ -363,10 +363,10 @@ describe('super admin role (RYT-153)', () => {
     expect(before).toBe(1)
     await db.query('begin')
     // Unassigned first: a character's own rolls go with the character, a seat's with the seat.
-    await db.query('update public.characters set user_id = null where campaign_id = $1 and user_id = $2', [
-      campaignA,
-      playerA,
-    ])
+    await db.query(
+      'update public.characters set user_id = null where campaign_id = $1 and user_id = $2',
+      [campaignA, playerA],
+    )
     await db.query('delete from public.campaign_members where campaign_id = $1 and user_id = $2', [
       campaignA,
       playerA,

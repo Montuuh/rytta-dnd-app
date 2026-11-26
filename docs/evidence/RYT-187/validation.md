@@ -172,6 +172,20 @@ the books and of how the app reads the entries, then publishing both versions.
 - **Not verified.** No person reviewed the Spanish; the English was not compared word by word with
   the books. The app fixes reach production with the next release.
 
+## Public packs and pictures (2026-11-26)
+
+- **Visibility.** On the owner's request, confirmed after a warning that every DM would read the
+  books' text and that it risks a copyright claim, both packs were switched to public with the
+  library's pack editor as the super admin, in production and in PRE. SQL check: `visibility`
+  is `public` for both slugs in `public` and `pre`. The decision is recorded in the ADR 051
+  addendum.
+- **Image queue.** 112 requests, IMG-472 to IMG-583, in four batches: 47 Tasha items and 48
+  Xanathar items (style of the SRD magic items), the 15 Tasha creatures (style of the bestiary)
+  and the two pack covers (style of the RYT-184 covers). Sources go to
+  `art/queue/source/{tcoe,xgte}/…` and the covers to `art/queue/source/pack-cover-<slug>.png`;
+  each picture is then uploaded as the entry's picture or the pack's cover in the library, in PRE
+  and in production.
+
 ## Still to do
 
-- Offering the packs to the owner's campaigns (the Campaigns button of each pack).
+- The 112 pictures: the owner paints them, then they are reviewed and uploaded.

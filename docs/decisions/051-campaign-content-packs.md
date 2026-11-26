@@ -247,3 +247,13 @@ records and functions; migration `20261228120000_campaign_content_by_pack` adds 
 - **Lists.** Categories count their entries per kind; the entry list can show hidden entries
   only, returns the hidden total and each entry's index row. `get_campaign_used_creatures` names
   the creatures the campaign's encounters use, so hiding or turning off can warn about them.
+
+## Addendum: owner's book packs made public (RYT-187, 2026-11-26)
+
+Rule 5 keeps content from books the owner bought in private packs. The owner chose otherwise for
+the packs of Tasha's Cauldron of Everything and Xanathar's Guide to Everything ("Haz los paquetes
+publicos también", 2026-11-26), after being told that every DM of rytta.app would then read the
+books' full text and that this exposes the owner to a copyright claim. Both packs are public in
+PRE and production at version 1, licence still "Private use". The Player's Handbook 2024 pack
+(RYT-175) was already public by an earlier owner change. The texts and line files stay out of
+the repository either way.

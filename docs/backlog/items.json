@@ -5763,7 +5763,8 @@
         "No import file or line file is tracked: they stay under content-private/ and npm run check:private passes.",
         "The owner can open each pack in the library as the super admin and fill an entry's text with the library's form.",
         "Texts slice (owner, 26 November 2026: \"Sí, empieza por Tasha\", \"Sí, sigue con Xanathar\"): every entry that carries text has data.en and data.es, and each kind reads without loss in the glossary and sheet, storeroom, bestiary and character creation readers.",
-        "Publication (owner, 26 November 2026: \"Una vez este todo OK, puedes publicar ambas versiones\"): after a review of both languages, of coverage against the books and of the app's readers, version 1 of each pack is published in PRE and production, still private; a glossary entry of a pack other than the base one cites that pack's book and page, never the SRD."
+        "Publication (owner, 26 November 2026: \"Una vez este todo OK, puedes publicar ambas versiones\"): after a review of both languages, of coverage against the books and of the app's readers, version 1 of each pack is published in PRE and production; a glossary entry of a pack other than the base one cites that pack's book and page, never the SRD.",
+        "Visibility and pictures (owner, 26 November 2026: \"Mete a la cola de imágenes las nuevas criaturas y objetos y portada de paquete. Haz los paquetes publicos también\", confirmed after the copyright warning): both packs are public in PRE and production (ADR 051 addendum), and the image queue holds a request for every Tasha creature, every Tasha and Xanathar item and each pack cover."
       ],
       "validation": [
         "npm run content:check on every import file",

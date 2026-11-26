@@ -5712,7 +5712,11 @@
         "npm run check",
         "hosted staging then production apply with md5 comparison"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/evidence/RYT-185/verification.md",
+        "tests/database/super-admin.test.ts",
+        "supabase/migrations/20261229120000_admin_access_campaign_reads.sql"
+      ]
     }
   ]
 }

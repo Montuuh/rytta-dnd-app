@@ -5761,7 +5761,9 @@
         "Both packs exist in PRE and production, private and unpublished, owned by the super admin; a DM of another campaign does not see them in the library or in the choices for a new campaign and is refused their entries.",
         "Every import file validates with npm run content:check and imports through import_content_entries with every entry added and none refused; the stored entries of each kind have the MD5 of the local file in both environments.",
         "No import file or line file is tracked: they stay under content-private/ and npm run check:private passes.",
-        "The owner can open each pack in the library as the super admin and fill an entry's text with the library's form."
+        "The owner can open each pack in the library as the super admin and fill an entry's text with the library's form.",
+        "Texts slice (owner, 26 November 2026: \"Sí, empieza por Tasha\", \"Sí, sigue con Xanathar\"): every entry that carries text has data.en and data.es, and each kind reads without loss in the glossary and sheet, storeroom, bestiary and character creation readers.",
+        "Publication (owner, 26 November 2026: \"Una vez este todo OK, puedes publicar ambas versiones\"): after a review of both languages, of coverage against the books and of the app's readers, version 1 of each pack is published in PRE and production, still private; a glossary entry of a pack other than the base one cites that pack's book and page, never the SRD."
       ],
       "validation": [
         "npm run content:check on every import file",

@@ -132,6 +132,46 @@ carries text now has `data.en` and `data.es`.
   without the book's random tables. Nothing was published: the pack stays at version 0 and
   private.
 
+## Review and publication (2026-11-26)
+
+Fourth slice, owner's request the same day: a full review of both languages, of coverage against
+the books and of how the app reads the entries, then publishing both versions.
+
+- **App readers.** Every entry of both packs was read with the app's own parsers, shaped as the
+  campaign RPCs return them: glossary index rows and bodies (spells, features, rules, traps) in
+  both languages, class and subclass references after the pack's names are localized, the class
+  catalog, the storeroom catalogue and the bestiary index and stat blocks. Result: 878 entries
+  read, no row or body dropped, every feature's class and subclass and every spell's class
+  resolves.
+- **Texts.** Both languages were linted entry by entry: dice, DCs and bonuses match between
+  English and Spanish, distances in feet have their metric value, no untranslated units or
+  English words in Spanish, markup is balanced, and the OCR-derived English was checked against
+  a dictionary built from the SRD and the hand-written texts. Fixed: three OCR remnants in
+  Xanathar spells (`ld 10`, `IOfoot`, `1 lth`), the cantrip scaling sentence of three Spanish
+  spells, nested emphasis in four invocation prerequisites, the rival marker of the downtime
+  complication tables (now `†`, since `*` is the emphasis markup) and one Spanish sentence of a
+  Tasha feature.
+- **Coverage.** Xanathar's table of contents against the pack: every subclass (31), racial feat
+  (15), spell (95), common magic item (48), sample trap (12), optional rule, tool, spellcasting
+  rule, encounter-building rule, downtime activity and the magic item awarding rules are in.
+  Added: Land and Water Vehicles (the one tool description missing). Left out, as for Tasha:
+  random tables (backstory, random encounters, names), class flavor tables, the druid's beast
+  lists by environment, the magic item tables by rarity and the shared campaigns appendix.
+- **In the app (PRE).** Both packs published as version 1 in PRE and enabled in "Mesa de
+  pruebas": the glossary lists 455 spells (339 base + 21 + 95) and opens their articles with
+  tables; the bestiary lists the 15 Tasha creatures with readable stat blocks; the storeroom
+  import offers the 48 Xanathar items; character creation offers the Tasha and Xanathar fighter
+  subclasses beside the base one.
+- **App fixes.** A glossary entry of a pack other than the base one printed "SRD 5.2.1, page N";
+  it now cites its pack's title and page (`glossary.sourcePack`). The storeroom import printed the
+  SRD equipment credit for any source; it now prints it only when the chosen source includes the
+  SRD's items. UI review: docs/evidence/ui-review/ryt-187/.
+- **Production.** The fixes were imported (Xanathar: 1 new, 22 updated; Tasha: 1 updated), the
+  stored MD5 per kind matched PRE and the local files, and version 1 of each pack was published
+  (Tasha 421 entries, Xanathar 457). Both stay private; no campaign has access in production.
+- **Not verified.** No person reviewed the Spanish; the English was not compared word by word with
+  the books. The app fixes reach production with the next release.
+
 ## Still to do
 
-- Publishing a version of each pack, then offering the packs to the owner's campaigns.
+- Offering the packs to the owner's campaigns (the Campaigns button of each pack).

@@ -105,6 +105,7 @@ export const glossaryEs = {
   'glossary.houseRule': 'Regla de la casa',
   'glossary.houseRuleFor': 'Regla de la casa sobre',
   'glossary.source': 'SRD 5.2.1, página {{page}}',
+  'glossary.sourcePack': '{{pack}}, página {{page}}',
   'glossary.sourceChanged': 'SRD 5.2.1, página {{page}} · modificado por {{pack}}',
   'glossary.legacySource': 'SRD 5.1, página {{page}}',
   'glossary.license':

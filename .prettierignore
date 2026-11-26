@@ -12,5 +12,7 @@ tests/fixtures/srd/bestiary/
 src/features/bestiary/content/
 # Third-party builds copied as published (public/vendor/*/NOTICE.md)
 public/vendor/
+# Image queue, rewritten by scripts/art-queue/lib.mjs as JSON.stringify output
+art/queue/requests.json
 # Site ownership verification file, kept byte for byte as issued
 public/google*.html

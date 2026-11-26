@@ -64,9 +64,9 @@ describe('legal content', () => {
     expect(legalEs['legal.terms.law.p1']).not.toContain('pendiente')
   })
 
-  it('is published, effective 2026-11-21 after the RYT-157 privacy update', () => {
+  it('is published, effective 2026-11-26 after the RYT-147 and RYT-128 privacy update', () => {
     expect(LEGAL_DRAFT).toBe(false)
-    expect(LEGAL_EFFECTIVE_DATE).toBe('2026-11-21')
+    expect(LEGAL_EFFECTIVE_DATE).toBe('2026-11-26')
     expect(fill(legalEs['legal.effective'], { date: '17 de noviembre de 2026' })).toBe(
       'En vigor desde el 17 de noviembre de 2026',
     )
@@ -95,5 +95,16 @@ describe('legal content', () => {
     }
     expect(legalEs['legal.privacy.collect.l1']).toContain('contraseña')
     expect(legalEn['legal.privacy.collect.l1']).toContain('password')
+  })
+
+  it('states the aggregate counts (RYT-147) and the offline files (RYT-128) the owner approved', () => {
+    expect(legalEs['legal.privacy.collect.p3']).toBe(
+      'El titular también cuenta, de forma agregada, cuántas campañas empiezan a jugar y vuelven a usarse cada semana, para saber si Rytta resulta útil. Esos recuentos no identifican a nadie ni a ninguna campaña.',
+    )
+    expect(legalEn['legal.privacy.collect.p3']).toContain('in aggregate')
+    expect(legalEs['legal.privacy.local.l4']).toBe(
+      'los archivos de la propia aplicación, para que abra sin conexión; no contienen datos tuyos.',
+    )
+    expect(legalEn['legal.privacy.local.l4']).toContain('opens without a connection')
   })
 })

@@ -3100,7 +3100,7 @@
       "title": "Content manager: editors create, edit, import and publish downloadable data",
       "priority": "P1",
       "owner": "fullstack",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": ["RYT-092"],
       "sources": [
         "User 2026-11-13: a download endpoint for game data instead of static files in the repository; the DM downloads what they choose. Build the endpoint and a manager to create and change general downloadable data, in this repository. The SRD goes to the endpoint first; much more downloadable data will be added by hand later.",
@@ -3991,7 +3991,7 @@
       "title": "Launch release checklist",
       "priority": "P1",
       "owner": "producer",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-112", "RYT-113", "RYT-115", "RYT-118"],
       "sources": [
         "Producer upkeep 2026-11-17: RYT-112, RYT-113, RYT-115 and RYT-118 are in review with implementation, checks, reviews and hosted migrations complete; the working tree is uncommitted and the new frontend is not deployed, so Players follow combat by polling until it is published.",
@@ -5395,7 +5395,7 @@
       "title": "A private pack with the Player's Handbook content the base pack lacks",
       "priority": "P2",
       "owner": "fullstack",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": ["RYT-163", "RYT-168", "RYT-171", "RYT-174"],
       "sources": [
         "Owner, 24 November 2026: \"Quiero que hagas un análisis de los libros manual del jugador, y del dungeon master. Sé que tiene copyright, pero para jugar en local sin publicar, qué data dirías que se debería importar en rytta como basico. Por ejemplo mas subclases, skills, features, criaturas, items, etc...\" and, after the analysis: \"Sí, prepara un ticket que sirva para importar la data faltante del manual del jugador, de momento en privado.\"",

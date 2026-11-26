@@ -42,6 +42,8 @@ export const legalEs: Record<keyof typeof legalEn, string> = {
     'Las imágenes y el audio que subes para criaturas, objetos, tiendas y escenas de mesa.',
   'legal.privacy.collect.p2':
     'Estos datos se usan solo para iniciar tu sesión, mostrar tus campañas a las personas con las que juegas y conservar tu partida. No se venden ni se usan para publicidad.',
+  'legal.privacy.collect.p3':
+    'El titular también cuenta, de forma agregada, cuántas campañas empiezan a jugar y vuelven a usarse cada semana, para saber si Rytta resulta útil. Esos recuentos no identifican a nadie ni a ninguna campaña.',
 
   'legal.privacy.where.title': 'Dónde se guardan',
   'legal.privacy.where.p1':
@@ -62,7 +64,9 @@ export const legalEs: Record<keyof typeof legalEn, string> = {
   'legal.privacy.local.l1': 'el token de tu sesión, para que sigas dentro;',
   'legal.privacy.local.l2': 'tu idioma, tu tema y tu unidad de peso;',
   'legal.privacy.local.l3':
-    'comodidades de la interfaz, como las vistas de lista o cuadrícula, las entradas recientes del glosario, las criaturas favoritas y la última vista de mesa.',
+    'comodidades de la interfaz, como las vistas de lista o cuadrícula, las entradas recientes del glosario, las criaturas favoritas y la última vista de mesa;',
+  'legal.privacy.local.l4':
+    'los archivos de la propia aplicación, para que abra sin conexión; no contienen datos tuyos.',
   'legal.privacy.local.p2':
     'Rytta no tiene analítica ni cookies o scripts de publicidad o seguimiento. Si borras los datos del navegador, desaparecen estos elementos y se cierra tu sesión.',
 

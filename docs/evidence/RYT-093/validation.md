@@ -189,3 +189,9 @@ Minor recommendations left:
   manager.
 - PostgREST request size and statement timeouts with real batches (the fixture accepts them).
 - iOS Safari and real devices.
+
+## Owner acceptance (2026-11-26)
+
+The owner reported in the session of 26 November 2026 that importing several SRD contents through
+the manager in production worked, and accepted the ticket as done. The items under "Not verified"
+above stay as recorded: they were not measured separately.

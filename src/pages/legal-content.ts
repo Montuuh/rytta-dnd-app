@@ -5,11 +5,13 @@ export type LegalKey = keyof typeof legalEn
 /**
  * RYT-115: true shows the draft notice and "Borrador del …"; false (the owner approved both texts
  * on 2026-11-17) shows the effective date. This is the only switch. The privacy policy changed on
- * 2026-11-21 (RYT-157: email sign-in, Brevo and Cloudflare Turnstile), so its date moved with it.
+ * 2026-11-21 (RYT-157: email sign-in, Brevo and Cloudflare Turnstile) and again on 2026-11-26, when
+ * the owner approved the aggregate activation counts (RYT-147) and the offline shell's files
+ * (RYT-128); its date moved with each.
  */
 export const LEGAL_DRAFT = false
 /** The day both documents take effect (ISO date, shown in the visitor's language). */
-export const LEGAL_EFFECTIVE_DATE = '2026-11-21'
+export const LEGAL_EFFECTIVE_DATE = '2026-11-26'
 
 export type LegalKind = 'privacy' | 'terms'
 export type LegalBlock =
@@ -64,6 +66,7 @@ export const legalDocuments: Record<LegalKind, LegalDocument> = {
             'legal.privacy.collect.l4',
           ),
           p('legal.privacy.collect.p2'),
+          p('legal.privacy.collect.p3'),
         ],
       },
       {
@@ -87,7 +90,12 @@ export const legalDocuments: Record<LegalKind, LegalDocument> = {
         title: 'legal.privacy.local.title',
         blocks: [
           p('legal.privacy.local.p1'),
-          ul('legal.privacy.local.l1', 'legal.privacy.local.l2', 'legal.privacy.local.l3'),
+          ul(
+            'legal.privacy.local.l1',
+            'legal.privacy.local.l2',
+            'legal.privacy.local.l3',
+            'legal.privacy.local.l4',
+          ),
           p('legal.privacy.local.p2'),
         ],
       },

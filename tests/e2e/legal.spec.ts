@@ -40,8 +40,8 @@ for (const language of ['es', 'en'] as const)
       await expect(page.locator('.legal')).not.toContainText(/Borrador|Draft/)
       await expect(page.locator('.legal-date')).toContainText(
         language === 'es'
-          ? 'En vigor desde el 21 de noviembre de 2026'
-          : 'In force since November 21, 2026',
+          ? 'En vigor desde el 26 de noviembre de 2026'
+          : 'In force since November 26, 2026',
       )
       await expect(page).toHaveTitle(`${title} · Rytta`)
       await expect(page.locator('html')).toHaveAttribute('lang', language)
@@ -94,11 +94,11 @@ test('Settings links to both pages and leaves the drawer behind', async ({ page 
 test('the approved text shows the effective date, not a draft', async ({ page }) => {
   await page.goto('./#/privacy')
   await expect(page.locator('.legal-date')).toContainText(
-    'En vigor desde el 21 de noviembre de 2026',
+    'En vigor desde el 26 de noviembre de 2026',
   )
   await expect(page.locator('.legal-date')).not.toContainText('Borrador')
   await expect(page.locator('.legal-draft')).toHaveCount(0)
-  await expect(page.locator('.legal-date time')).toHaveAttribute('datetime', '2026-11-21')
+  await expect(page.locator('.legal-date time')).toHaveAttribute('datetime', '2026-11-26')
   // The e2e builds publish no owner name and no contact address.
   await expect(page.locator('#legal-who + p')).toContainText(
     'El responsable se identificará antes del lanzamiento',
@@ -120,6 +120,10 @@ test('the signed-out landing links to both pages', async ({ page }, testInfo) =>
   test.skip(!identity(testInfo.project.name), 'The landing exists only in the signed-in build')
   await identityFixture(page, { signedIn: false })
   await page.goto('./')
+  // The boot screen of index.html carries static links with the same name until the app renders;
+  // the landing's own links are the ones under test.
+  await expect(page.getByRole('button', { name: 'Continuar con Google' })).toBeVisible()
+  await expect(page.locator('.boot-legal')).toHaveCount(0)
   const links = page.getByRole('navigation', { name: 'Privacidad y condiciones' })
   await expect(links.getByRole('link')).toHaveCount(2)
   // Polled: the landing lays the links out after its styles load.

@@ -38,6 +38,8 @@ export const legalEn = {
     'The images and audio you upload for creatures, items, shops and tabletop scenes.',
   'legal.privacy.collect.p2':
     'This data is used only to sign you in, show your campaigns to the people you play with and keep your game. It is not sold and not used for advertising.',
+  'legal.privacy.collect.p3':
+    'The owner also counts, in aggregate, how many campaigns start playing and come back each week, to learn whether Rytta is useful. These counts do not identify anyone or any campaign.',
 
   'legal.privacy.where.title': 'Where it is stored',
   'legal.privacy.where.p1':
@@ -58,7 +60,9 @@ export const legalEn = {
   'legal.privacy.local.l1': 'your sign-in session token, so you stay signed in;',
   'legal.privacy.local.l2': 'your language, theme and weight unit;',
   'legal.privacy.local.l3':
-    'interface conveniences, such as list or grid views, recent glossary entries, favourite creatures and the last tabletop view.',
+    'interface conveniences, such as list or grid views, recent glossary entries, favourite creatures and the last tabletop view;',
+  'legal.privacy.local.l4':
+    "the app's own files, so it opens without a connection; they contain none of your data.",
   'legal.privacy.local.p2':
     'Rytta has no analytics, advertising or tracking cookies or scripts. Clearing your browser data removes these items and signs you out.',
 

@@ -101,7 +101,37 @@ text lives in their features.
   Spanish paragraph of the Teeth of Dahlver-Nar). Nothing was published: the pack stays at
   version 0 and private.
 
+## Xanathar texts (2026-11-26)
+
+Third slice, owner's go-ahead the same day ("Sí, sigue con Xanathar"): every Xanathar entry that
+carries text now has `data.en` and `data.es`.
+
+| Kind      | With text | Notes                                                                                        |
+| --------- | --------- | -------------------------------------------------------------------------------------------- |
+| `feature` | 199 / 199 | Subclass features, the 8 arcane shots, the 14 invocations and the 15 racial feat texts         |
+| `spell`   | 95 / 95   | Casting time, range, components, material, duration, save and damage types                   |
+| `item`    | 48 / 48   | Common magic items; type, rarity and attunement on the first line                            |
+| `hazard`  | 12 / 12   | Sample simple and complex traps                                                              |
+| `rule`    | 56 / 56   | Optional rules, tools, spellcasting, encounter building, traps, downtime and awarding items  |
+
+`subclass` (31) and `feat` (15) keep their index only, as in the base pack and in Tasha.
+
+- **Source.** The book's PDF has no text layer: its pages were rendered, split into columns and
+  read with the system OCR, then the English was corrected by hand against the page images where
+  the OCR was garbled (the encounter-building ratio tables, the solo-monster and quick-matchup
+  tables and the magic-items-by-rarity table were read from page images). The Spanish is a
+  working translation with metric units, not the Spanish edition's.
+- **Route.** Three import files (spells, feats and items; rules and traps; subclass features and
+  options), each checked with the library's parser, then imported with the library's Import
+  dialog as the super admin: PRE from the local app, production on rytta.app. Every dry run
+  reported 0 new, all updated, 0 refused.
+- **Stored content.** After the last file, the MD5 of each kind's stored data (key and data
+  ordered by key, byte order) is the same in PRE, in production and in the local files.
+- **Not verified.** The texts were not compared word by word with the book and the Spanish was
+  not reviewed by a person; OCR errors may remain. "This Is Your Life" is a marked summary
+  without the book's random tables. Nothing was published: the pack stays at version 0 and
+  private.
+
 ## Still to do
 
-- Xanathar's texts, then publishing a version of each pack, then offering the packs to the
-  owner's campaigns.
+- Publishing a version of each pack, then offering the packs to the owner's campaigns.

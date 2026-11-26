@@ -25,5 +25,21 @@ Date: 2026-11-26. Decision: [ADR 061](../../decisions/061-path-routing.md).
 | Full `npm run test:e2e`, first run | 1888 passed, 31 failed: specs still expecting `#/` URLs, and specs whose `page.goto` relied on a hash change keeping in-memory state (the DM's Player view). Fixed with path expectations and an in-app navigation helper (`tests/e2e/fixtures/navigate.ts`) |
 | Full `npm run test:e2e`, final run | 1917 passed, 208 skipped, 2 failed at identity-desktop only (`identity.spec.ts:380`, `quick-switcher.spec.ts:183`); both pass 3/3 with `--repeat-each=3` in isolation: load flakes |
 
-Not covered: production behaviour after deploy (verify with `curl` and a sign-in on rytta.app once the
-release pull request is merged); the old-domain redirect with a `#/` fragment in a real browser.
+## Production release
+
+Released with the next-to-main pull request #42 (merge commit `fb47c9cc`, all CI checks and the
+four browser-test shards green), 26 November 2026. `https://rytta.app/version.json` reports build
+`fb47c9ccbbc3`.
+
+| Check on rytta.app | Result |
+| --- | --- |
+| `/`, `/campaign/abc/party`, `/glossary/rule.long-rest` | 200 with the app |
+| `/privacy`, `/privacy/` | 308 to `/privacy/`, then the static policy |
+| `/sw.js` | the new worker, with the app-route branch |
+| Browser: `https://rytta.app/#/privacy` | lands on `https://rytta.app/privacy` with the policy heading, no console errors |
+| Browser: `https://rytta.app/#/glossary` | lands on `https://rytta.app/glossary` |
+| Hosted migrations | production history includes every local migration up to `admin_access_campaign_reads`; this ticket adds none |
+
+Not covered: a real Google sign-in on production after the release (agents cannot complete it;
+the allowlist and OAuth configuration checks above pass), and the old-domain redirect with a
+`#/` fragment in a real browser.

@@ -5723,7 +5723,7 @@
       "title": "Clean addresses: routes without the #/ prefix",
       "priority": "P2",
       "owner": "frontend",
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-116", "RYT-128"],
       "sources": [
         "Owner question and request, 26 November 2026: why the routing has a /#/, and remove it if it is no longer needed, reviewing Cloudflare, Supabase and Google sign-in."

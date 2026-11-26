@@ -2,35 +2,36 @@ import type { levelupEn } from './levelup-en'
 
 /** RYT-130: el nivel del grupo que fija el DM y la subida de nivel guiada de cada jugador. */
 export const levelupEs = {
-  'partyLevel.title': 'Nivel del grupo',
   'partyLevel.unset': 'Sin fijar',
-  'partyLevel.hintUnset': 'Fíjalo para que cada jugador suba de nivel desde su ficha.',
-  'partyLevel.hintSet':
-    'Los jugadores por debajo de este nivel reciben la subida guiada en su ficha. Una ficha cambia solo cuando su jugador la confirma.',
-  'partyLevel.below_one': '{{count}} personaje está por debajo del nivel del grupo.',
-  'partyLevel.below_other': '{{count}} personajes están por debajo del nivel del grupo.',
-  'partyLevel.allUp': 'Todas las fichas terminadas están en el nivel del grupo.',
+  'partyLevel.hint':
+    'Los jugadores por debajo de este nivel reciben la subida guiada; una ficha cambia solo cuando su jugador la confirma.',
+  'partyLevel.below_one': '{{below}} de {{count}} personaje está por debajo',
+  'partyLevel.below_other': '{{below}} de {{count}} personajes están por debajo',
+  'partyLevel.allUp': 'Todos están en el nivel del grupo',
+  'partyLevel.statusUnset': 'Aún no hay nivel del grupo',
   'partyLevel.decrease': 'Bajar el nivel del grupo',
   'partyLevel.increase': 'Subir el nivel del grupo',
   'partyLevel.valueName': 'Nivel del grupo, valor nuevo',
   'partyLevel.set': 'Fijar nivel {{level}}',
+  'partyLevel.raise': 'Subir a nivel {{level}}',
+  'partyLevel.another': 'Otro nivel',
   'partyLevel.clear': 'Quitar el nivel del grupo',
-  'partyLevel.confirmTitle': '¿Fijar el nivel del grupo en {{level}}?',
-  'partyLevel.confirmClearTitle': '¿Quitar el nivel del grupo?',
-  'partyLevel.confirmRaise':
-    'Los jugadores con un personaje por debajo del nivel {{level}} verán la subida en su ficha. Ninguna ficha cambia hasta que la confirmen.',
-  'partyLevel.confirmLower':
-    'Bajar el nivel del grupo solo detiene los avisos. Ninguna ficha ni nivel cambia.',
-  'partyLevel.confirmClear': 'Los jugadores dejan de ver avisos de subida. Ninguna ficha cambia.',
-  'partyLevel.saved': 'Nivel del grupo fijado en {{level}}.',
-  'partyLevel.cleared': 'Nivel del grupo quitado.',
+  'partyLevel.saved': 'Nivel {{level}} fijado',
+  'partyLevel.cleared': 'Nivel del grupo quitado',
+  'partyLevel.back': 'De vuelta al nivel {{level}}',
+  'partyLevel.backUnset': 'De vuelta sin nivel del grupo',
+  'partyLevel.undo': 'Deshacer',
+  'partyLevel.characters': 'Personajes del grupo',
+  'partyLevel.levelOf': 'nivel {{level}}',
+  'partyLevel.belowSr': 'Por debajo del nivel del grupo.',
+  'partyLevel.draft': 'sin terminar',
   'partyLevel.errorTitle': 'No se guardó el nivel del grupo',
   'partyLevel.error.unavailable':
     'No se pudo conectar con el servidor. Nada cambió; inténtalo de nuevo.',
   'partyLevel.error.forbidden': 'Solo un DM de esta campaña puede fijar el nivel del grupo.',
   'partyLevel.error.invalid': 'Ese nivel no es válido. Usa un nivel del 1 al 20.',
   'partyLevel.error.request-mismatch':
-    'Esa petición ya se usó para otro nivel. Cierra esto y fija el nivel otra vez.',
+    'El nivel del grupo cambió mientras tanto. Revisa el nivel actual e inténtalo de nuevo.',
 
   'dm.auditEvent.level_up': 'Subida de nivel',
   'panel.history.levelUp': 'Subida de nivel',

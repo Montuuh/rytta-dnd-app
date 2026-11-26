@@ -1,0 +1,55 @@
+/* RYT-180 audit: events under their calendar day. The character's name is a link in accent ink,
+   never a badge; the Timeline keeps its line and bullets. */
+.audit-days {
+  display: grid;
+  gap: 18px;
+}
+.audit-day-heading {
+  margin: 0 0 8px;
+  font-family: inherit;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  color: var(--app-muted);
+}
+.audit-timeline .mantine-Timeline-itemBullet {
+  background: var(--app-raised);
+  border-color: var(--app-accent);
+  color: var(--app-accent);
+}
+.audit-event {
+  overflow-wrap: anywhere;
+}
+/* A 44px target that does not make the event taller: it overlaps its own line's margins. */
+.audit-character {
+  display: inline-flex;
+  align-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin-block: -12px;
+  color: var(--app-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.audit-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.audit-filters .mantine-NativeSelect-input {
+  min-height: 44px;
+}
+.audit-filter {
+  max-width: 100%;
+}
+.audit-filter .mantine-SegmentedControl-label {
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+}
+.audit-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-24",
+  "updatedAt": "2026-11-26",
   "items": [
     {
       "id": "RYT-000",
@@ -3100,7 +3100,7 @@
       "title": "Content manager: editors create, edit, import and publish downloadable data",
       "priority": "P1",
       "owner": "fullstack",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": ["RYT-092"],
       "sources": [
         "User 2026-11-13: a download endpoint for game data instead of static files in the repository; the DM downloads what they choose. Build the endpoint and a manager to create and change general downloadable data, in this repository. The SRD goes to the endpoint first; much more downloadable data will be added by hand later.",
@@ -3991,7 +3991,7 @@
       "title": "Launch release checklist",
       "priority": "P1",
       "owner": "producer",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-112", "RYT-113", "RYT-115", "RYT-118"],
       "sources": [
         "Producer upkeep 2026-11-17: RYT-112, RYT-113, RYT-115 and RYT-118 are in review with implementation, checks, reviews and hosted migrations complete; the working tree is uncommitted and the new frontend is not deployed, so Players follow combat by polling until it is published.",
@@ -5395,7 +5395,7 @@
       "title": "A private pack with the Player's Handbook content the base pack lacks",
       "priority": "P2",
       "owner": "fullstack",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": ["RYT-163", "RYT-168", "RYT-171", "RYT-174"],
       "sources": [
         "Owner, 24 November 2026: \"Quiero que hagas un análisis de los libros manual del jugador, y del dungeon master. Sé que tiene copyright, pero para jugar en local sin publicar, qué data dirías que se debería importar en rytta como basico. Por ejemplo mas subclases, skills, features, criaturas, items, etc...\" and, after the analysis: \"Sí, prepara un ticket que sirva para importar la data faltante del manual del jugador, de momento en privado.\"",
@@ -5481,6 +5481,214 @@
         "independent UI review PASS"
       ],
       "evidence": []
+    },
+    {
+      "id": "RYT-178",
+      "title": "SRD magic items show their own painting instead of their category's",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-170", "RYT-172"],
+      "sources": [
+        "Owner, 24 November 2026: \"Actualiza tambien el listado de imagenes a generar con todo el dataset nuevo de SRD y del manual del jugador.\" Inventory of the two packs the same day: only creature, item and class entries carry a picture (RYT-172). The base pack's 330 creatures and 12 classes are painted and its 200 basic items are queued (RYT-170); its 268 magic items share the 9 category paintings. The handbook pack holds subclasses, features, feats, backgrounds, one species and spells, none of which the app draws."
+      ],
+      "scope": "The 268 SRD magic items get their own painting through the image queue (set interface, art/generated/items/srd/<library key>.png, imported by scripts/art-gen/build.py into public/art/items/srd and its thumbs): IMG-201 to IMG-468 in nine batches by kind of item, with the style of the basic items. An item that comes from one of those library entries and has a shipped painting shows it where its category painting shows today: the library's list and editor and the inventory, storeroom and shop tiles of 40px or more. A campaign's upload and a pack picture still win and the category painting stays the fallback. An entry that stands for several objects (a +1 weapon, the potions of healing, the figurines) shows one representative. Non-goals: pictures for species, backgrounds, subclasses, feats or spells, which have no place in the app today.",
+      "acceptance": [
+        "The approved pictures are imported into public/art/items/srd with thumbnails; items still waiting keep their category painting.",
+        "A tile of 40px or more of an item taken from one of those entries, and the entry's row and editor in the library, show its painting; a campaign's upload and a pack picture still win and other items keep their category painting."
+      ],
+      "validation": [
+        "npm run check",
+        "Captures at 390px and tablet of the library list, inventory and shop tiles",
+        "Independent UI review"
+      ],
+      "evidence": ["docs/evidence/RYT-178/validation.md"]
+    },
+    {
+      "id": "RYT-179",
+      "title": "DM command centre: a home that shows the state of the table, and every panel two taps away",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "done",
+      "dependsOn": ["RYT-144", "RYT-151"],
+      "sources": [
+        "Owner, 25 November 2026: \"Audita, mejora y orquestra un revamp a la UX y UI del centro de mando de DM, veo demasiados clicks y poca accesibilidad\".",
+        "Audit of the rendered command centre the same day at 390px, 820px and 1280px (docs/evidence/RYT-179/audit.md): three taps and a scroll to reach any panel, panel content from 525px of 844 on a phone, eight sibling panels that mix session tools with one-time settings, no current-page mark inside the panels; axe WCAG 2.2 AA clean and no target under 44px.",
+        "Owner decision on the options page, 25 November 2026: A, the DM home is a board with the live encounter, the pending work, the session tools and the campaign rows with their current value; A, on a phone the panel title is the switcher and opens a sheet with every panel in groups; A, tablets and laptops get a grouped side navigation with Summary first; A, the bestiary and the storeroom stay in the command centre under At the table, with direct access from the home; A, a quick switcher (slash or Ctrl+K, and a search control on touch) lists panels and actions; A, the first-session steps move to the home as pending work and disappear when complete; C, three deliveries: navigation and home (this ticket), the administration panels inside (RYT-180), the bestiary and the storeroom inside (RYT-181)."
+      ],
+      "scope": "First of three deliveries: the DM's first screen and the navigation between command centre panels; the panels do not change inside. The menu of three links becomes a board: the live encounter with its resume action, the pending work (invitations to accept, item proposals, characters below the party level, and the first-session steps until they are complete), the session tools (bestiary, storeroom, distribute loot, session journal, open the table, solo rehearsal) and the campaign rows with their current value (members, party level, modules, dice, content, audit). Panels are grouped: At the table (bestiary, storeroom), Party (members, party level as its own panel), Settings (modules, dice, content, audit). On a phone the stack of eight tabs is replaced by the panel title as a switcher that opens a sheet with the groups, and a link back to the home; tablets and laptops get a grouped side navigation of links with Summary first. Prepare session stops being a panel and its link opens the home. A quick switcher opens with slash or Ctrl+K and from a search control in the header, and lists the panels and the actions Invite player, New creature, New item, Distribute loot and Set party level. The main navigation marks the command centre as the current page inside every panel and each panel has one heading. Existing ?panel= links and the /items redirect keep working. Non-goals: changes inside the panels (RYT-180, RYT-181), database changes, new modules, a new dependency.",
+      "acceptance": [
+        "An options page with the audit and the directions is answered by the owner before implementation. Answered on 25 November 2026.",
+        "On a 390px phone, from any campaign screen, every command centre panel opens in at most two taps and its first control sits in the first screen (measured before: three taps, content from 525px of 844).",
+        "The DM's first screen shows a live encounter and the pending work without opening a panel; with nothing pending it shows no empty section, and the first-session steps leave it once the three are complete.",
+        "Session tools, party and settings are separate groups in the home, the phone sheet and the side navigation; ?panel= links, the bestiary encounter and creature links, ?panel=prepare and the /items redirect open a working screen.",
+        "Inside every panel the main navigation carries the current-page mark, the panel has one h2, and the side navigation and the sheet are links that load a panel only when chosen.",
+        "The quick switcher opens with slash and Ctrl+K outside text fields and from a labelled control, filters panels and the five actions, runs one with Enter, closes with Escape and returns focus; it is offered to the DM only.",
+        "390px, 820px and 1280px, Hearth and Parchment, English and Spanish, 150% text, keyboard and Escape, axe clean, 44px targets; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "The audit measurement repeated after the change: taps per task, offset of the first panel control, axe and target sizes at the three widths",
+        "Before and after captures; design critique of the rendered result; independent UI review"
+      ],
+      "evidence": ["docs/evidence/RYT-179/audit.md", "docs/evidence/RYT-179/validation.md"]
+    },
+    {
+      "id": "RYT-180",
+      "title": "DM command centre: the administration panels read and act in fewer steps",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "done",
+      "dependsOn": ["RYT-179"],
+      "sources": [
+        "Owner decision on the RYT-179 options page, 25 November 2026: scope C, the administration panels are redesigned inside after the navigation and the home.",
+        "RYT-179 audit (docs/evidence/RYT-179/audit.md): Invite player is cut by the bottom navigation in the first phone screen, Modules and Audit have no heading, and Refresh appears on panels it does not refresh.",
+        "Carried over from the RYT-179 review, 25 November 2026: keys typed in the first frame after Ctrl+K can be lost; the count next to Members in the side navigation has no visible meaning; the Set party level action lands on the panel without focusing the stepper; Party level and Dice repeat their title under the phone bar and keep their first control below 200px; a failed party, proposal or session query drops its row on the home without a message; the switcher overflows 6px at 390x667 with 150% text; its Panels label scrolls out of view after Home.",
+        "Owner decision on the RYT-180 options page, 25 November 2026 (the recommended option in each): member rows are compact and open a sheet per member (P1 A); the party level has a button for the next level and lists the characters (P2 A); a level change saves at once with Undo, a dice change keeps its confirmation (P3 B); dice are two rows with their value and a sheet per setting (P4 A); modules are the list alone (P5 A); pack versions to review come first in Content (P6 A); the audit filters by character and groups by day (P7 A)."
+      ],
+      "scope": "Members, party level, modules, dice, content and audit inside the command centre shell from RYT-179: what each panel shows first, its one primary action and the steps each task takes. An options page with the measured steps per task and the directions goes to the owner before implementation. Non-goals: the bestiary and the storeroom (RYT-181), database changes.",
+      "acceptance": [
+        "An options page with the current steps per task and the proposed panels is answered by the owner before implementation.",
+        "Each administration panel shows its primary action in the first phone screen, one title on a phone, no badges, and Refresh only where it refetches what the panel shows.",
+        "Steps on a phone, measured again after the change: raising the party one level takes one tap and can be undone from the panel; the characters below the level are named on arrival; a dice setting changes in three taps without scrolling; linking a character to a Player takes three taps; a pack version to review is the first control of Content; the audit of one character takes two taps; about eight members fit in the first screen.",
+        "Carried from the RYT-179 review: keys typed right after Ctrl+K are kept, the count next to Members in the side navigation says what it counts, Set party level focuses the control, the switcher fits 390x667 at 150% text, and a failed party, proposal or session query shows on the home.",
+        "390px, 820px and 1280px, Hearth and Parchment, English and Spanish, 150% text, keyboard and Escape, axe clean, 44px targets; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "Before and after captures and step counts; design critique of the rendered result; independent UI review"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-180/audit.md",
+        "docs/evidence/RYT-180/validation.md",
+        "docs/decisions/057-dm-administration-panels.md"
+      ]
+    },
+    {
+      "id": "RYT-181",
+      "title": "DM command centre: the bestiary and the storeroom at the table in fewer steps",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "done",
+      "dependsOn": ["RYT-179", "RYT-180"],
+      "sources": [
+        "Owner decision on the RYT-179 options page, 25 November 2026: scope C, the bestiary and the storeroom are redesigned inside as the third delivery.",
+        "RYT-179 audit (docs/evidence/RYT-179/audit.md): on a phone the bestiary page is 37,618px tall with 106 controls in the main area, and giving an item takes five taps from the navigation.",
+        "Carried over from the RYT-180 review, 25 November 2026: holding Enter on the raise action of the party level raises one more level each time its rest ends; the segmented control and the off switch keep cool greys in Parchment; the dice confirmation repeats the line of the chosen option; the switcher placeholder is cut at 390x667 with 150% text; after a stale-version error in the Content review dialog the focus is left on the page.",
+        "Owner decision on the RYT-181 options page, 25 November 2026 (A in each of its eight questions): compact creature rows with a thumbnail (P1); a stat block that opens on the numbers and the attacks (P2); the stat block beside the list on tablets and laptops (P3); adding to the open encounter straight from the stat block, with Undo (P4); an item row opens the item with Give as its main action (P5); loot as one line per item with a fixed deliver action (P6); the storeroom head is the search and Filters, like the bestiary (P7); a proposal can be accepted and given directly, with Review first beside it (P8)."
+      ],
+      "scope": "The bestiary and the item storeroom inside the command centre shell from RYT-179, for use during play: finding a creature and reading its stat block, sending it to an encounter, finding an item and giving it or distributing loot. An options page with the measured steps per task and the directions goes to the owner before implementation. Non-goals: the creature and item editors, content packs, database changes.",
+      "acceptance": [
+        "An options page with the current steps per task and the proposed screens is answered by the owner before implementation.",
+        "Measured again on a phone after the change: about seven creatures and six items fit in the first screen; a stat block shows armor class, hit points and its first attacks without scrolling; adding a creature to the open encounter takes two taps and can be undone; giving an item to one character takes four taps; two items to three characters take about eight taps with the deliver action always in view; accepting a proposal takes two taps.",
+        "Search ranks names that start with the query first and Enter opens the best match; the storeroom search stays in view, takes the slash key and its long list is windowed; no badges on either screen; a typed quick creature or new item is not discarded by Escape without asking.",
+        "The existing bestiary, storeroom, loot and long-list scroll specs pass, updated only where the approved design changes a control.",
+        "Carried from the RYT-180 review: a held Enter on the raise action does not keep raising; the segmented control and the off switch use the theme greys in Parchment; the dice confirmation does not repeat the option line; the switcher placeholder fits 390x667 at 150% text; a stale-version error in the Content review dialog keeps the focus.",
+        "390px, 820px and 1280px, Hearth and Parchment, English and Spanish, 150% text, keyboard and Escape, axe clean, 44px targets; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "Before and after captures and step counts; design critique of the rendered result; independent UI review"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-181/audit.md",
+        "docs/evidence/RYT-181/validation.md",
+        "docs/decisions/058-bestiary-and-storeroom-at-the-table.md"
+      ]
+    },
+    {
+      "id": "RYT-182",
+      "title": "DM command centre: the small findings left open by the bestiary and storeroom delivery",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-181"],
+      "sources": [
+        "Owner request, 25 November 2026: open a ticket with the minor points left open by RYT-181.",
+        "RYT-181 validation record (docs/evidence/RYT-181/validation.md, Open) and the three rounds of its UI review.",
+        "RYT-180 third review round: where the invitation status wraps (150% text, 820px columns) the break point moves with the width.",
+        "RYT-181 fifth review round, 25 November 2026: at a wide face and 150% text the kind of a creature row shrinks to a sliver before the numbers; with several packs the pack name comes before the type and is what survives truncation; at 820px with 150% text the search field is 176 to 224px wide."
+      ],
+      "scope": "Small fixes in the bestiary, the storeroom and the controls they share, none of which changes a flow: (1) after adding a creature the status line makes the bottom area of the stat block 131px on a phone and on a 1280x800 laptop the second attack ends 7px under the fold until the pane scrolls; (2) in the 820px pane the count is a number field without its minus and plus buttons; (3) with the pane open, Escape in the search clears the query and leaves the pane open; (4) at 820px with 150% text the menu button of both heads wraps alone onto a second row; (5) English says \"given to\" after a give and \"receives\" after an accepted proposal; (6) in Hearth a disabled unchecked checkbox has the same ring as an enabled one; (7) creature search and item search rank through two helpers; (8) the captures in docs/evidence/RYT-181/after predate the review fixes; (9) the invitation status in Members breaks at a different point at each width. (10) a creature row hides its kind and separator when not even a letter and its ellipsis fit, and puts the type before the pack name; (11) the search field at 820px with 150% text keeps a typed word in view. Non-goals: the design-detector findings in the navigation, the character sheet, shops and combat styles; the accessible name of the header brand link; any change to the flows approved in RYT-179, RYT-180 and RYT-181; database changes.",
+      "acceptance": [
+        "Each of the eleven points is fixed, or recorded as accepted with its reason in the validation record.",
+        "The stat block of a creature with two attacks shows both after adding to an encounter on a 390x844 phone and a 1280x800 laptop without scrolling, or the record says why the status line stays where it is.",
+        "English and Spanish use the same sentence shape for a give and for an accepted proposal.",
+        "One search ranking helper serves creatures and items, with the creature rule for the name in the other language kept, or the record says why two remain.",
+        "The after captures of RYT-181 show the delivered state.",
+        "The specs of the bestiary, the storeroom and Members pass on a wider font as well (CI); 390px, 820px and 1280px, Hearth and Parchment, English and Spanish, 150% text, axe clean, 44px targets; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run format:check",
+        "npm run test:e2e",
+        "Captures of each fixed state; independent UI review"
+      ],
+      "evidence": ["docs/evidence/RYT-182/validation.md"]
+    },
+    {
+      "id": "RYT-183",
+      "title": "A shadcn kit beside Mantine: Tailwind without Preflight, tokens and the first components",
+      "priority": "P1",
+      "owner": "frontend",
+      "status": "done",
+      "dependsOn": [],
+      "sources": [
+        "Owner request, 26 November 2026: put shadcn/ui (https://ui.shadcn.com/) in the project and use it in the flows that need it.",
+        "ADR 059 (docs/decisions/059-shadcn-kit-beside-mantine.md), which changes decision 2 of ADR 001."
+      ],
+      "scope": "The foundation only: Tailwind 4 through its Vite plugin without Preflight and with the tw: prefix (src/app/kit.css), the kit colours mapped to the application tokens, components.json for the shadcn command line (style base-nova, Lucide), the prefixed cn helper, the first components (Item, Empty, Skeleton, Separator) in src/shared/ui/kit, the architecture check that keeps Base UI inside the kit, ADR 059 and the design system text. Non-goals: using the kit in a screen (RYT-184), rewriting existing stylesheets into utilities, replacing any Mantine control.",
+      "acceptance": [
+        "npx shadcn add <name> writes a component into src/shared/ui/kit with tw: utilities.",
+        "A kit component renders with the Hearth and Parchment tokens without a second palette.",
+        "No existing screen changes: the unit, build and browser suites pass as before.",
+        "npm run check:architecture fails when a file outside the kit imports Base UI.",
+        "The stylesheet growth is recorded."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "Render Item, Empty and Skeleton in both themes and read their computed border, radius and colours."
+      ],
+      "evidence": [
+        "docs/evidence/RYT-183/validation.md",
+        "docs/decisions/059-shadcn-kit-beside-mantine.md"
+      ]
+    },
+    {
+      "id": "RYT-184",
+      "title": "Campaign content the DM can read at a glance: packs first, one update digest, a lighter import",
+      "priority": "P1",
+      "owner": "frontend",
+      "status": "review",
+      "dependsOn": ["RYT-183", "RYT-162", "RYT-181"],
+      "sources": [
+        "Owner request, 26 November 2026: improve how downloadable content is shown to the DM without overwhelming them with data they may not use.",
+        "Audit of 26 November 2026 (docs/evidence/RYT-184/audit.md): 24 findings in art, interface and information load.",
+        "Owner answer to the options page, 26 November 2026: the recommended option (A) in each of its eight questions."
+      ],
+      "scope": "As chosen by the owner: (1) the content panel shows one card per pack with its cover, a short name, one line of what it brings and one switch, the categories and hidden entries behind Personalizar, and packs not in use folded; (2) one update notice per pack with one Actualizar for the whole pack, and a review that leads with what affects the campaign and counts the rest; (3) entries are browsed in a sheet with the bestiary rows (picture, name, kind), a search that stays in view and the views Todas and Ocultas; (4) nothing is imported into the storeroom in bulk by default: its search also finds the items of the active packs and adds them one at a time; (5) creating a campaign shows one content line with Cambiar; (6) a pack has a painted cover, set in the library and published with the pack, falling back to a picture of its content; (7) the bestiary opens on the campaign's own creatures when it has any, the glossary opens on its search and hides empty tabs, and list rows carry a pack mark when more than one pack is active; (8) the shadcn kit is used only in these screens. First, the kit fixes the RYT-183 review left for its first use: the scoped reset clears paragraph margins and link underlines inside kit parts, one focus ring on a focused Item, Skeleton still under reduced motion, 44px targets. Non-goals: the library manager for editors beyond the cover field (RYT-093), rebuilding the bestiary and storeroom rows of RYT-181 with the kit.",
+      "acceptance": [
+        "The eight chosen options are built as described in the scope.",
+        "Each audit finding is fixed, or recorded as out of scope with its reason.",
+        "With five packs the content panel fits its packs in the first two phone screens at 390px.",
+        "Loading, empty, error, forbidden and stale states are designed, in both themes and both languages.",
+        "An independent UI review passes."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "Captures at 390px and 820px in both themes and languages; keyboard, Escape, 150% text and reduced motion."
+      ],
+      "evidence": [
+        "docs/evidence/RYT-184/audit.md",
+        "docs/evidence/RYT-184/validation.md",
+        "docs/decisions/060-campaign-content-by-pack.md",
+        "supabase/migrations/20261228120000_campaign_content_by_pack.sql"
+      ]
     }
   ]
 }

@@ -26,7 +26,9 @@ import { legalEs } from './legal-es'
 import { adminEs } from './admin-es'
 import { questsEs } from './quests-es'
 import { campaignContentEs } from './campaign-content-es'
+import { contentChoiceEs } from './content-choice-es'
 import { diceEs } from './dice-es'
+import { switcherEs } from './switcher-es'
 import { levelupEs } from './levelup-es'
 import { castEs } from './cast-es'
 import { activationEs } from './activation-es'
@@ -40,7 +42,9 @@ export const es = {
   ...adminEs,
   ...questsEs,
   ...campaignContentEs,
+  ...contentChoiceEs,
   ...diceEs,
+  ...switcherEs,
   ...levelupEs,
   ...castEs,
   ...identityEs,

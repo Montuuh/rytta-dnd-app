@@ -5,6 +5,8 @@ import { expectTouchTargets, capture } from './fixtures/audit.ts'
 
 const sheetUrl = `./#/campaign/${campaignId}/party/${characterId}`
 const membersUrl = `./#/campaign/${campaignId}/members`
+// RYT-179: the party level is its own command centre panel.
+const levelUrl = `./#/campaign/${campaignId}/members?panel=level`
 
 async function audit(page: Page, path: string) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
@@ -70,82 +72,225 @@ async function pickSpells(
   for (let n = 0; n < count; n += 1) await adds.first().click()
 }
 
-test('RYT-130 the DM sets the party level: confirmation, retry with the same request, count below', async ({
+/** The filled accent controls inside the panel (RYT-151: at most one per panel). */
+const filledControls = (page: Page) =>
+  page.evaluate(() => {
+    const probe = document.createElement('i')
+    probe.style.color = 'var(--app-accent)'
+    document.body.append(probe)
+    const accent = getComputedStyle(probe).color
+    probe.remove()
+    return [...document.querySelectorAll<HTMLElement>('main a, main button')]
+      .filter((el) => el.offsetParent && getComputedStyle(el).backgroundColor === accent)
+      .map((el) => el.textContent?.trim())
+  })
+
+const setPartyLevelCalls = (calls: { method: string; body: Record<string, unknown> }[]) =>
+  calls.filter((call) => call.method === 'set_party_level')
+
+test('RYT-180 the DM raises the party level in one tap, undoes it, and sees who is below', async ({
   page,
 }, info) => {
   const fixture = await identityFixture(page, { party: true, sheet: 'complete' })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(membersUrl)
+  await page.goto(levelUrl)
   const section = page.getByRole('region', { name: /Nivel del grupo/ })
   await expect(section.getByRole('heading', { name: /Nivel del grupo\s*Sin fijar/ })).toBeVisible()
-  await expect(section.getByText('Fíjalo para que cada jugador suba de nivel')).toBeVisible()
+  await expect(section.getByText('Aún no hay nivel del grupo')).toBeVisible()
+  await expect(
+    section.getByText('una ficha cambia solo cuando su jugador la confirma'),
+  ).toBeVisible()
+  // One filled action, and the panel's first control is high on a phone.
+  expect(await filledControls(page)).toEqual(['Fijar nivel 5'])
+  const first = (await section.getByRole('button', { name: 'Fijar nivel 5' }).boundingBox())!
+  if (info.project.name === 'identity-mobile') expect(first.y).toBeLessThan(280)
   await audit(page, info.outputPath('party-level-unset.png'))
+  await expectTouchTargets(page, 'main a:visible, main button:visible')
   await evidence(page, 'dm-party-level-unset')
 
-  // Nothing is sent until the DM confirms.
-  // It starts at the highest finished sheet (level 5) and the DM raises it by one.
-  await expect(section.locator('output')).toHaveText('5')
-  await section.getByRole('button', { name: 'Subir el nivel del grupo' }).click()
-  await expect(section.locator('output')).toHaveText('6')
-  await section.getByRole('button', { name: 'Fijar nivel 6' }).click()
-  const dialog = page.getByRole('dialog', { name: '¿Fijar el nivel del grupo en 6?' })
-  await expect(dialog).toContainText('Ninguna ficha cambia hasta que la confirmen.')
-  // RYT-135: the header key and the footer button do not share a name.
-  const names = await dialog
-    .getByRole('button')
-    .evaluateAll((buttons) =>
-      buttons.map((b) => b.getAttribute('aria-label') ?? b.textContent?.trim() ?? ''),
-    )
-  expect(names).toEqual(['Cerrar', 'Cancelar', 'Confirmar'])
-  expect(new Set(names).size).toBe(names.length)
-  expect(fixture.calls.filter((call) => call.method === 'set_party_level')).toHaveLength(0)
-  await audit(page, info.outputPath('party-level-confirm.png'))
-  await evidence(page, 'dm-party-level-confirm')
+  // One tap saves: no dialog, one request, and the status line says what happened.
+  const set = section.getByRole('button', { name: 'Fijar nivel 5' })
+  await set.click()
+  await expect(section.locator('[role="status"]')).toHaveText('Nivel 5 fijado')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  expect(setPartyLevelCalls(fixture.calls)).toHaveLength(1)
+  expect(setPartyLevelCalls(fixture.calls)[0]!.body).toMatchObject({
+    target_campaign: campaignId,
+    new_level: 5,
+  })
+  await expect(section.getByRole('heading', { name: /Nivel del grupo\s*5/ })).toBeVisible()
+  // Focus stays on the control that was pressed, which now raises to the next level.
+  const raise = section.getByRole('button', { name: 'Subir a nivel 6' })
+  await expect(raise).toBeFocused()
+  expect(await filledControls(page)).toEqual(['Subir a nivel 6'])
 
-  // A failure leaves the level as it was and the same button retries the same request.
+  // The common case: one tap raises the party, one tap undoes it.
+  await raise.click()
+  await expect(section.locator('[role="status"]')).toHaveText('Nivel 6 fijado')
+  await expect(section.getByText('3 de 3 personajes están por debajo')).toBeVisible()
+  expect(setPartyLevelCalls(fixture.calls)).toHaveLength(2)
+  await audit(page, info.outputPath('party-level-set.png'))
+  await evidence(page, 'dm-party-level-set')
+  const undo = section.getByRole('button', { name: 'Deshacer' })
+  await undo.click()
+  await expect(section.locator('[role="status"]')).toHaveText('De vuelta al nivel 5')
+  await expect(undo).toHaveCount(0)
+  // The Undo button is gone: focus moves to the Raise button, which is visible on every screen.
+  await expect(raise).toBeFocused()
+  const requests = setPartyLevelCalls(fixture.calls)
+  expect(requests).toHaveLength(3)
+  expect(requests[2]!.body).toMatchObject({ new_level: 5 })
+  expect(new Set(requests.map((call) => call.body.request_id)).size).toBe(3)
+  await expect(section.getByText('Todos están en el nivel del grupo')).toBeVisible()
+
+  // Characters: those below the level first, with their Player, level and a link to the sheet.
+  await raise.click()
+  const list = section.getByRole('list', { name: 'Personajes del grupo' })
+  const rows = list.getByRole('listitem')
+  await expect(rows).toHaveCount(3)
+  await expect(rows.first().getByRole('link')).toHaveAttribute('href', /\/party\/[0-9a-f-]+$/)
+  await expect(rows.first()).toContainText('nivel 5')
+  await expect(rows.first()).toContainText('Por debajo del nivel del grupo')
+  await expect(list).toContainText('Bea P.')
+  await audit(page, info.outputPath('party-level-below.png'))
+})
+
+test('RYT-180 a failed change shows the reason inline and Retry repeats the same request', async ({
+  page,
+}, info) => {
+  const fixture = await identityFixture(page, { party: true, sheet: 'complete', partyLevel: 6 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(levelUrl)
+  const section = page.getByRole('region', { name: /Nivel del grupo/ })
   fixture.failNextPartyLevel()
-  await dialog.getByRole('button', { name: 'Confirmar' }).click()
-  await expect(dialog.getByRole('alert')).toContainText('No se guardó el nivel del grupo')
-  // Focus stays inside the dialog, on the reason, and the retry is the next stop.
-  await expect(dialog.getByRole('alert')).toBeFocused()
-  await page.keyboard.press('Tab')
-  await expect(dialog.locator(':focus')).toHaveCount(1)
+  await section.getByRole('button', { name: 'Subir a nivel 7' }).click()
+  const alert = section.getByRole('alert')
+  await expect(alert).toContainText('No se guardó el nivel del grupo')
+  // The reason has the focus, nothing changed, and the retry is the next stop.
+  await expect(alert).toBeFocused()
+  await expect(section.getByRole('heading', { name: /Nivel del grupo\s*6/ })).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
   await evidence(page, 'dm-party-level-error')
-  await dialog.getByRole('button', { name: 'Reintentar' }).click()
-  await expect(dialog).toHaveCount(0)
-  const sent = fixture.calls.filter((call) => call.method === 'set_party_level')
+  await audit(page, info.outputPath('party-level-error.png'))
+  await page.keyboard.press('Tab')
+  await expect(section.getByRole('button', { name: 'Reintentar' })).toBeFocused()
+  await page.keyboard.press('Enter')
+  await expect(section.locator('[role="status"]')).toHaveText('Nivel 7 fijado')
+  await expect(alert).toHaveCount(0)
+  const sent = setPartyLevelCalls(fixture.calls)
   expect(sent).toHaveLength(2)
   expect(sent[0]!.body.request_id).toBe(sent[1]!.body.request_id)
-  expect(sent[1]!.body).toMatchObject({ target_campaign: campaignId, new_level: 6 })
+  expect(sent[1]!.body).toMatchObject({ target_campaign: campaignId, new_level: 7 })
+})
 
-  await expect(section.getByRole('heading', { name: /Nivel del grupo\s*6/ })).toBeVisible()
-  await expect(section.locator('.party-level-saved')).toHaveText('Nivel del grupo fijado en 6.')
-  await expect(
-    section.getByText('3 personajes están por debajo del nivel del grupo.'),
-  ).toBeVisible()
-  await audit(page, info.outputPath('party-level-set.png'))
-  // RYT-151: "Invite player" is the filled action; setting the level is outlined and waits for a
-  // number other than the one the campaign holds.
-  const setLevel = section.getByRole('button', { name: 'Fijar nivel 6' })
-  await expect(setLevel).toBeDisabled()
-  await expect(setLevel).toHaveAttribute('data-variant', 'outline')
-  await expect(section.getByRole('heading', { name: /Nivel del grupo/ })).toBeFocused()
-  await evidence(page, 'dm-party-level-set')
-
-  // The notice goes as soon as the value is edited again.
+test('RYT-180 Another level opens the stepper: any level, clearing, and Undo back to nothing', async ({
+  page,
+}) => {
+  const fixture = await identityFixture(page, { party: true, sheet: 'complete', partyLevel: 6 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(levelUrl)
+  const section = page.getByRole('region', { name: /Nivel del grupo/ })
+  const another = section.getByRole('button', { name: 'Otro nivel' })
+  await expect(another).toHaveAttribute('aria-expanded', 'false')
+  await expect(section.locator('output')).toHaveCount(0)
+  await another.click()
+  await expect(another).toHaveAttribute('aria-expanded', 'true')
+  await expect(section.locator('output')).toHaveText('6')
+  const outlined = section.getByRole('button', { name: 'Fijar nivel 6' })
+  await expect(outlined).toBeDisabled()
+  await expect(outlined).toHaveAttribute('data-variant', 'outline')
+  expect(await filledControls(page)).toEqual(['Subir a nivel 7'])
   await section.getByRole('button', { name: 'Bajar el nivel del grupo' }).click()
-  await expect(section.locator('.party-level-saved')).toBeEmpty()
-  await section.getByRole('button', { name: 'Subir el nivel del grupo' }).click()
-  // Lowering only stops the prompts; Escape closes the question and focus comes back.
-  const lower = section.getByRole('button', { name: 'Bajar el nivel del grupo' })
-  await lower.click()
-  const apply = section.getByRole('button', { name: 'Fijar nivel 5' })
-  await apply.click()
-  await expect(page.getByRole('dialog')).toContainText('solo detiene los avisos')
-  await page.keyboard.press('Escape')
-  await expect(page.getByRole('dialog')).toHaveCount(0)
-  await expect(apply).toBeFocused()
-  expect(fixture.calls.filter((call) => call.method === 'set_party_level')).toHaveLength(2)
+  await section.getByRole('button', { name: 'Bajar el nivel del grupo' }).click()
+  await section.getByRole('button', { name: 'Fijar nivel 4' }).click()
+  await expect(section.locator('[role="status"]')).toHaveText('Nivel 4 fijado')
+  expect(setPartyLevelCalls(fixture.calls)[0]!.body).toMatchObject({ new_level: 4 })
+  // Lowering saves at once too, and the stepper follows the saved level.
+  await expect(section.locator('output')).toHaveText('4')
+  await section.getByRole('button', { name: 'Quitar el nivel del grupo' }).click()
+  await expect(section.locator('[role="status"]')).toHaveText('Nivel del grupo quitado')
+  await expect(section.getByRole('heading', { name: /Nivel del grupo\s*Sin fijar/ })).toBeVisible()
+  expect(setPartyLevelCalls(fixture.calls)[1]!.body).toMatchObject({ new_level: null })
+  await section.getByRole('button', { name: 'Deshacer' }).click()
+  await expect(section.locator('[role="status"]')).toHaveText('De vuelta al nivel 4')
+  expect(setPartyLevelCalls(fixture.calls)[2]!.body).toMatchObject({ new_level: 4 })
+})
+
+test('RYT-180 a second tap on the raise action right after a save does not raise again', async ({
+  page,
+}) => {
+  const fixture = await identityFixture(page, { party: true, sheet: 'complete', partyLevel: 6 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(levelUrl)
+  const section = page.getByRole('region', { name: /Nivel del grupo/ })
+  await section.getByRole('button', { name: 'Subir a nivel 7' }).click()
+  await expect(section.locator('[role="status"]')).toHaveText('Nivel 7 fijado')
+  // The same button now reads the next level. A tap that was already on its way lands on it.
+  const next = section.getByRole('button', { name: 'Subir a nivel 8' })
+  await expect(next).toHaveAttribute('aria-disabled', 'true')
+  for (const wait of [0, 300]) {
+    await page.waitForTimeout(wait)
+    // Checked and pressed in one step, so the tap is known to land while the action rests.
+    const landed = await next.evaluate((button: HTMLElement) => {
+      if (button.getAttribute('aria-disabled') !== 'true') return false
+      button.click()
+      return true
+    })
+    expect(landed).toBe(true)
+  }
+  await expect(section.getByRole('heading', { name: /Nivel del grupo\s*7/ })).toBeVisible()
+  expect(setPartyLevelCalls(fixture.calls)).toHaveLength(1)
+  // Undo still returns to where the DM started, and a deliberate raise works once it rests.
+  await expect(next).not.toHaveAttribute('aria-disabled', 'true')
+  await next.click()
+  await expect(section.locator('[role="status"]')).toHaveText('Nivel 8 fijado')
+  expect(setPartyLevelCalls(fixture.calls)).toHaveLength(2)
+})
+
+test('RYT-180 at level 20 there is nothing to raise and the heading takes the focus', async ({
+  page,
+}) => {
+  await identityFixture(page, { party: true, sheet: 'complete', partyLevel: 19 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(levelUrl)
+  const section = page.getByRole('region', { name: /Nivel del grupo/ })
+  await section.getByRole('button', { name: 'Subir a nivel 20' }).click()
+  await expect(section.locator('[role="status"]')).toHaveText('Nivel 20 fijado')
+  await expect(section.getByRole('button', { name: /^Subir a nivel/ })).toHaveCount(0)
+  // No action button is left: the heading takes the focus.
+  await expect(section.getByRole('heading', { name: /Nivel del grupo/ })).toBeFocused()
+})
+
+test('RYT-180 the one-time set action opens the stepper and focuses it, once', async ({ page }) => {
+  await identityFixture(page, { party: true, sheet: 'complete', partyLevel: 6 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(`${levelUrl}&do=set`)
+  const section = page.getByRole('region', { name: /Nivel del grupo/ })
+  await expect(section.getByRole('button', { name: 'Subir el nivel del grupo' })).toBeFocused()
+  await expect(section.getByRole('button', { name: 'Otro nivel' })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  )
+  await expect(page).toHaveURL(/panel=level$/)
+  await page.reload()
+  await expect(section.getByRole('button', { name: 'Otro nivel' })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  )
+})
+
+test('RYT-180 the party list gives way to a retry when the party cannot be read', async ({
+  page,
+}) => {
+  await identityFixture(page, { party: true, sheet: 'complete', partyLevel: 6 })
+  await page.route('**/rest/v1/rpc/get_party_overview', (route) =>
+    route.fulfill({ status: 500, json: { message: 'boom' } }),
+  )
+  await page.goto(levelUrl)
+  const section = page.getByRole('region', { name: /Nivel del grupo/ })
+  await expect(section.getByRole('button', { name: 'Subir a nivel 7' })).toBeVisible()
+  await expect(section.getByRole('button', { name: 'Reintentar' })).toBeVisible()
+  await expect(section.getByRole('list', { name: 'Personajes del grupo' })).toHaveCount(0)
 })
 
 test('RYT-130 a Player cannot set the party level and has no control for it', async ({ page }) => {
@@ -483,7 +628,7 @@ for (const language of ['es', 'en'] as const)
       const tag = `${theme === 'default' ? 'hearth' : 'parchment'}-${language}`
       const dm = await identityFixture(page, { party: true, sheet: 'complete', partyLevel: 6 })
       await page.emulateMedia({ reducedMotion: 'reduce' })
-      await page.goto(membersUrl)
+      await page.goto(levelUrl)
       await expect(page.locator('.party-level')).toContainText('6')
       await evidence(page, `matrix-${tag}-dm-control`)
       expect(dm.calls.length).toBeGreaterThan(0)
@@ -951,16 +1096,28 @@ for (const theme of ['default', 'parchment', 'wizard'] as const)
     })
 
 for (const theme of ['default', 'parchment', 'wizard'] as const)
-  test(`RYT-135 axe is clean on the DM party-level dialog in ${theme}`, async ({ page }, info) => {
+  test(`RYT-180 axe is clean on the DM party-level panel in ${theme}`, async ({ page }, info) => {
     await page.addInitScript((id) => localStorage.setItem('rytta-theme', id), theme)
-    await identityFixture(page, { party: true, sheet: 'complete' })
+    await identityFixture(page, { party: true, sheet: 'complete', partyLevel: 6 })
     await page.emulateMedia({ reducedMotion: 'reduce' })
-    await page.goto(membersUrl)
+    await page.goto(levelUrl)
     const section = page.getByRole('region', { name: /Nivel del grupo/ })
-    await section.getByRole('button', { name: 'Subir el nivel del grupo' }).click()
-    await section.getByRole('button', { name: 'Fijar nivel 6' }).click()
-    await expect(
-      page.getByRole('dialog', { name: '¿Fijar el nivel del grupo en 6?' }),
-    ).toBeVisible()
-    await audit(page, info.outputPath(`dm-dialog-${theme}.png`))
+    await section.getByRole('button', { name: 'Otro nivel' }).click()
+    await section.getByRole('button', { name: 'Subir a nivel 7' }).click()
+    await expect(section.locator('[role="status"]')).toHaveText('Nivel 7 fijado')
+    await audit(page, info.outputPath(`dm-panel-${theme}.png`))
+    await expectTouchTargets(page, 'main a:visible, main button:visible')
   })
+
+test('RYT-181 a held Enter on the raise action raises the party level once', async ({ page }) => {
+  const fixture = await identityFixture(page, { party: true, sheet: 'complete', partyLevel: 6 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(levelUrl)
+  const section = page.getByRole('region', { name: /Nivel del grupo/ })
+  await section.getByRole('button', { name: 'Subir a nivel 7' }).focus()
+  // Holding the key sends keydown again with `repeat` set: only the first one is a press.
+  for (let repeat = 0; repeat < 4; repeat++) await page.keyboard.down('Enter')
+  await page.keyboard.up('Enter')
+  await expect(section.locator('[role="status"]')).toHaveText('Nivel 7 fijado')
+  expect(setPartyLevelCalls(fixture.calls)).toHaveLength(1)
+})

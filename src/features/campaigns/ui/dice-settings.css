@@ -1,0 +1,202 @@
+/* RYT-180 dice settings: two ruled rows (label, current value, chevron) that open a sheet with
+   the options. The chosen option is marked by accent ink and a ring, never by a fill. */
+.dice-panel {
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 48em) {
+  .dice-panel {
+    max-width: var(--settings-measure);
+  }
+}
+
+.dice-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--app-border);
+  border-radius: var(--mantine-radius-md);
+  background: var(--app-surface);
+  overflow: hidden;
+}
+
+.dice-rows li + li {
+  border-top: 1px solid var(--app-border);
+}
+
+.dice-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 14px;
+  border: 0;
+  background: none;
+  color: var(--app-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.dice-row:hover {
+  background: var(--app-hover);
+}
+
+.dice-row:focus-visible,
+.dice-option:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: -3px;
+}
+
+.dice-row-text {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dice-row-label {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+
+.dice-row-value {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.dice-row-chevron {
+  flex: none;
+  color: var(--app-muted);
+}
+
+/* The status line keeps its place, so "Saved" does not move what is below it. */
+.dice-saved {
+  min-height: 1.5em;
+  line-height: 1.5;
+  font-size: var(--fs-meta);
+  color: var(--success);
+}
+
+/* The sheet on phones: the same bottom sheet look as the panel switcher. */
+.dice-sheet .mantine-Drawer-content {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  max-height: 86dvh;
+  margin-top: auto;
+  border-radius: 18px 18px 0 0;
+  background: var(--app-surface);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.dice-sheet .mantine-Drawer-header {
+  background: var(--app-surface);
+}
+
+.dice-sheet .mantine-Drawer-title,
+.dice-sheet .mantine-Modal-title {
+  font-family: var(--mantine-font-family-headings);
+  font-size: var(--fs-h3);
+}
+
+.dice-options {
+  display: grid;
+  padding-bottom: 12px;
+}
+
+.dice-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 4px;
+  border: 0;
+  border-top: 1px solid var(--app-border);
+  background: none;
+  color: var(--app-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.dice-option:first-child {
+  border-top: 0;
+}
+
+.dice-option:hover {
+  background: var(--app-hover);
+}
+
+.dice-option-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  border: 2px solid var(--app-muted);
+  border-radius: 50%;
+}
+
+.dice-option-mark::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--app-accent);
+  transform: scale(0);
+}
+
+.dice-option[aria-checked='true'] .dice-option-mark {
+  border-color: var(--app-accent);
+}
+
+.dice-option[aria-checked='true'] .dice-option-mark::after {
+  transform: scale(1);
+}
+
+.dice-option[aria-checked='true'] .dice-option-title {
+  color: var(--app-accent);
+}
+
+.dice-option-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dice-option-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.dice-option-hint {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+
+.dice-summary {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dice-summary li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.dice-summary span {
+  color: var(--app-muted);
+}

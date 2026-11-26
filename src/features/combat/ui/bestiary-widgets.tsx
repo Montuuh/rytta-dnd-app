@@ -1,6 +1,6 @@
 import { useId, useState, type KeyboardEvent, type ReactNode, type Ref } from 'react'
 import { ActionIcon, NumberInput } from '@mantine/core'
-import { Check, Minus, Plus, type LucideIcon } from 'lucide-react'
+import { Bookmark, Check, Minus, Plus, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   challengeRatings,
@@ -29,6 +29,20 @@ const sizeSquares: Record<CreatureSize, number> = {
   large: 2,
   huge: 3,
   gargantuan: 4,
+}
+
+/**
+ * A favourite creature: a filled bookmark beside its name. Decorative (a mark, not a control); the
+ * visually hidden word is what a screen reader reads after the name.
+ */
+export function FavouriteMark({ size = 18 }: { size?: number }) {
+  const { t } = useTranslation()
+  return (
+    <span className="bst-fav-mark">
+      <Bookmark size={size} fill="currentColor" aria-hidden="true" />
+      <span className="visually-hidden"> · {t('bestiary.favorite.mark')}</span>
+    </span>
+  )
 }
 
 type TileOption<T extends string> = { value: T; content: ReactNode; disabled?: boolean }

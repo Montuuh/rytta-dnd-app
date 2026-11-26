@@ -1,0 +1,58 @@
+/* RYT-180: the settings panels (Party level, Modules, Audit) keep a readable measure from 48em,
+   left aligned in the panel area; Members uses the full width as columns. */
+:root {
+  --settings-measure: 44rem;
+}
+
+@media (min-width: 48em) {
+  .dm-settings-panel {
+    max-width: var(--settings-measure);
+  }
+}
+
+/* Modules: one muted line, then the switches. The row label is full ink when on and muted when
+   off; the switch carries the state, never a fill (RYT-151). */
+.module-switch-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--app-border);
+  border-radius: var(--mantine-radius-md);
+  background: var(--app-surface);
+  overflow: hidden;
+}
+.module-switch-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--app-border);
+}
+.module-switch-row:last-child {
+  border-bottom: 0;
+}
+.module-switch-row .feature-icon {
+  flex: none;
+  color: var(--app-muted);
+}
+.module-switch-row[data-active] .feature-icon {
+  color: var(--app-accent);
+}
+.module-switch-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  color: var(--app-muted);
+  overflow-wrap: anywhere;
+}
+.module-switch-row[data-active] .module-switch-name {
+  color: var(--app-text);
+}
+.module-switch-row .mantine-Switch-track {
+  cursor: pointer;
+}
+.module-switch-row .mantine-Switch-body {
+  min-height: 44px;
+  align-items: center;
+}

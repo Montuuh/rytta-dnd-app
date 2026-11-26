@@ -4,36 +4,29 @@ import type { diceEn } from './dice-en'
  * las últimas tiradas. */
 export const diceEs = {
   'dm.panelDice': 'Dados',
-  'diceSettings.title': 'Dados de la mesa',
-  'diceSettings.hint':
-    'Elige cómo tira la mesa y quién ve las tiradas hechas o anotadas en la app.',
-  'diceSettings.current': 'En uso',
   'diceSettings.modeLegend': 'Cómo se tira',
   'diceSettings.visibilityLegend': 'Quién ve las tiradas',
   'diceSettings.mode.physical': 'Dados físicos',
-  'diceSettings.mode.physicalHint':
-    'Cada jugador tira sus dados. La ficha dice qué tirar y qué sumar, y el resultado se puede anotar: queda marcado como anotado.',
+  'diceSettings.mode.physicalHint': 'Cada jugador tira sus dados y puede anotar el resultado.',
   'diceSettings.mode.app': 'Dados en la app',
-  'diceSettings.mode.appHint':
-    'Rytta tira los dados de las pruebas, salvaciones, ataques, daño, iniciativa y dados de golpe, y anota cada tirada. Queda marcada como tirada por Rytta y nadie puede cambiarla.',
+  'diceSettings.mode.appHint': 'Rytta tira y anota cada tirada; nadie puede cambiarla.',
   'diceSettings.mode.player': 'Cada jugador elige',
   'diceSettings.mode.playerHint':
-    'Cada uno escoge dados físicos o en la app en su dispositivo. Hasta que elija, dados físicos.',
+    'Cada uno elige en su dispositivo; hasta entonces, dados físicos.',
   'diceSettings.visibility.roller_dm': 'Quien tira y el DM',
   'diceSettings.visibility.roller_dmHint': 'El resto de la mesa no ve la tirada.',
   'diceSettings.visibility.table': 'Toda la mesa',
   'diceSettings.visibility.tableHint': 'Todos los miembros activos ven cada tirada.',
   'diceSettings.visibility.roller': 'Solo quien tira',
   'diceSettings.visibility.rollerHint': 'Ni siquiera el DM ve la tirada.',
-  'diceSettings.apply': 'Aplicar cambios',
   'diceSettings.saved': 'Ajustes de dados guardados.',
   'diceSettings.confirmTitle': '¿Cambiar los dados de la mesa?',
   'diceSettings.confirmMode.physical':
-    'Los jugadores tiran sus dados. Las fichas dicen qué tirar, y la iniciativa y los dados de golpe se escriben a mano. Ningún dato de personaje cambia.',
+    'Las fichas dicen qué tirar; la iniciativa y los dados de golpe se escriben a mano. Ningún dato de personaje cambia.',
   'diceSettings.confirmMode.app':
-    'Los jugadores tirarán en la app: Rytta tira y anota cada tirada, la iniciativa y los dados de golpe incluidas. En las fichas, los números dejan de decir qué tirar y tiran al tocarlos. Ningún dato de personaje cambia.',
+    'En las fichas, los números dejan de decir qué tirar y tiran al tocarlos; la iniciativa y los dados de golpe también. Ningún dato de personaje cambia.',
   'diceSettings.confirmMode.player':
-    'Cada jugador elige en su dispositivo; hasta que elija, usa dados físicos.',
+    'Hasta que cada jugador elija, sus fichas funcionan como con dados físicos.',
   'diceSettings.confirmVisibility.wider':
     'Las tiradas anteriores no se muestran a más gente: siguen visibles solo para quien las veía cuando se hicieron.',
   'diceSettings.confirmVisibility.narrower':

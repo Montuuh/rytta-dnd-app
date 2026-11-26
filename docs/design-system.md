@@ -44,9 +44,15 @@ Use src/shared/i18n catalogs and typed keys for visible text, accessible names, 
 empty/error states and route titles. Update the document language. Never machine-translate
 user campaign content. Sample campaign copy is localized because it is application-owned.
 
-Mantine is the single component kit: accessible dialogs/drawers, forms, menus, tabs,
-notifications and layout. Lucide supplies icons. Reuse official patterns rather than
-maintaining duplicate widgets or adding Tailwind/shadcn alongside Mantine.
+Two kits, one owner per job ([ADR 059](decisions/059-shadcn-kit-beside-mantine.md)). Mantine
+owns the shell, forms and inputs, modals, menus, tabs and notifications. The shadcn kit in
+`src/shared/ui/kit` (added with `npx shadcn add <name>`, then edited as our own source) is for
+widgets Mantine lacks: rich list rows (`Item`), designed empty states (`Empty`), content-shaped
+skeletons, sheets that follow the finger, command lists and carousels. Never show two versions
+of one control on a screen: buttons, switches, text inputs and modals are Mantine's. Kit
+utilities carry the `tw:` prefix and read the same semantic tokens (`tw:bg-card` is
+`--app-surface`); adjust every kit component to 44px targets and the gold focus ring before
+use. Lucide supplies icons.
 
 Theme tokens: src/app/theme.ts. Layout: src/app/styles.css. Keep campaign art optional;
 the compass is decorative. Self-host future fonts and document licenses.
@@ -70,7 +76,11 @@ Every interface change gets an independent UI review.
 
 ## DM tools and item lists (RYT-027)
 
-DM-only tools live in the DM Command Center tabs (`?panel=` deep links), not in separate
+The DM Command Center is a home board plus panels in three groups (At the table, Party, Settings).
+Panels are links with a current-page mark, in a side navigation from 48em and in a sheet opened
+from the panel name on phones, never tabs (ADR 056); counts are numerals in the row, and the home
+keeps one filled action, the live encounter.
+DM-only tools live in the DM Command Center panels (`?panel=` deep links), not in separate
 navigation items. Item collections use dense 64px rows (rarity-tinted icon, name, one meta
 line, icon actions) with an optional compact grid. Actions that fit stay as 44px icon buttons
 with accessible names; on phones they fold into one ⋯ menu. Avoid stacks of plain text
@@ -146,11 +156,11 @@ How it works:
 ## Primary action and selection (RYT-151)
 
 The filled accent marks one action per screen: the one the DM uses at the table. Item
-storeroom: Distribute loot (New item outlined, Manage catalogue a quiet link). Members: Invite
-player; Set level N is outlined and enabled only when the stepper differs from the campaign's
-level. Shops: Add item (New shop outlined). Combat: the fight-flow button (Start, Next turn);
+storeroom: Distribute loot (New item and Manage catalogue in the `···` menu). Members: Invite
+player. Party level: Raise to level N (Set level N under "Another level" is outlined). Content:
+Review changes, only while a pack version waits. Dice, Modules and Audit have none. Shops: Add item (New shop outlined). Combat: the fight-flow button (Start, Next turn);
 adding party members or creatures uses the light variant. Bestiary: Add to encounter in the
-stat block (New creature light). Dialogs and drawers are their own screen with their own fill.
+stat block (New creature in the `···` menu). Dialogs and drawers are their own screen with their own fill.
 
 Selection is never the fill. The selected command-centre tab, shop, segment or pressed toggle
 uses accent ink on `--app-select-tint` with a 3px rail (`--select-rail`, vertical lists) or
@@ -169,7 +179,8 @@ use tabular figures with their unit (PG/HP, po/gp, a visible or visually hidden 
 Every page starts with `PageHead`: the h1, one short lede, primary actions and the
 `RefreshControl` on one band (ADR 023). On phones the refresh button sits beside the h1 and its
 relative timestamp is announced through `aria-describedby` instead of a separate visible row;
-pages whose tabs already explain them (DM Command Center) hide the lede on phones. Inside a
+pages whose frame already names them (the DM Command Center panels) hide the lede and the
+repeated panel title on phones. Inside a
 campaign the phone header drops the RYTTA wordmark for the campaign name, and bottom-bar labels
 stay on one line. Keep ledes to one line on laptops. Overlays that mount on
 open use `usePhone`/`useWide` so phones never paint the desktop variant first. Destructive and
@@ -234,9 +245,42 @@ The bestiary token is its own image picker: a visually hidden file input labelle
 …" / "Change the image of …", the token as its label, a camera seal on the rim and the focus ring
 around the token. Progress and success are announced; failures appear under the card.
 
+## Bestiary and storeroom at the table (RYT-181, ADR 058)
+
+This section takes precedence over older passages below where they differ (rows with a CR chip
+and a star, removable filter chips, the stat block led by its plate, the storeroom row menu).
+
+Both screens open on the search with Filters and one `···` menu beside it (New creature and
+Creature packs; New item and Manage catalogue). Search ranks names that start with the query, then
+names where a word starts with it, then the rest; Enter opens the first. Active filters are one
+muted line with a text button to clear them; a filter is removed one by one in the Filters sheet.
+Rows are one button with one tab stop and no badge: a creature row is about 57px (32px token, name,
+"type · AC · HP", "CR n" as text; a small bookmark after the name marks a favourite), an item row
+about 64px (icon, name, "category · rarity · weight", price as text). Rare actions live inside the
+open creature or item.
+
+Stat block: a 56px thumbnail beside the name (it opens the picture; image editing is in `···`),
+then armor class, hit points, initiative and speed, then actions, bonus actions, reactions and
+traits, then abilities, saves, details and lore. Its bar is one row: the main action and `···`.
+From 48em it opens in a pane beside the list (selected row with the rail and `aria-current`,
+arrows move the selection, Escape closes the pane); on phones it is a full-screen sheet. With an
+encounter in progress, or the one opened last in the session, the bar is a count stepper and "Add
+to {encounter}"; a ruled status line above the bar says what was added, with Undo and a link to
+the encounter. The dialog stays for another encounter, a new one or other options, under `···`.
+
+Storeroom: Distribute loot is the one filled action; the proposals row shows only while one
+waits and opens the proposal itself when it is the only one. An item opens a read-only sheet with
+Give (filled), Edit and `···`. Giving is quantity, the characters as a radio list and "Give to
+{character}"; the result is a status line on the list. Loot is one line per item (recipients as
+toggles in ink and underline, an All toggle, quantity per recipient), a searchable alphabetical
+picker, a summary per character and one pinned "Deliver n items" action that says why when it
+cannot act. A proposal offers "Accept and give to {character}" when its draft is valid, "Review
+first" and Reject. Status lines keep their region mounted and use the rail line; a quick creature
+or a new item with typed content asks before it is discarded.
+
 ## Bestiary (ADR 028)
 
-The bestiary is a DM Command Center tab (`?panel=bestiary`, `&creature=` deep link), never a
+The bestiary is a DM Command Center panel (`?panel=bestiary`, `&creature=` deep link), never a
 navigation item. It reads like a field guide: a large search first (both languages, accents ignored,
 Enter opens the best match, ArrowDown enters the list, `/` focuses it from anywhere on the panel)
 with the Filters button beside it (active count; popover from 48em, bottom drawer on phones: CR
@@ -430,11 +474,13 @@ parchment plate set large.
 
 ## Level up (RYT-130)
 
-The DM sets the party level in the DM Command Center (Members tab): a shield seal with the level,
-a 44px −/value/+ stepper that starts at the highest finished sheet, and one confirmation that says
-what the change does (raising prompts the Players, lowering or clearing only stops the prompts; no
-sheet changes). Each request carries one id, so the retry after a failure never applies twice. A
-line counts the finished characters still below the level.
+The DM sets the party level in the DM Command Center (Party level panel, RYT-180, ADR 057): the
+level as a display numeral with how many characters are below it, a filled action for the next
+level, and "Another level" with the 44px −/value/+ stepper (it starts at the highest finished
+sheet), Set level N and Clear. A change saves at once: no sheet changes until its Player confirms,
+so instead of a confirmation the panel keeps a status line with Undo until the DM leaves or
+changes the level again. Each request carries one id, so the retry after a failure never applies
+twice. A ruled list names the characters with their level, those below first.
 
 A Player below the party level sees one prompt on the sheet with a single action. It opens the
 guided level-up: a full-screen sheet on phones and a modal from 48em, owned by the overlay wrappers
@@ -547,12 +593,13 @@ token below. On its side, the update notice stacks above the measure readout whi
 
 ## Dice (RYT-133, ADR 046)
 
-The DM sets the table's dice in the DM Command Center, tab "Dice": two groups of exclusive rows (how
-the table rolls: physical dice, dice in the app, each Player chooses; who sees the rolls: the roller and
-the DM, the whole table, only the roller). Each row is a 44px label with a mark, the choice and what it
-means; the radio is visually hidden and the checked row takes the accent border. A change shows one
-button, then one confirmation that lists what changes and what it does to earlier rolls; failures
-focus the reason and the retry repeats the same request. "Each Player chooses" is kept on the Player's
+The DM sets the table's dice in the DM Command Center, panel "Dice" (RYT-180, ADR 057): two rows
+with the current value (how the table rolls: physical dice, dice in the app, each Player chooses;
+who sees the rolls: the roller and the DM, the whole table, only the roller). A row opens a sheet
+(bottom drawer on phones, dialog from 48em) with its three options, a mark and one line of what
+each means; arrow keys move without committing. Choosing another option asks once, for that
+change, saying what it does to earlier rolls; failures focus the reason and the retry repeats the
+same request. There is no Apply button. "Each Player chooses" is kept on the Player's
 device (`rytta-dice-choice:<user>:<campaign>` in localStorage, in memory for the session where storage
 is blocked): a two-way control "Physical / In the app" on the sheet, the initiative entry and the hit
 dice, physical until it is used.

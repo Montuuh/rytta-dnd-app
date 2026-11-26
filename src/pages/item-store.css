@@ -1,77 +1,200 @@
-/* Storeroom rows: the meta line wraps instead of cutting itself at 390px, and the price keeps its
-   own line when the meta needs the width. */
-.store-list .store-row-line {
-  flex-wrap: wrap;
-  column-gap: 8px;
-  row-gap: 0;
+/* The storeroom: search and filters stay in view, rows are one button, one filled action. */
+.item-store {
+  min-width: 0;
 }
-.store-list .store-row-meta {
-  flex: 1 1 8rem;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
-  overflow-wrap: break-word;
-}
-.store-list .store-row-line .store-value {
-  margin-left: auto;
+.store-title {
+  margin-bottom: 8px;
 }
 
-.store-find {
-  display: grid;
-  gap: var(--mantine-spacing-xs);
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
+/* Search, Filters and the ⋯ menu in one row that stays at the top while the list scrolls. */
+.store-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  margin-inline: -4px;
+  padding: 8px 4px;
+  background: var(--app-bg);
 }
-.store-options summary {
-  cursor: pointer;
-  min-height: 44px;
-  align-content: center;
-  width: fit-content;
+.store-sticky:has(.status-rail:not([data-empty])) {
+  box-shadow: 0 8px 12px -12px color-mix(in srgb, var(--app-text) 45%, transparent);
+}
+/* A row reached by Shift+Tab scrolls clear of the sticky row (WCAG 2.4.11). */
+html:has(.item-store) {
+  scroll-padding-top: 9rem;
+}
+/* One row at the default text size, even in a wide fallback face: the field's basis is nothing and
+   its minimum is small, so it takes what Filters and ··· leave. At large text the minimum grows
+   with the text, and Filters and ··· wrap under the field, which keeps a usable width. */
+.store-find {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  /* Field, Filters and ··· share one height: 48px, or the field's own height at large text. */
+  --store-control: max(48px, 2.25rem);
+}
+.store-search {
+  flex: 1 1 0;
+  min-width: 6rem;
+}
+/* Filters and ··· travel together: when they do not fit beside the field they take the next row
+   as a pair and the field keeps the whole first row. */
+.store-tools {
+  display: flex;
+  flex: none;
+  gap: 8px;
+  align-items: center;
+}
+.store-tools > .mantine-ActionIcon-root {
+  --ai-size: var(--store-control) !important;
+}
+.store-search input {
+  min-height: var(--store-control);
+  font-size: 1.0625rem;
+}
+.store-search input::-webkit-search-cancel-button,
+.store-search input::-webkit-search-decoration {
+  display: none;
+  appearance: none;
+}
+.store-filters-button {
+  flex: none;
+  height: var(--store-control);
+  min-height: var(--store-control);
+}
+
+/* Filters in force: the button reads as set, with its count as a numeral. */
+.store-filters-button[data-active] {
+  color: var(--app-accent);
+  box-shadow: var(--select-underline);
+}
+.store-filters-count {
+  margin-inline-start: 6px;
+  font-weight: 700;
+}
+.store-filter-line {
+  padding-top: 2px;
+}
+
+.store-loot {
+  margin-top: 4px;
+}
+
+/* Proposals waiting: one ruled row, only when there are any. */
+.store-proposals {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 8px;
+  padding: 0 4px;
+  border-block: 1px solid var(--app-border);
+  color: var(--app-text);
+  font-weight: 600;
+}
+.store-proposals > span {
+  flex: 1;
+  min-width: 0;
+  text-align: start;
+}
+.store-proposals:hover {
+  background: var(--app-raised);
+}
+.store-proposals > svg {
+  flex: none;
   color: var(--app-muted);
 }
-.loot-line {
-  min-width: 0;
-  margin: 0;
-  padding: var(--mantine-spacing-sm);
-  border: 1px solid var(--app-border);
-  border-radius: var(--mantine-radius-sm);
-}
-.loot-line legend {
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-.loot-recipients {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.loot-recipient {
-  min-height: 44px;
-  padding: 4px 12px;
-  border: 1px solid var(--app-border);
-  border-radius: var(--mantine-radius-sm);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  overflow-wrap: anywhere;
-}
-.loot-recipient[aria-pressed='true'] {
-  border-color: var(--mantine-primary-color-filled);
-  font-weight: 700;
-}
-@media (max-width: 36em) {
-  .store-find {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.store-count {
+  margin: 12px 0 0;
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+  font-variant-numeric: tabular-nums;
 }
 
-.loot-batch-name {
-  min-width: 0;
-  flex: 1;
-  height: auto;
-  min-height: 44px;
+/* Rows: about 60px, one button, the price at the end. */
+.store-lists {
+  margin-top: 6px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface);
+  overflow: hidden;
 }
-.loot-batch-name .mantine-Button-label {
+.store-lists .store-list {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+.store-lists > div:last-child .store-row:last-child {
+  border-bottom: 0;
+}
+.store-row {
+  padding-right: 0;
+}
+.store-row-main {
+  min-height: 60px;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 0;
+}
+.store-row-name {
+  color: var(--app-text);
+}
+/* The muted line drops its last segment whole when the row is narrow; it never cuts a number. */
+.item-store .store-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  max-height: 1.4em;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+.store-meta-part {
+  flex: none;
+}
+.store-meta-part + .store-meta-part::before {
+  content: '·';
+  margin-inline: 0.4em;
+}
+.store-row-main .store-value {
+  margin-left: auto;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+}
+/* Wide screens keep a readable measure: the head and the list share one column. */
+@media (min-width: 48em) {
+  .item-store {
+    max-width: 44rem;
+  }
+}
+.store-grids {
+  margin-top: 6px;
+}
+
+.store-empty {
+  text-align: center;
+}
+
+/* RYT-184 "In your packs": a continuation of the list, not a box. A muted serif heading like the
+   command centre's sub-headings, hairlines between rows, no card. */
+.store-packs {
+  margin-top: 20px;
+}
+.store-packs-heading {
+  margin: 0 0 4px;
+  color: var(--app-muted);
+  font-size: var(--fs-h3);
+  font-weight: 500;
+}
+.item-store .pack-find-meta {
+  display: block;
+  line-height: 1.4;
+  /* A larger text size wraps the line instead of cutting it; the parts break at their spaces. */
   white-space: normal;
   overflow-wrap: anywhere;
+  color: var(--app-muted);
+}
+.item-store .pack-find-meta .store-meta-part {
+  display: inline;
 }

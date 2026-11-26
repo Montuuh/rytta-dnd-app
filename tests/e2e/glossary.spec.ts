@@ -75,6 +75,16 @@ test('keyboard search finds a condition in either language and shows its quick f
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(glossaryUrl)
   await expect(page.getByRole('heading', { level: 1, name: 'Glosario' })).toBeVisible()
+  // It opens on the search, not on 838 rows: the tabs and a prompt are all there is until asked.
+  const tabs = page.getByRole('tablist', { name: 'Categorías' })
+  await expect(tabs).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Busca una regla' })).toBeVisible()
+  await expect(page.locator('.gl-row')).toHaveCount(0)
+  await expect(page.getByText('838 entradas')).toHaveCount(0)
+  // A category with nothing in it is not offered (homebrew, with none written).
+  await expect(tabs.getByRole('tab', { name: /Homebrew/ })).toHaveCount(0)
+  await evidence(page, info.project.name, 'landing')
+  await page.getByRole('tab', { name: /^Todo/ }).click()
   await expect(page.getByText('838 entradas')).toBeVisible()
   await evidence(page, info.project.name, 'index')
   await page.locator('body').press('/')
@@ -129,6 +139,34 @@ test('keyboard search finds a condition in either language and shows its quick f
   await page.keyboard.press('Escape')
   await expect(page.getByRole('button', { name: '1 filtro activo' })).toBeVisible()
   expect(errors).toEqual([])
+})
+
+test('the landing lists the entries read lately, and the search takes focus only with a pointer', async ({
+  page,
+}) => {
+  await identityFixture(page, { player: true, modules: ['party', 'glossary'], sheet: 'complete' })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(glossaryUrl)
+  const search = page.getByRole('searchbox', { name: 'Buscar en el glosario' })
+  await expect(page.getByRole('heading', { name: 'Busca una regla' })).toBeVisible()
+  const finePointer = await page.evaluate(
+    () => matchMedia('(hover: hover) and (pointer: fine)').matches,
+  )
+  if (finePointer) await expect(search).toBeFocused()
+  else await expect(search).not.toBeFocused()
+  await page.goto(`${glossaryUrl}/condition.grappled`)
+  await expect(page.getByRole('heading', { name: 'Agarrado', exact: true })).toBeVisible()
+  await page.goto(glossaryUrl)
+  // Recents stand in for the prompt; no list of every entry, no result count.
+  const recent = page.getByRole('region', { name: 'Consultadas hace poco' })
+  await expect(recent.getByRole('link', { name: 'Agarrado' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Busca una regla' })).toHaveCount(0)
+  await expect(page.locator('.gl-row')).toHaveCount(0)
+  // A category, then "Todo", opens the list; clearing the search returns to the landing.
+  await page.getByRole('tab', { name: /Conjuros/ }).click()
+  await expect(page.getByText('339 entradas')).toBeVisible()
+  await page.getByRole('tab', { name: /^Todo/ }).click()
+  await expect(page.getByText('838 entradas')).toBeVisible()
 })
 
 test('a rules term on the character sheet opens its definition in place', async ({
@@ -533,7 +571,11 @@ test('deleting homebrew asks first, names the entry and removes it from the glos
   await page.getByRole('searchbox').fill('descanso duro')
   await expect(page.getByRole('link', { name: /Descanso duro/ })).toHaveCount(0)
   await page.getByRole('searchbox').press('Escape')
-  await page.getByRole('tab', { name: /Homebrew/ }).click()
+  // The last homebrew entry is gone: its tab leaves with it, and "Nueva entrada" stays the way in.
+  await page.getByRole('tab', { name: /Todo/ }).click()
+  await expect(page.getByRole('tab', { name: /Homebrew/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Nueva entrada' })).toBeVisible()
+  await page.goto(`${glossaryUrl}?cat=homebrew`)
   await expect(page.getByText('Aún no hay homebrew')).toBeVisible()
   await page.goto(`${glossaryUrl}/rule.long-rest`)
   await expect(page.getByRole('heading', { name: 'Descanso largo', exact: true })).toBeVisible()
@@ -703,7 +745,7 @@ test('a search change from outside the field (the nav item) resets the field', a
 // pins the intended outcome rather than reproducing the timing.
 test('a category chosen right after typing survives the delayed ?q= update', async ({ page }) => {
   await identityFixture(page, { player: true, modules: ['party', 'glossary'] })
-  await page.goto(glossaryUrl)
+  await page.goto(`${glossaryUrl}?cat=all`)
   const search = page.getByRole('searchbox', { name: 'Buscar en el glosario' })
   await expect(page.getByText('838 entradas')).toBeVisible()
   await search.fill('a')
@@ -726,7 +768,7 @@ test('RYT-117 the index mounts a bounded number of rows and still reaches every 
   page.on('pageerror', (error) => errors.push(error.message))
   await identityFixture(page, { player: true, modules: ['party', 'glossary'], sheet: 'complete' })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(glossaryUrl)
+  await page.goto(`${glossaryUrl}?cat=all`)
   await expect(page.getByText('838 entradas')).toBeVisible()
   await expect(page.locator('.gl-row').first()).toBeVisible()
   expect(await page.locator('.gl-row').count()).toBeLessThan(250)
@@ -783,7 +825,7 @@ test('RYT-117 Home and End move row focus across the whole list and the DOM stay
   test.setTimeout(90_000)
   await identityFixture(page, { player: true, modules: ['party', 'glossary'], sheet: 'complete' })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(glossaryUrl)
+  await page.goto(`${glossaryUrl}?cat=all`)
   await expect(page.getByText('838 entradas')).toBeVisible()
   const letters = page.getByRole('navigation', { name: 'Saltar a la letra' })
   for (const letter of ['M', 'Z', 'D', 'S', 'B', 'V'])

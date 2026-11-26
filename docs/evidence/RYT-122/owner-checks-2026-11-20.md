@@ -50,3 +50,10 @@ The owner signed in with a second Google account and deleted it from the app.
   20 November at about 00:55. Whether anyone downloaded them cannot be confirmed.
 - The backup workflow is disabled. It stays disabled until the dump is encrypted before upload
   or stored outside the public repository. Until then production has no copy.
+
+## Release checklist closed (2026-11-26)
+
+The owner closed RYT-122 in the session of 26 November 2026: the production checks recorded here
+and the owner's own use of https://rytta.app since the launch on 24 November are the evidence, and
+no further check was requested. The two privacy sentences the checklist waited for (RYT-147,
+RYT-128) were approved the same day and are in the policy, effective 26 November 2026.

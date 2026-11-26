@@ -59,7 +59,13 @@ for (const language of ['es', 'en'] as const)
           await expect(page.getByRole('heading', { level: 1 })).toHaveText(
             es ? 'Centro de mando DM' : 'DM Command Center',
           )
-          await expect(page.getByText('player@example.com', { exact: true })).toBeVisible()
+          // The phone's row keeps the address for the member sheet: the row's `···` is what shows.
+          await expect(
+            page.getByRole('button', {
+              name: es ? 'Acciones de Arin' : 'Actions for Arin',
+              exact: true,
+            }),
+          ).toBeVisible()
           await expect(
             page.getByRole('link', { name: es ? 'Ficha de Arin' : 'Sheet of Arin' }),
           ).toBeVisible()
@@ -532,8 +538,8 @@ test('RYT-025 keyboard focus stays on steppers, preview switch and More drawer c
   await expect(preview).not.toBeChecked()
 
   // RYT-035: planned modules cannot be enabled, so they never reach Player navigation.
-  await page.goto(`./#/campaign/${campaignId}/members`)
-  await page.getByRole('tab', { name: 'Módulos activos', exact: true }).click()
+  await page.goto(`./#/campaign/${campaignId}/members?panel=modules`)
+  await expect(page.getByRole('region', { name: 'Módulos activos', exact: true })).toBeVisible()
   // RYT-007: combat is implemented, so the DM can enable it like shops.
   // RYT-006: quests shipped too.
   for (const module of ['Tiendas', 'Combate', 'Misiones'])

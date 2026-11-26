@@ -18,6 +18,12 @@ export const libraryEs = {
   'library.image.fallback.app': 'Si la quitas, se usa la pintura de la app.',
   'library.image.fallback.category': 'Si la quitas, se usa la pintura de su categoría.',
   'library.image.fallback.none': 'Si la quitas, la app muestra un icono.',
+  'library.cover.title': 'Portada',
+  'library.cover.reach': 'Llega a las campañas con la próxima versión que publiques.',
+  'library.cover.none':
+    'Sin portada: la app muestra una imagen del contenido del paquete, o su inicial.',
+  'library.cover.editorTitle': 'Portada de {{name}}',
+  'library.cover.use': 'Usar como portada',
   'library.title': 'Biblioteca de contenido',
   'library.lede': 'Los cambios llegan a los DMs cuando publicas una versión.',
   'library.newPack': 'Nuevo paquete',

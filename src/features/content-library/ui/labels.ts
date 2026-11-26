@@ -1,9 +1,13 @@
 import type { TFunction } from 'i18next'
 import type { EntryOrigin } from '../domain/library'
-import { isKnownKind, type ContentPack, type DraftRow } from '../domain/library'
+import { isCoverKind, isKnownKind, type ContentPack, type DraftRow } from '../domain/library'
 
 export const kindLabel = (t: TFunction, kind: string) =>
-  isKnownKind(kind) ? t(`library.kind.${kind}` as 'library.kind.creature') : kind
+  isCoverKind(kind)
+    ? t('library.cover.title')
+    : isKnownKind(kind)
+      ? t(`library.kind.${kind}` as 'library.kind.creature')
+      : kind
 
 export const packLine = (t: TFunction, pack: ContentPack) =>
   [

@@ -167,6 +167,25 @@ export type EntryInput = {
   data: Record<string, unknown>
 }
 
+/**
+ * RYT-184: a pack's cover is one reserved entry of kind `pack` and key `cover`; its picture is
+ * `data.index.image`. It is drafted and published like any entry but is never listed as content.
+ */
+export const coverKind = 'pack'
+export const coverKey = 'cover'
+export const isCoverKind = (kind: string) => kind === coverKind
+/** Kind counts without the reserved cover entry. */
+export const contentCounts = (counts: Record<string, number>) =>
+  Object.fromEntries(Object.entries(counts).filter(([kind]) => !isCoverKind(kind)))
+/** The cover entry a draft saves: the picture's storage path, or none. */
+export const coverInput = (image: string | null): EntryInput => ({
+  kind: coverKind,
+  key: coverKey,
+  name_en: 'Cover',
+  name_es: 'Portada',
+  data: { index: image ? { image } : {} },
+})
+
 /** Entry data is a JSON object of at most 128 KB as text; its "index" at most 4 KB. */
 export const entryDataLimit = 131072
 export const entryIndexLimit = 4096

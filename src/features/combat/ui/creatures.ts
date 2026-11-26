@@ -3,6 +3,7 @@ import type { ComboboxItem, ComboboxParsedItem, OptionsFilter } from '@mantine/c
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
+import { shortPackName } from '@/shared/api/pack-origins'
 import { PackImagesContext } from '@/shared/ui/pack-images-context'
 import {
   bestiaryLanguage,
@@ -122,7 +123,7 @@ export function useCreatureCatalog(campaignId: string) {
     const artOf = (id: string | null | undefined) => (id && art.data?.[id] ? id : null)
     const fromPacks = packList.map((pack, at) => {
       // List rows name their pack in a few words: the SRD's full title would fill a phone row.
-      const title = pack.srd ? 'SRD' : packTitle(pack, language)
+      const title = shortPackName(packTitle(pack, language), pack.srd, 'SRD')
       const list = srdItems(indexData[at]?.rows ?? [], language, { id: pack.id, title }).map(
         (item) => ({
           ...item,

@@ -1,0 +1,77 @@
+/* The ruled lines under a search: what the last action did, and the filters in force. */
+.status-rail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 4px;
+  margin-top: 6px;
+  padding-inline-start: 12px;
+  box-shadow: inset 3px 0 0 var(--success);
+}
+.status-rail[data-tone='warn'] {
+  box-shadow: inset 3px 0 0 var(--warn);
+}
+/* Mounted for the screen reader, no room on the page until there is something to say. */
+.status-rail[data-empty] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  box-shadow: none;
+}
+.status-rail > p {
+  flex: 1 1 12rem;
+  min-width: 0;
+  margin: 0;
+  /* Whole words; a single word longer than the line is the only thing that may break. */
+  overflow-wrap: break-word;
+}
+/* The actions keep to one row while they fit and wrap as whole controls when they do not. */
+.status-rail-actions {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  margin-inline-start: auto;
+}
+.status-rail-actions .mantine-ActionIcon-root,
+.status-rail-actions .mantine-Button-root,
+.status-rail-actions .quiet-link,
+.status-rail-actions a {
+  display: inline-flex;
+  align-items: center;
+  min-width: 44px;
+  min-height: 44px;
+}
+/* A message said again reads as new: it fades in once more (not with reduced motion). */
+@media (prefers-reduced-motion: no-preference) {
+  .status-rail-text {
+    animation: status-rail-in 220ms ease-out;
+  }
+}
+@keyframes status-rail-in {
+  from {
+    opacity: 0.25;
+  }
+}
+
+.filter-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 12px;
+  margin: 0;
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+}
+.filter-line > span {
+  min-width: 0;
+  overflow-wrap: break-word;
+}

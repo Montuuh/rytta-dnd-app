@@ -33,6 +33,10 @@ export function rosterOf<T extends RosterEntry>(entries: readonly T[], userId: s
   }
 }
 
+/** RYT-180: whether a member has a character in play (the Members row names it). */
+export const hasActiveCharacter = (entries: readonly RosterEntry[], userId: string) =>
+  rosterOf(entries, userId).active !== null
+
 /** DM view: characters without a Player that are still in the campaign (not archived). */
 export const unassignedOf = <T extends RosterEntry>(entries: readonly T[]) =>
   entries.filter((entry) => !entry.user_id && !entry.archived_at)

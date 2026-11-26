@@ -224,3 +224,26 @@ slot until the DM gives it one. Rings and worn wondrous items go on their slot.
 - The app needs the network for game data; pack content is cached by version.
 - Pack entries keep stable keys across versions so campaign versions, hidden entries and updates
   can follow them.
+
+## Addendum: content by pack (RYT-184, 2026-11-26)
+
+The Content section works by pack instead of by pack category. The server keeps the per-category
+records and functions; migration `20261228120000_campaign_content_by_pack` adds pack-wide ones.
+
+- **One switch per pack.** `set_campaign_content_pack` turns on every category the pack has
+  (only a pack offered to the campaign) or turns off every category the campaign enabled, also
+  when the pack is no longer offered. Each category goes through the same step as
+  `set_campaign_content`, so the SRD creatures still follow the bestiary record. The SRD pack
+  keeps refusing changes while it is not the published public SRD.
+- **One update per pack.** `get_campaign_content_pack_changes` sums what the pack's current
+  version changes over the enabled categories pinned below it, and lists the entries an update
+  touches (withdrawn, hidden or with a campaign version; own versions first; 200 at most).
+  `update_campaign_content_pack` moves them all at once and carries the version it expects.
+- **Cover.** A pack's picture is the reserved entry of kind `pack` and key `cover`, which names
+  it in `data.index.image` like any pictured entry; without one, the first pictured creature,
+  item or class stands in. Kind `pack` belongs to no category: campaigns are never offered it,
+  counts and reviews skip it, and a version that changes only the cover advances every campaign
+  at once. Pack titles stay unversioned.
+- **Lists.** Categories count their entries per kind; the entry list can show hidden entries
+  only, returns the hidden total and each entry's index row. `get_campaign_used_creatures` names
+  the creatures the campaign's encounters use, so hiding or turning off can warn about them.

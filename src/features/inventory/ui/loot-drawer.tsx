@@ -1,11 +1,10 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ActionIcon,
   Alert,
   Button,
   Checkbox,
   Group,
-  Select,
   Stack,
   Text,
   TextInput,
@@ -13,25 +12,28 @@ import {
   UnstyledButton,
 } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
-import { Check, Gift, Trash2, X } from 'lucide-react'
+import { Plus, Search, Trash2, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { newRequestId } from '@/shared/lib/request-id'
+import { rankSearch } from '@/shared/lib/search-rank'
 import { localizedName } from '@/shared/lib/translations'
 import { Drawer } from '@/shared/ui/overlays'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { lootBatchesQuery, rosterQuery, useDeleteLootBatch, useDistributeLoot } from '../api'
-import type { LootAllocation, LootRequest } from '../data/repository'
+import type { LootAllocation } from '../data/repository'
 import type { ItemDefinition } from '../domain/item'
 import { ItemIcon } from './item-icon'
+import { NoCharacters } from './no-characters'
 import { Stepper } from './stepper'
+import './loot-drawer.css'
 
 type DraftLine = { key: string; itemId: string; quantity: number; recipients: string[] }
-const newLine = (itemId: string, quantity = 1): DraftLine => ({
+const newLine = (itemId: string, quantity = 1, recipients: string[] = []): DraftLine => ({
   key: newRequestId(),
   itemId,
   quantity,
-  recipients: [],
+  recipients,
 })
 function fromBatch(allocations: LootAllocation[]) {
   const lines: DraftLine[] = []
@@ -145,8 +147,83 @@ function BatchPicker({
   )
 }
 
-type Review = { request: LootRequest; names: Map<string, string> }
+/** The picker: a search field and every item in alphabetical order, in 48px rows. */
+function ItemPicker({
+  items,
+  onPick,
+  onBack,
+  onBatch,
+}: {
+  items: ItemDefinition[]
+  onPick: (item: ItemDefinition) => void
+  onBack: () => void
+  /** A saved batch instead, offered while the distribution has no line yet. */
+  onBatch?: () => void
+}) {
+  const { t, i18n } = useTranslation()
+  const [query, setQuery] = useState('')
+  const field = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => field.current?.focus())
+    return () => cancelAnimationFrame(frame)
+  }, [])
+  const nameOf = (item: ItemDefinition) => localizedName(item, i18n.language)
+  const sorted = [...items].sort((a, b) => nameOf(a).localeCompare(nameOf(b), i18n.language))
+  const found = rankSearch(sorted, query, (item) => [item.name, nameOf(item)])
+  return (
+    <Stack gap="sm">
+      <TextInput
+        ref={field}
+        data-autofocus
+        type="search"
+        aria-label={t('loot.pickSearch')}
+        placeholder={t('loot.pickSearch')}
+        leftSection={<Search size={16} aria-hidden="true" />}
+        value={query}
+        onChange={(event) => setQuery(event.currentTarget.value)}
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter' || event.nativeEvent.isComposing || !found[0]) return
+          event.preventDefault()
+          onPick(found[0])
+        }}
+        classNames={{ input: 'loot-pick-search' }}
+      />
+      {found.length === 0 ? (
+        <Text c="dimmed" role="status">
+          {t('store.noMatch')}
+        </Text>
+      ) : (
+        <ul className="loot-pick-list" aria-label={t('loot.pickList')}>
+          {found.map((item) => (
+            <li key={item.id}>
+              <UnstyledButton className="loot-pick-row" onClick={() => onPick(item)}>
+                <span className={`store-glyph rarity-${item.rarity}`} aria-hidden="true">
+                  <ItemIcon icon={item.icon} imagePath={item.image_path} size={20} />
+                </span>
+                <span className="loot-pick-name user-copy">{nameOf(item)}</span>
+                <span className="loot-pick-kind">{t(`inventory.category.${item.category}`)}</span>
+              </UnstyledButton>
+            </li>
+          ))}
+        </ul>
+      )}
+      {onBatch && (
+        <UnstyledButton className="quiet-link loot-load" onClick={onBatch}>
+          {t('loot.load')}
+        </UnstyledButton>
+      )}
+      <Button variant="subtle" onClick={onBack}>
+        {t('common.back')}
+      </Button>
+    </Stack>
+  )
+}
 
+/**
+ * The loot view: one line per item (who gets it, how many each) and one fixed action that
+ * delivers through the existing operation, closes the view and leaves the result to the page.
+ * Saved batches stay as quiet controls. `initial` starts the view with that item in it.
+ */
 export function LootDrawer({
   campaignId,
   items,
@@ -157,7 +234,8 @@ export function LootDrawer({
   campaignId: string
   items: ItemDefinition[]
   initial?: ItemDefinition
-  onDelivered?: () => void
+  /** What was delivered, as one sentence for the page's status line. */
+  onDelivered?: (text: string) => void
   onClose: () => void
 }) {
   const { state } = useAuth()
@@ -167,15 +245,35 @@ export function LootDrawer({
   const grant = useDistributeLoot(campaignId)
   const [lines, setLines] = useState<DraftLine[]>(() => (initial ? [newLine(initial.id)] : []))
   const [loadingBatch, setLoadingBatch] = useState(false)
+  // Without an item to start from the picker is the first thing the view shows.
+  const [picking, setPicking] = useState(!initial)
+  const [seeded, setSeeded] = useState(false)
   const [saveBatch, setSaveBatch] = useState(false)
   const [batchName, setBatchName] = useState('')
-  const [review, setReview] = useState<Review | null>(null)
-  const [receipt, setReceipt] = useState<LootAllocation[] | null>(null)
-  const titleRef = useRef<HTMLHeadingElement>(null)
-  const reviewTrigger = useRef<HTMLButtonElement>(null)
+  const addButton = useRef<HTMLButtonElement>(null)
+  const failure = useRef<HTMLDivElement>(null)
+  // The pressed button went busy and dropped focus: the failure is where the keyboard is, and
+  // Retry is the next stop.
+  const failedAt = grant.isError ? grant.submittedAt : 0
+  useEffect(() => {
+    if (failedAt) failure.current?.focus()
+  }, [failedAt])
+  const request = useRef({ key: '', id: '' })
   const sending = useRef(false)
   const names = new Map(items.map((item) => [item.id, localizedName(item, i18n.language)]))
   for (const ch of roster.data ?? []) names.set(ch.id, ch.name)
+  const characters = roster.data ?? []
+  // With exactly one character there is nobody to choose: each new line starts with them.
+  const sole = characters.length === 1 ? characters[0]!.id : null
+  if (!seeded && roster.data) {
+    setSeeded(true)
+    if (roster.data.length === 1)
+      setLines((prev) =>
+        prev.map((line) =>
+          line.recipients.length ? line : { ...line, recipients: [roster.data[0]!.id] },
+        ),
+      )
+  }
   const allocations = lines.flatMap((line) =>
     line.recipients.map((character_id) => ({
       character_id,
@@ -196,36 +294,46 @@ export function LootDrawer({
     !duplicates &&
     !missing &&
     (!saveBatch || Boolean(batchName.trim()))
-  const change = (key: string, patch: Partial<DraftLine>) =>
+  const units = allocations.reduce((sum, a) => sum + a.quantity, 0)
+  // Why the action waits, said above it: the first item with nobody to receive it, or the batch name.
+  const unserved = lines.find((line) => line.recipients.length === 0)
+  const reason = !lines.length
+    ? null
+    : unserved
+      ? t('loot.needsRecipient', { name: names.get(unserved.itemId) ?? t('loot.missingItem') })
+      : saveBatch && !batchName.trim()
+        ? t('loot.needsName')
+        : null
+  // "Arin: 1 Poción · Bea: 1 Poción, 1 Anillo": what each character gets, in roster order.
+  const summary = characters
+    .map((ch) => ({
+      name: ch.name,
+      what: allocations
+        .filter((a) => a.character_id === ch.id)
+        .map((a) => `${a.quantity} ${names.get(a.definition_id) ?? ''}`),
+    }))
+    .filter((entry) => entry.what.length > 0)
+    .map((entry) => `${entry.name}: ${entry.what.join(', ')}`)
+  const edited = () => {
+    if (grant.isError) grant.reset()
+  }
+  const change = (key: string, patch: Partial<DraftLine>) => {
+    edited()
     setLines((prev) => prev.map((line) => (line.key === key ? { ...line, ...patch } : line)))
-  const startReview = () => {
-    if (!valid) return
-    grant.reset()
-    setReview({
-      request: {
-        allocations,
-        name: saveBatch ? batchName.trim() : null,
-        requestId: newRequestId(),
-      },
-      names,
-    })
-    requestAnimationFrame(() => titleRef.current?.focus())
   }
-  const back = () => {
-    setReview(null)
-    grant.reset()
-    requestAnimationFrame(() => reviewTrigger.current?.focus())
-  }
-  const confirm = async () => {
-    if (!review || sending.current || receipt) return
+  const deliver = async () => {
+    if (!valid || sending.current) return
+    const draft = { allocations, name: saveBatch ? batchName.trim() : null }
+    // A retry after a failure repeats the same request, so nothing is delivered twice.
+    const key = JSON.stringify(draft)
+    if (request.current.key !== key) request.current = { key, id: newRequestId() }
     sending.current = true
     try {
-      const result = await grant.mutateAsync(review.request)
-      setReceipt(result.allocations)
-      onDelivered?.()
-      requestAnimationFrame(() => titleRef.current?.focus())
+      await grant.mutateAsync({ ...draft, requestId: request.current.id })
+      onDelivered?.(t('loot.deliveredLine', { summary: summary.join(' · ') }))
+      onClose()
     } catch {
-      /* The review keeps the exact payload and request ID for a retry. */
+      /* The view stays open with the reason; Retry sends the same request. */
     } finally {
       sending.current = false
     }
@@ -238,10 +346,15 @@ export function LootDrawer({
     forbidden: t('inventory.error.forbidden'),
   }
   const definiteError = grant.error && knownErrors[grant.error.message]
+  const leavePicker = () => {
+    setPicking(false)
+    requestAnimationFrame(() => addButton.current?.focus())
+  }
   const close = () => {
     if (sending.current) return
-    if (loadingBatch) setLoadingBatch(false)
-    else if (review && !receipt && !grant.isError) back()
+    // An empty picker is where the view started: Escape closes the view rather than showing it empty.
+    if (picking && lines.length > 0) leavePicker()
+    else if (loadingBatch) setLoadingBatch(false)
     else onClose()
   }
   return (
@@ -251,10 +364,15 @@ export function LootDrawer({
       returnFocus={false}
       position={phone ? 'bottom' : 'right'}
       size={phone ? '88%' : 490}
-      title={t(initial ? 'catalogue.give' : 'loot.open')}
+      title={t('loot.open')}
+      closeOnEscape={!grant.isPending}
+      closeOnClickOutside={!grant.isPending}
       closeButtonProps={{ 'aria-label': t('common.close'), size: 44 }}
+      classNames={{ content: 'loot-drawer', body: 'loot-drawer-body' }}
     >
-      {loadingBatch ? (
+      {roster.data?.length === 0 ? (
+        <NoCharacters campaignId={campaignId} />
+      ) : loadingBatch ? (
         <Stack>
           <BatchPicker
             campaignId={campaignId}
@@ -267,64 +385,26 @@ export function LootDrawer({
             {t('common.back')}
           </Button>
         </Stack>
-      ) : review ? (
-        <Stack>
-          <Title order={3} ref={titleRef} tabIndex={-1}>
-            {t(receipt ? 'loot.delivered' : 'loot.review')}
-          </Title>
-          {[...new Set((receipt ?? review.request.allocations).map((a) => a.character_id))].map(
-            (id) => (
-              <section key={id}>
-                <Group gap="xs">
-                  {receipt && <Check size={18} aria-hidden />}
-                  <Text fw={700}>{review.names.get(id)}</Text>
-                </Group>
-                <ul>
-                  {(receipt ?? review.request.allocations)
-                    .filter((a) => a.character_id === id)
-                    .map((a) => (
-                      <li key={a.definition_id}>
-                        {review.names.get(a.definition_id)} × {a.quantity}
-                      </li>
-                    ))}
-                </ul>
-              </section>
-            ),
-          )}
-          {review.request.name && (
-            <Text>
-              {t(receipt ? 'loot.savedAs' : 'loot.saveAs', { name: review.request.name })}
-            </Text>
-          )}
-          {grant.isError && (
-            <Alert role="alert" color="red">
-              {definiteError ?? t('loot.retry')}
-            </Alert>
-          )}
-          {receipt ? (
-            <Button onClick={onClose}>{t('common.close')}</Button>
-          ) : (
-            <Group>
-              {(!grant.isError || definiteError) && (
-                <Button variant="default" disabled={grant.isPending} onClick={back}>
-                  {t('loot.edit')}
-                </Button>
-              )}
-              {!definiteError && (
-                <Button loading={grant.isPending} onClick={() => void confirm()}>
-                  {t(grant.isError ? 'common.retry' : 'loot.confirm')}
-                </Button>
-              )}
-            </Group>
-          )}
-        </Stack>
+      ) : picking ? (
+        <ItemPicker
+          items={items}
+          onPick={(item) => {
+            edited()
+            setLines((prev) => [...prev, newLine(item.id, 1, sole ? [sole] : [])])
+            leavePicker()
+          }}
+          onBack={leavePicker}
+          onBatch={
+            lines.length === 0
+              ? () => {
+                  setPicking(false)
+                  setLoadingBatch(true)
+                }
+              : undefined
+          }
+        />
       ) : (
-        <Stack>
-          {lines.length === 0 && (
-            <Button variant="subtle" onClick={() => setLoadingBatch(true)}>
-              {t('loot.load')}
-            </Button>
-          )}
+        <div className="loot-view">
           {roster.isError && (
             <Alert role="alert">
               {t('query.error')}{' '}
@@ -334,13 +414,15 @@ export function LootDrawer({
             </Alert>
           )}
           {roster.isPending && <Text role="status">{t('common.loading')}</Text>}
-          {roster.data?.length === 0 && <Text>{t('inventory.noCharacters')}</Text>}
           {lines.map((line) => {
             const item = items.find((d) => d.id === line.itemId)
+            const label = names.get(line.itemId) ?? t('loot.missingItem')
+            const all =
+              characters.length > 0 && characters.every((ch) => line.recipients.includes(ch.id))
             return (
               <fieldset className="loot-line" key={line.key}>
-                <legend>{names.get(line.itemId) ?? t('loot.missingItem')}</legend>
-                <Group justify="space-between">
+                <legend className="visually-hidden">{label}</legend>
+                <div className="loot-line-head">
                   {item && (
                     <ItemIcon
                       icon={item.icon}
@@ -348,35 +430,41 @@ export function LootDrawer({
                       category={item.category}
                       basicKey={item.basic_key}
                       viewable
-                      name={names.get(item.id)}
+                      name={label}
                       size={24}
                       frame={`store-glyph rarity-${item.rarity}`}
                     />
                   )}
+                  <span className="loot-line-name user-copy" aria-hidden="true">
+                    {label}
+                  </span>
                   <ActionIcon
                     variant="subtle"
                     size={44}
-                    aria-label={t('loot.remove', {
-                      name: names.get(line.itemId) ?? t('loot.missingItem'),
-                    })}
-                    onClick={() => setLines(lines.filter((entry) => entry.key !== line.key))}
+                    aria-label={t('loot.remove', { name: label })}
+                    onClick={() => {
+                      edited()
+                      setLines(lines.filter((entry) => entry.key !== line.key))
+                    }}
                   >
-                    <X size={18} />
+                    <X size={18} aria-hidden="true" />
                   </ActionIcon>
-                </Group>
-                <Stepper
-                  label={t('inventory.card.amount')}
-                  value={line.quantity}
-                  min={1}
-                  max={1000}
-                  required
-                  onChange={(quantity) => change(line.key, { quantity: quantity ?? 1 })}
-                />
-                <Text fw={600} mt="sm">
-                  {t('loot.recipients')}
-                </Text>
-                <div className="loot-recipients">
-                  {(roster.data ?? []).map((ch) => (
+                </div>
+                <div className="loot-recipients" role="group" aria-label={t('loot.recipients')}>
+                  {characters.length > 1 && (
+                    <UnstyledButton
+                      className="loot-recipient loot-all"
+                      aria-pressed={all}
+                      onClick={() =>
+                        change(line.key, {
+                          recipients: all ? [] : characters.map((ch) => ch.id),
+                        })
+                      }
+                    >
+                      {t('loot.all')}
+                    </UnstyledButton>
+                  )}
+                  {characters.map((ch) => (
                     <UnstyledButton
                       className="loot-recipient"
                       key={ch.id}
@@ -389,7 +477,6 @@ export function LootDrawer({
                         })
                       }
                     >
-                      {line.recipients.includes(ch.id) && <Check size={16} aria-hidden />}
                       {ch.name}
                     </UnstyledButton>
                   ))}
@@ -409,21 +496,33 @@ export function LootDrawer({
                       </Button>
                     ))}
                 </div>
+                <Stepper
+                  label={t('loot.quantityEach')}
+                  value={line.quantity}
+                  min={1}
+                  max={1000}
+                  required
+                  onChange={(quantity) => change(line.key, { quantity: quantity ?? 1 })}
+                />
               </fieldset>
             )
           })}
           {lines.length < 100 && (
-            <Select
-              searchable
-              label={t('loot.add')}
-              value={null}
-              data={items.map((item) => ({ value: item.id, label: names.get(item.id)! }))}
-              limit={40}
-              nothingFoundMessage={t('store.noResults')}
-              comboboxProps={{ withinPortal: false }}
-              onChange={(id) => id && setLines([...lines, newLine(id)])}
-            />
+            <Button
+              ref={addButton}
+              variant={lines.length ? 'default' : 'outline'}
+              leftSection={<Plus size={18} aria-hidden="true" />}
+              onClick={() => setPicking(true)}
+            >
+              {t('loot.add')}
+            </Button>
           )}
+          {lines.length === 0 && (
+            <UnstyledButton className="quiet-link loot-load" onClick={() => setLoadingBatch(true)}>
+              {t('loot.load')}
+            </UnstyledButton>
+          )}
+          {summary.length > 0 && <p className="loot-summary">{summary.join(' · ')}</p>}
           {!!lines.length && (
             <Checkbox
               label={t('loot.save')}
@@ -444,15 +543,26 @@ export function LootDrawer({
               {t(duplicates ? 'loot.duplicate' : missing ? 'loot.changed' : 'loot.tooMany')}
             </Alert>
           )}
-          <Button
-            ref={reviewTrigger}
-            disabled={!valid}
-            leftSection={<Gift size={18} />}
-            onClick={startReview}
-          >
-            {t('loot.review')}
-          </Button>
-        </Stack>
+          {grant.isError && (
+            <Alert ref={failure} tabIndex={-1} role="alert" color="red">
+              {definiteError ?? t('loot.retry')}
+            </Alert>
+          )}
+          <div className="loot-dock">
+            {reason && <p className="loot-reason">{reason}</p>}
+            <Button
+              size="md"
+              fullWidth
+              loading={grant.isPending}
+              disabled={!valid || Boolean(definiteError)}
+              onClick={() => void deliver()}
+            >
+              {grant.isError && !definiteError
+                ? t('common.retry')
+                : t('loot.deliver', { count: units })}
+            </Button>
+          </div>
+        </div>
       )}
     </Drawer>
   )

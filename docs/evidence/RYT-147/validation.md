@@ -45,3 +45,14 @@ use. Proposed wording for the owner to approve (not applied):
 The block B offline shell (RYT-128) also stores the app's own files in the browser; the section on
 browser storage could add «los archivos de la propia aplicación, para que abra sin conexión; no
 contienen datos tuyos».
+
+## Privacy wording applied (2026-11-26)
+
+The owner approved both proposals above on 26 November 2026. They are in the privacy policy as
+`legal.privacy.collect.p3` (aggregate counts) and `legal.privacy.local.l4` (the offline files),
+in Spanish and English, and the policy's effective date moved to 26 November 2026. Unit test
+`src/pages/legal-content.test.ts` pins both sentences; `tests/e2e/legal.spec.ts` passes (49).
+
+The UI review noted that `legal.privacy.local.p2` ("Rytta no tiene analítica…") sits a few
+sections after the new aggregate-count sentence. The owner chose on 26 November 2026 to keep
+both as written.

@@ -2,36 +2,28 @@
  * the recent rolls. */
 export const diceEn = {
   'dm.panelDice': 'Dice',
-  'diceSettings.title': 'Table dice',
-  'diceSettings.hint':
-    'Choose how the table rolls and who sees the rolls made or recorded in the app.',
-  'diceSettings.current': 'In use',
   'diceSettings.modeLegend': 'How the table rolls',
   'diceSettings.visibilityLegend': 'Who sees the rolls',
   'diceSettings.mode.physical': 'Physical dice',
-  'diceSettings.mode.physicalHint':
-    'Each Player rolls their own dice. The sheet says what to roll and what to add, and the result can be recorded: it is marked as recorded.',
+  'diceSettings.mode.physicalHint': 'Each Player rolls their own dice and can record the result.',
   'diceSettings.mode.app': 'Dice in the app',
-  'diceSettings.mode.appHint':
-    'Rytta rolls the dice for checks, saves, attacks, damage, initiative and hit dice, and records every roll. It is marked as rolled by Rytta and nobody can change it.',
+  'diceSettings.mode.appHint': 'Rytta rolls and records every roll; nobody can change it.',
   'diceSettings.mode.player': 'Each Player chooses',
-  'diceSettings.mode.playerHint':
-    'Each one picks physical or in-app dice on their own device. Physical dice until they choose.',
+  'diceSettings.mode.playerHint': 'Each one chooses on their own device; physical dice until then.',
   'diceSettings.visibility.roller_dm': 'The roller and the DM',
   'diceSettings.visibility.roller_dmHint': 'The rest of the table does not see the roll.',
   'diceSettings.visibility.table': 'The whole table',
   'diceSettings.visibility.tableHint': 'Every active member sees each roll.',
   'diceSettings.visibility.roller': 'Only the roller',
   'diceSettings.visibility.rollerHint': 'Not even the DM sees the roll.',
-  'diceSettings.apply': 'Apply changes',
   'diceSettings.saved': 'Dice settings saved.',
   'diceSettings.confirmTitle': 'Change the table dice?',
   'diceSettings.confirmMode.physical':
-    'Players roll their own dice. The sheets say what to roll, and initiative and hit dice are typed in. No character data changes.',
+    'The sheets say what to roll; initiative and hit dice are typed in. No character data changes.',
   'diceSettings.confirmMode.app':
-    'Players will roll in the app: Rytta rolls and records every roll, initiative and hit dice included. On the sheets, the numbers stop saying what to roll and roll when tapped. No character data changes.',
+    'On the sheets, the numbers stop saying what to roll and roll when tapped; initiative and hit dice too. No character data changes.',
   'diceSettings.confirmMode.player':
-    'Each Player chooses on their device; until they do, they use physical dice.',
+    'Until each Player chooses, their sheets work as with physical dice.',
   'diceSettings.confirmVisibility.wider':
     'Earlier rolls are not shown to more people: they stay visible only to those who could see them when they were made.',
   'diceSettings.confirmVisibility.narrower':

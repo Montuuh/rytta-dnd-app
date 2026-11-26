@@ -2377,6 +2377,10 @@ export async function identityFixture(
     if (method === 'admin_status') return respond({ super_admin: false, access: [] })
     // RYT-006: the navigation asks a Player's journal for news.
     if (method === 'list_quests') return respond({ dm: false, quests: [] })
+    // RYT-179: the DM home reads the encounters; no fight unless a spec routes one (combat.ts).
+    if (method === 'list_encounters') return respond([])
+    // RYT-184: no creature has been in an encounter unless a spec says so.
+    if (method === 'get_campaign_used_creatures') return respond({ references: [], templates: [] })
     return respond({ message: 'Unhandled test route' }, 500)
   })
   return {

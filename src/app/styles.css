@@ -65,6 +65,42 @@ html {
 .ink-seg .mantine-SegmentedControl-label[data-active]:hover {
   color: var(--app-accent);
 }
+/* Parchment: the track of a segmented control and the off switch take the theme's own warm
+   tokens, not Mantine's cool greys. */
+html[data-mantine-color-scheme='light'] .mantine-SegmentedControl-root {
+  background-color: var(--app-raised);
+}
+html[data-mantine-color-scheme='light']
+  .mantine-Switch-input:not(:checked)
+  + .mantine-Switch-track {
+  background-color: var(--app-raised);
+  border-color: var(--app-muted);
+}
+/* An unchosen radio ring or checkbox box takes the theme's muted ink in both themes (3:1
+   non-text contrast); Mantine's greys are 1.3:1 on Parchment and 1.7:1 on Hearth. */
+.mantine-Radio-radio:not(:checked),
+.mantine-Checkbox-input:not(:checked):not(:indeterminate) {
+  border-color: var(--app-muted);
+}
+/* A placeholder that does not fit ends in an ellipsis, never in half a letter. */
+.mantine-Input-input {
+  text-overflow: ellipsis;
+}
+/* Parchment: the inactive labels of a marked segmented control take the same muted ink. */
+html[data-mantine-color-scheme='light']
+  .ink-seg
+  .mantine-SegmentedControl-label:not([data-active]) {
+  color: var(--app-muted);
+}
+/* Parchment: a field's placeholder reads at 4.5:1 (Mantine's cool grey on white is about 2:1), on
+   the surface token the panels are made of. Disabled and read-only fields keep their own look. */
+html[data-mantine-color-scheme='light'] .mantine-Input-input:not(:disabled, [readonly]) {
+  background-color: var(--app-surface);
+}
+html[data-mantine-color-scheme='light'] .mantine-Input-input::placeholder {
+  color: var(--app-muted);
+  opacity: 1;
+}
 /* A pressed toggle button reads like a selection, not like the primary action. */
 .select-toggle[aria-pressed='true'],
 .select-toggle[aria-pressed='true']:hover {
@@ -282,9 +318,17 @@ a.brand-bar {
   align-items: center;
   min-height: 44px;
 }
-/* The off track must stand out from the capsule in every theme (3:1 non-text contrast). */
-.preview-switch .mantine-Switch-input:not(:checked) + .mantine-Switch-track {
+/* The off track must stand out from its surface in every theme (3:1 non-text contrast). */
+.preview-switch .mantine-Switch-input:not(:checked) + .mantine-Switch-track,
+.module-switch-row .mantine-Switch-input:not(:checked) + .mantine-Switch-track,
+.content-switch .mantine-Switch-input:not(:checked) + .mantine-Switch-track {
   box-shadow: inset 0 0 0 1.5px var(--app-muted);
+}
+/* The off thumb takes the same ink as the track's ring, so the switch reads as a whole on the
+   card and in the sheets (Mantine's thumb is near-white, 1.2:1 on a Parchment track). */
+.content-switch .mantine-Switch-input:not(:checked) + .mantine-Switch-track .mantine-Switch-thumb {
+  background-color: var(--app-muted);
+  border-color: var(--app-muted);
 }
 .preview-switch .mantine-Switch-label {
   font-weight: 600;
@@ -2266,7 +2310,7 @@ html[data-mantine-color-scheme='light'] .view-switch .mantine-SegmentedControl-i
   min-width: 0;
   flex: 1 1 20rem;
 }
-/* RYT-025 DM Command Center: one panel at a time, vertical tabs on laptops. */
+/* RYT-025 panel tabs (the combat console's side panels); RYT-179 replaced the command centre's. */
 .dm-tabs-list {
   gap: 6px;
   flex-wrap: nowrap;
@@ -2291,94 +2335,16 @@ html[data-mantine-color-scheme='light'] .view-switch .mantine-SegmentedControl-i
   color: var(--app-accent);
   box-shadow: var(--select-rail);
 }
-.dm-tabs-refresh {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
 .dm-tabs-panel {
   padding-top: 18px;
   min-width: 0;
 }
-.dm-tabs[data-orientation='vertical'] {
-  gap: 28px;
-}
-.dm-tabs[data-orientation='vertical'] .dm-tabs-list {
-  position: sticky;
-  top: 16px;
-  align-self: flex-start;
-  flex-direction: column;
-  width: 15rem;
-  flex-shrink: 0;
-  overflow: visible;
-}
-.dm-tabs[data-orientation='vertical'] .mantine-Tabs-tab {
-  justify-content: flex-start;
-}
-.dm-tabs[data-orientation='vertical'] .dm-tabs-refresh {
-  margin: 8px 0 0;
-}
-.dm-tabs[data-orientation='vertical'] .dm-tabs-panel {
-  padding-top: 0;
-  flex: 1;
-}
-.module-switch-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border: 1px solid var(--app-border);
-  border-radius: 12px;
-  background: var(--app-surface);
-  overflow: hidden;
-}
-.module-switch-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 56px;
-  padding: 6px 14px;
-  border-bottom: 1px solid var(--app-border);
-}
-.module-switch-row:last-child {
-  border-bottom: 0;
-}
-.module-switch-row[data-active] {
-  background: var(--success-soft);
-}
-.module-switch-name {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 10px;
-}
-.module-switch-row .mantine-Switch-track,
 .reveal-switch .mantine-Switch-track {
   cursor: pointer;
 }
-.module-switch-row .mantine-Switch-body,
 .reveal-switch .mantine-Switch-body {
   min-height: 44px;
   align-items: center;
-}
-.audit-filter {
-  align-self: flex-start;
-  max-width: 100%;
-}
-.audit-filter .mantine-SegmentedControl-label {
-  min-height: 44px;
-  display: grid;
-  place-items: center;
-}
-.audit-timeline .mantine-Timeline-itemBullet {
-  background: var(--app-raised);
-  border-color: var(--app-accent);
-  color: var(--app-accent);
-}
-.audit-event {
-  overflow-wrap: anywhere;
 }
 /* RYT-025 character sheet: HP ring, number pad, hit-die pips, condition chips. */
 .hp-head {
@@ -2602,10 +2568,6 @@ html[data-mantine-color-scheme='light'] .view-switch .mantine-SegmentedControl-i
     -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent);
     padding-right: 24px;
   }
-}
-.dm-tabs[data-orientation='vertical'] .mantine-Tabs-tabLabel {
-  flex: 1;
-  text-align: start;
 }
 
 /* RYT-005 shops. The merchant's price tag is the one decorative element; item glyphs reuse
@@ -3525,33 +3487,11 @@ html[data-mantine-color-scheme='light'] .order-counter {
 .item-store {
   min-width: 0;
 }
-.store-toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(10rem, 13rem) auto;
-  gap: 8px;
-  align-items: center;
-}
 .store-view .view-option {
   display: grid;
   place-items: center;
   min-width: 40px;
   min-height: 36px;
-}
-.store-rail {
-  margin: 10px 0 4px;
-}
-.chip-count {
-  min-width: 22px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: var(--app-bg);
-  color: var(--app-muted);
-  font-size: var(--fs-tag);
-  font-weight: 700;
-  text-align: center;
-}
-.category-chip[aria-pressed='true'] .chip-count {
-  color: var(--app-accent);
 }
 .store-glyph {
   display: grid;
@@ -3615,16 +3555,6 @@ html[data-mantine-color-scheme='light'] .order-counter {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.store-row-line {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  min-width: 0;
-}
-.store-row-line .store-value {
-  margin-left: auto;
-  font-size: var(--fs-meta);
-}
 .store-row-meta {
   min-width: 0;
   font-size: var(--fs-meta);
@@ -3633,30 +3563,12 @@ html[data-mantine-color-scheme='light'] .order-counter {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.store-row-side {
-  display: grid;
-  justify-items: end;
-  gap: 2px;
-  flex-shrink: 0;
-}
-.store-origin {
-  font-size: var(--fs-tag);
-  color: var(--app-muted);
-  padding: 1px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--app-border);
-}
 .store-value {
   flex-shrink: 0;
   font-weight: 700;
   white-space: nowrap;
   color: var(--gold-accent);
   font-variant-numeric: tabular-nums;
-}
-.store-row-actions {
-  display: flex;
-  gap: 2px;
-  flex-shrink: 0;
 }
 .store-grid {
   list-style: none;
@@ -3706,11 +3618,6 @@ html[data-mantine-color-scheme='light'] .order-counter {
   color: var(--gold-accent);
   font-weight: 700;
 }
-.store-tile-menu {
-  position: absolute;
-  top: 0;
-  right: 0;
-}
 .store-empty {
   border: 1px dashed var(--app-border);
   border-radius: 12px;
@@ -3730,14 +3637,6 @@ html[data-mantine-color-scheme='light'] .order-counter {
   font-family: Georgia, Cambria, serif;
   font-size: var(--fs-h3);
   font-variant-numeric: tabular-nums;
-}
-@media (max-width: 47.99em) {
-  .store-toolbar {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-  .store-toolbar .store-search {
-    grid-column: 1 / -1;
-  }
 }
 .store-value[data-empty],
 .store-tile-meta[data-empty] {
@@ -4367,7 +4266,7 @@ html[data-mantine-color-scheme='light'] .order-counter {
     margin-left: auto;
   }
 }
-/* Phones: the four DM Command Center panels sit in a 2×2 grid, all visible, no hidden scroll. */
+/* Phones: horizontal panel tabs sit in a two-column grid, all visible, no hidden scroll. */
 @media (max-width: 47.99em) {
   .dm-tabs:not([data-orientation='vertical']) .dm-tabs-list {
     display: grid;

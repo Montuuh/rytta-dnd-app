@@ -43,3 +43,9 @@ it: [docs/offline-shell.md](../../offline-shell.md).
   to the home screen. Tests ran in Chromium against the local production build.
 - The update path across two real deployments on Cloudflare Pages: the test simulates a newer
   `version.json` with the same build.
+
+## Privacy wording applied (2026-11-26)
+
+The browser storage section of the privacy policy now names the app's own files kept for opening
+without a connection (`legal.privacy.local.l4`), approved by the owner on 26 November 2026. See
+the RYT-147 record for the checks.

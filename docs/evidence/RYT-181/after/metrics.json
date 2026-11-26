@@ -1,0 +1,9431 @@
+{
+ "notes": [
+  "Same method and definitions as before/metrics.json.",
+  "y values are CSS pixels from the top of the page on arrival, or from the top of the viewport inside tasks and overlays.",
+  "controlsInMain counts visible, enabled links, buttons, fields and summaries inside <main>; both lists are windowed, so it counts mounted rows only.",
+  "badges counts the same classes as the first audit; badgesStillPaintedAsTags keeps only those with a background or a border.",
+  "barHeight is the height of the block pinned to the stat block: the row of the action and, after adding, the status line above it.",
+  "Timings come from a development server and only compare states of this audit with each other."
+ ],
+ "measured": "2026-11-25",
+ "commit": "d14b15e6",
+ "setup": "e2e fixture backend on a Vite dev server, Hearth theme, Spanish, reduced motion; Desktop Chrome with touch at 390x844, 820x1180 and 1280x800",
+ "data": {
+  "bestiary": "330 SRD creatures (one enabled pack), no campaign creatures on arrival",
+  "storeroom": "9 items, 3 characters (Arin, Bea, Cato), 1 pending proposal",
+  "storeroom-129-items": "the same 9 items plus 120 synthetic copies, to see a long catalogue",
+  "encounterInProgress": "an encounter \"Cripta\" in the initiative phase",
+  "noCharacters": "a campaign without characters and with an empty storeroom"
+ },
+ "arrival": {
+  "phone-bestiary": {
+   "viewport": [
+    390,
+    844
+   ],
+   "pageHeight": 20747,
+   "horizontalOverflow": false,
+   "panelTop": 183,
+   "panelHeight": 20452,
+   "searchFieldY": 183,
+   "firstControl": {
+    "x": 16,
+    "y": 183,
+    "w": 170,
+    "h": 48,
+    "label": "Goblin, dragón rojo, lobo…"
+   },
+   "firstControls": [
+    {
+     "x": 16,
+     "y": 183,
+     "w": 170,
+     "h": 48,
+     "label": "Goblin, dragón rojo, lobo…"
+    },
+    {
+     "x": 311,
+     "y": 183,
+     "w": 48,
+     "h": 48,
+     "label": "Más acciones del bestiario"
+    },
+    {
+     "x": 194,
+     "y": 187,
+     "w": 109,
+     "h": 44,
+     "label": "Filtros"
+    },
+    {
+     "x": 109,
+     "y": 301,
+     "w": 44,
+     "h": 44,
+     "label": "A"
+    },
+    {
+     "x": 153,
+     "y": 301,
+     "w": 44,
+     "h": 44,
+     "label": "B"
+    },
+    {
+     "x": 197,
+     "y": 301,
+     "w": 44,
+     "h": 44,
+     "label": "C"
+    },
+    {
+     "x": 241,
+     "y": 301,
+     "w": 44,
+     "h": 44,
+     "label": "D"
+    },
+    {
+     "x": 285,
+     "y": 301,
+     "w": 44,
+     "h": 44,
+     "label": "E"
+    },
+    {
+     "x": 329,
+     "y": 301,
+     "w": 44,
+     "h": 44,
+     "label": "F"
+    },
+    {
+     "x": 373,
+     "y": 301,
+     "w": 44,
+     "h": 44,
+     "label": "G"
+    },
+    {
+     "x": 417,
+     "y": 301,
+     "w": 44,
+     "h": 44,
+     "label": "H"
+    },
+    {
+     "x": 461,
+     "y": 301,
+     "w": 44,
+     "h": 44,
+     "label": "I"
+    },
+    {
+     "x": 505,
+     "y": 301,
+     "w": 44,
+     "h": 44,
+     "label": "J"
+    },
+    {
+     "x": 549,
+     "y": 301,
+     "w": 44,
+     "h": 44,
+     "label": "K"
+    },
+    {
+     "x": 593,
+     "y": 301,
+     "w": 44,
+     "h": 44,
+     "label": "L"
+    },
+    {
+     "x": 637,
+     "y": 301,
+     "w": 44,
+     "h": 44,
+     "label": "M"
+    }
+   ],
+   "controlsInMain": 66,
+   "controlsInPanel": 64,
+   "controlsOnFirstScreenRows": 37,
+   "filledButtons": [],
+   "badges": {
+    ".bst-cr": 37,
+    ".bst-group-count": 24
+   },
+   "badgeTotal": 61,
+   "badgesStillPaintedAsTags": {},
+   "badgesStillPaintedAsTagsTotal": 0,
+   "pillShapedElements": 0,
+   "helperTextOver40": [
+    "Esta obra incluye material procedente del documento de referencia del sistema 5.2.1 (“SRD 5.2.1”) de Wizards of the Coast LLC, disponible en https://www.dndbeyond.com/srd. La licencia sobre el SRD 5.2.1 se concede de acuerdo con la licencia internacional de atribución/reconocimiento 4.0 de Creative Commons, disponible en https://creativecommons.org/licenses/by/4.0/legalcode.",
+    "Rytta separa el texto oficial en campos, restaura un signo omitido (salvación de Inteligencia del dragón blanco joven) y en los rasgos reutilizables cambia el nombre de la criatura por «la criatura»."
+   ],
+   "helperTextOver40Chars": 576,
+   "controlsUnder44": [],
+   "visibleHeadings": [
+    "H2 183 Bestiario",
+    "H3 346 A23(23 en este grupo)",
+    "H3 1694 B14(14 en este grupo)",
+    "H3 2530 C40(40 en este grupo)",
+    "H3 4887 D47(47 en este grupo)",
+    "H3 7650 E30(30 en este grupo)",
+    "H3 9428 F3(3 en este grupo)",
+    "H3 9639 G33(33 en este grupo)",
+    "… 25 in total"
+   ],
+   "bottomBars": [
+    {
+     "cls": "bottom-nav",
+     "tag": "NAV",
+     "position": "fixed",
+     "x": 0,
+     "y": 779,
+     "w": 375,
+     "h": 65
+    }
+   ],
+   "usableBottom": 779,
+   "rowsMounted": 37,
+   "rowsFullyInFirstScreen": 7,
+   "rowsPartlyInFirstScreen": 8,
+   "firstRow": {
+    "x": 18,
+    "y": 379,
+    "w": 339,
+    "h": 57
+   },
+   "rowHeights": [
+    57
+   ],
+   "tabStopsPerRow": [
+    1
+   ],
+   "listWidth": 343,
+   "domNodes": {
+    "main": 770,
+    "panel": 670,
+    "document": 1032
+   },
+   "firstRowMs": {
+    "note": "Vite dev server, unbundled modules; first load of the page in a fresh browser context",
+    "inPage": 1902,
+    "wallClock": 1918,
+    "reload": {
+     "firstRowWallMs": 1660,
+     "firstRowInPageMs": 1526
+    }
+   },
+   "axeViolations": [],
+   "keyboard": {
+    "tabStopsToSearch": 9,
+    "tabStopsToFirstRow": 14,
+    "slashFocuses": "INPUT:bestiary-search",
+    "arrowDownFromSearch": "BUTTON:AbolethAberración · CA 17 · PG 150 · VD 10",
+    "end": "BUTTON:ZombiMuerto viviente · CA 8 · PG 15 · VD 1/4",
+    "tabOrder": [
+     "other | A:Saltar al contenido | y -94",
+     "banner | A:RYTTA · Mis campañas | y 9",
+     "banner | A:Inicio de The Sunken Coast | y 9",
+     "banner | BUTTON:Buscar panel o acción | y 9",
+     "banner | INPUT:Vista jugador | y -3",
+     "banner | BUTTON:Perfil · Table_Hero · Sesión de dm@example.com | y 9",
+     "main | A:Centro de mando | y 73",
+     "main | BUTTON:Bestiario, cambiar de panel | y 119",
+     "main | INPUT:Goblin, dragón rojo, lobo… | y 183",
+     "main | BUTTON:Filtros | y 187",
+     "main | BUTTON:Más acciones del bestiario | y 183",
+     "main | INPUT: | y 248",
+     "main | BUTTON:A | y 301",
+     "main | BUTTON:AbolethAberración · CA 17 · PG 150 · VD 10 | y 379",
+     "main | BUTTON:Acechador invisibleElemental · CA 14 · PG 97 · VD  | y 436",
+     "main | BUTTON:Acechador osgoFeérico · CA 15 · PG 65 · VD 3 | y 493",
+     "main | BUTTON:ÁguilaBestia · CA 12 · PG 4 · VD 0 | y 550"
+    ]
+   },
+   "searchAfterScroll": {
+    "scrollY": 1700,
+    "listScrollTop": null,
+    "searchY": 0,
+    "searchInView": true,
+    "filtersInView": true,
+    "sourceSegmentsInView": false,
+    "jumpStripY": 54,
+    "rowsFullyVisible": 11,
+    "listAreaPx": 681
+   },
+   "longList": {
+    "scroller": "page",
+    "scrollerWithNothingOpen": "page",
+    "scrollerWithThePaneOpen": "page",
+    "windowed": true,
+    "onArrival": {
+     "rows": 37,
+     "nodes": 770,
+     "scrollHeight": 20747
+    },
+    "afterScrollingToTheEnd": {
+     "rows": 43,
+     "nodes": 840,
+     "scrollHeight": 20484
+    },
+    "mostRowsMounted": 117,
+    "mostNodesInMain": 1651,
+    "screensScrolled": 31
+   },
+   "statBlockOpenedFromTheMiddle": {
+    "before": {
+     "name": "León",
+     "top": 446,
+     "scrollY": 12857,
+     "listTop": null
+    },
+    "detail": {
+     "kind": "sheet",
+     "pane": {
+      "x": 0,
+      "y": 68,
+      "w": 375,
+      "h": 776
+     },
+     "listWidth": 343,
+     "header": {
+      "top": 69,
+      "bottom": 125,
+      "h": 56
+     },
+     "scrollTop": 0,
+     "scrollHeight": 1268,
+     "clientHeight": 629,
+     "pageScrollY": 12857,
+     "name": "León",
+     "core": {
+      "top": 222,
+      "bottom": 345,
+      "h": 123
+     },
+     "firstAttack": {
+      "name": "Ataque múltiple.",
+      "top": 399,
+      "bottom": 480,
+      "h": 80
+     },
+     "secondAttack": {
+      "name": "Desgarro.",
+      "top": 488,
+      "bottom": 568,
+      "h": 80
+     },
+     "secondAttackInView": true,
+     "secondAttackAboveBar": true,
+     "barTop": 782,
+     "barHeight": 61,
+     "barBottom": 843,
+     "barPosition": "static",
+     "statusLine": null,
+     "barControls": [
+      {
+       "label": "Añadir a un encuentro",
+       "top": 791,
+       "bottom": 835,
+       "h": 44,
+       "w": 289,
+       "textLines": 2
+      },
+      {
+       "label": "Más acciones para León",
+       "top": 791,
+       "bottom": 835,
+       "h": 44,
+       "w": 44
+      }
+     ],
+     "sectionOrder": [
+      "sb-core",
+      "Acciones",
+      "Atributos",
+      "sb-abilities",
+      "sb-details"
+     ],
+     "overflowX": false,
+     "rowMetaVisible": true,
+     "rowAriaCurrent": "true",
+     "rowTop": 446,
+     "listRowsInView": 12
+    },
+    "arrows": null,
+    "after": {
+     "paneOrSheetOpen": 0,
+     "rowStillMounted": true,
+     "top": 446,
+     "scrollY": 12857,
+     "listTop": null,
+     "focusOnRow": true,
+     "ariaCurrent": null,
+     "listWidth": 343
+    }
+   }
+  },
+  "phone-storeroom": {
+   "viewport": [
+    390,
+    844
+   ],
+   "pageHeight": 1065,
+   "horizontalOverflow": false,
+   "panelTop": 183,
+   "panelHeight": 770,
+   "searchFieldY": 191,
+   "firstControl": {
+    "x": 16,
+    "y": 191,
+    "w": 172,
+    "h": 48,
+    "label": "Buscar objetos"
+   },
+   "firstControls": [
+    {
+     "x": 16,
+     "y": 191,
+     "w": 172,
+     "h": 48,
+     "label": "Buscar objetos"
+    },
+    {
+     "x": 196,
+     "y": 193,
+     "w": 111,
+     "h": 44,
+     "label": "Filtros"
+    },
+    {
+     "x": 315,
+     "y": 193,
+     "w": 44,
+     "h": 44,
+     "label": "Acciones del almacén"
+    },
+    {
+     "x": 16,
+     "y": 251,
+     "w": 343,
+     "h": 44,
+     "label": "Repartir botín"
+    },
+    {
+     "x": 16,
+     "y": 303,
+     "w": 343,
+     "h": 48,
+     "label": "1 propuesta de un jugador por revisar"
+    },
+    {
+     "x": 17,
+     "y": 392,
+     "w": 341,
+     "h": 61,
+     "label": "Anillo de la mareaTesorosRaroSin precio"
+    },
+    {
+     "x": 17,
+     "y": 454,
+     "w": 341,
+     "h": 61,
+     "label": "Armadura de cueroArmadurasComún5 kgSin precio"
+    },
+    {
+     "x": 17,
+     "y": 516,
+     "w": 341,
+     "h": 61,
+     "label": "Cuerda de cáñamoEquipo de aventuraComún5 kg1 po"
+    },
+    {
+     "x": 17,
+     "y": 579,
+     "w": 341,
+     "h": 61,
+     "label": "EscudoEscudosComún3 kgSin precio"
+    },
+    {
+     "x": 17,
+     "y": 641,
+     "w": 341,
+     "h": 61,
+     "label": "Espada larga · PlantillaArmasComún1,5 kg15 po"
+    },
+    {
+     "x": 17,
+     "y": 704,
+     "w": 341,
+     "h": 61,
+     "label": "FlechaMuniciónComún0,05 kgSin precio"
+    },
+    {
+     "x": 17,
+     "y": 766,
+     "w": 341,
+     "h": 61,
+     "label": "Mochila reforzadaEquipo de aventuraComún3 kg12,50 po"
+    },
+    {
+     "x": 17,
+     "y": 828,
+     "w": 341,
+     "h": 61,
+     "label": "Poción de curaciónConsumiblesPoco común0,25 kg50 po"
+    },
+    {
+     "x": 17,
+     "y": 891,
+     "w": 341,
+     "h": 61,
+     "label": "RacionesConsumiblesComún1 kg0,50 po"
+    }
+   ],
+   "controlsInMain": 16,
+   "controlsInPanel": 14,
+   "controlsOnFirstScreenRows": 14,
+   "filledButtons": [
+    "Repartir botín"
+   ],
+   "badges": {},
+   "badgeTotal": 0,
+   "badgesStillPaintedAsTags": {},
+   "badgesStillPaintedAsTagsTotal": 0,
+   "pillShapedElements": 0,
+   "helperTextOver40": [],
+   "helperTextOver40Chars": 0,
+   "controlsUnder44": [],
+   "visibleHeadings": [],
+   "bottomBars": [
+    {
+     "cls": "bottom-nav",
+     "tag": "NAV",
+     "position": "fixed",
+     "x": 0,
+     "y": 779,
+     "w": 375,
+     "h": 65
+    }
+   ],
+   "usableBottom": 779,
+   "rowsMounted": 9,
+   "rowsFullyInFirstScreen": 6,
+   "rowsPartlyInFirstScreen": 7,
+   "firstRow": {
+    "x": 17,
+    "y": 392,
+    "w": 341,
+    "h": 62
+   },
+   "rowHeights": [
+    62,
+    61
+   ],
+   "tabStopsPerRow": [
+    1
+   ],
+   "listWidth": 341,
+   "panelWidth": 343,
+   "nameToPricePx": 202,
+   "domNodes": {
+    "main": 282,
+    "panel": 180,
+    "document": 536
+   },
+   "firstRowMs": {
+    "note": "Vite dev server, unbundled modules; first load of the page in a fresh browser context",
+    "inPage": 1555,
+    "wallClock": 1659
+   },
+   "axeViolations": [],
+   "keyboard": {
+    "tabStopsToSearch": 9,
+    "tabStopsToFirstRow": 14,
+    "slashFocuses": "INPUT:Buscar objetos",
+    "dialogsAfterSlash": 0,
+    "tabOrder": [
+     "other | A:Saltar al contenido | y -94",
+     "banner | A:RYTTA · Mis campañas | y 9",
+     "banner | A:Inicio de The Sunken Coast | y 9",
+     "banner | BUTTON:Buscar panel o acción | y 9",
+     "banner | INPUT:Vista jugador | y -3",
+     "banner | BUTTON:Perfil · Table_Hero · Sesión de dm@example.com | y 9",
+     "main | A:Centro de mando | y 73",
+     "main | BUTTON:Almacén de objetos, cambiar de panel | y 119",
+     "main | INPUT:Buscar objetos | y 191",
+     "main | BUTTON:Filtros | y 193",
+     "main | BUTTON:Acciones del almacén | y 193",
+     "main | BUTTON:Repartir botín | y 251",
+     "main | BUTTON:1 propuesta de un jugador por revisar | y 303",
+     "main | BUTTON:Anillo de la mareaTesorosRaroSin precio | y 392",
+     "main | BUTTON:Armadura de cueroArmadurasComún5 kgSin precio | y 454",
+     "main | BUTTON:Cuerda de cáñamoEquipo de aventuraComún5 kg1 po | y 516",
+     "main | BUTTON:EscudoEscudosComún3 kgSin precio | y 579"
+    ]
+   },
+   "searchAfterScroll": {
+    "searchAlwaysInViewWhileScrolling": true,
+    "searchYAtTheEnd": 8,
+    "lootButtonAlwaysInView": true
+   },
+   "longList": {
+    "windowed": "not exercised: the 9 rows are all on screen",
+    "onArrival": {
+     "rows": 9,
+     "nodes": 282,
+     "scrollHeight": 1065
+    },
+    "afterScrollingToTheEnd": {
+     "rows": 9,
+     "nodes": 282,
+     "scrollHeight": 1065,
+     "scrollY": 221
+    },
+    "mostRowsMounted": 9,
+    "mostNodesInMain": 282
+   }
+  },
+  "phone-storeroom-129-items": {
+   "viewport": [
+    390,
+    844
+   ],
+   "pageHeight": 8519,
+   "horizontalOverflow": false,
+   "panelTop": 183,
+   "panelHeight": 8224,
+   "searchFieldY": 191,
+   "firstControl": {
+    "x": 16,
+    "y": 191,
+    "w": 172,
+    "h": 48,
+    "label": "Buscar objetos"
+   },
+   "firstControls": [
+    {
+     "x": 16,
+     "y": 191,
+     "w": 172,
+     "h": 48,
+     "label": "Buscar objetos"
+    },
+    {
+     "x": 196,
+     "y": 193,
+     "w": 111,
+     "h": 44,
+     "label": "Filtros"
+    },
+    {
+     "x": 315,
+     "y": 193,
+     "w": 44,
+     "h": 44,
+     "label": "Acciones del almacén"
+    },
+    {
+     "x": 16,
+     "y": 251,
+     "w": 343,
+     "h": 44,
+     "label": "Repartir botín"
+    },
+    {
+     "x": 16,
+     "y": 303,
+     "w": 343,
+     "h": 48,
+     "label": "1 propuesta de un jugador por revisar"
+    },
+    {
+     "x": 17,
+     "y": 392,
+     "w": 341,
+     "h": 61,
+     "label": "Anillo de la mareaTesorosRaroSin precio"
+    },
+    {
+     "x": 17,
+     "y": 454,
+     "w": 341,
+     "h": 61,
+     "label": "Antorcha 1ConsumiblesPoco común0,25 kg0 po"
+    },
+    {
+     "x": 17,
+     "y": 516,
+     "w": 341,
+     "h": 61,
+     "label": "Antorcha 2ConsumiblesComún1 kg48 po"
+    },
+    {
+     "x": 17,
+     "y": 579,
+     "w": 341,
+     "h": 61,
+     "label": "Antorcha 3EscudosComún3 kg96 po"
+    },
+    {
+     "x": 17,
+     "y": 641,
+     "w": 341,
+     "h": 61,
+     "label": "Antorcha 4ConsumiblesPoco común0,25 kg24 po"
+    },
+    {
+     "x": 17,
+     "y": 704,
+     "w": 341,
+     "h": 61,
+     "label": "Antorcha 5ConsumiblesComún1 kg72 po"
+    },
+    {
+     "x": 17,
+     "y": 766,
+     "w": 341,
+     "h": 61,
+     "label": "Armadura de cueroArmadurasComún5 kgSin precio"
+    },
+    {
+     "x": 17,
+     "y": 828,
+     "w": 341,
+     "h": 61,
+     "label": "Bolsa de canicas 1ArmasComún1,5 kg7 po"
+    },
+    {
+     "x": 17,
+     "y": 891,
+     "w": 341,
+     "h": 61,
+     "label": "Bolsa de canicas 2Equipo de aventuraComún3 kg55 po"
+    },
+    {
+     "x": 17,
+     "y": 953,
+     "w": 341,
+     "h": 61,
+     "label": "Bolsa de canicas 3MuniciónComún0,05 kg103 po"
+    },
+    {
+     "x": 17,
+     "y": 1016,
+     "w": 341,
+     "h": 61,
+     "label": "Bolsa de canicas 4ArmasComún1,5 kg31 po"
+    }
+   ],
+   "controlsInMain": 55,
+   "controlsInPanel": 53,
+   "controlsOnFirstScreenRows": 14,
+   "filledButtons": [
+    "Repartir botín"
+   ],
+   "badges": {},
+   "badgeTotal": 0,
+   "badgesStillPaintedAsTags": {},
+   "badgesStillPaintedAsTagsTotal": 0,
+   "pillShapedElements": 0,
+   "helperTextOver40": [],
+   "helperTextOver40Chars": 0,
+   "controlsUnder44": [],
+   "visibleHeadings": [],
+   "bottomBars": [
+    {
+     "cls": "bottom-nav",
+     "tag": "NAV",
+     "position": "fixed",
+     "x": 0,
+     "y": 779,
+     "w": 375,
+     "h": 65
+    }
+   ],
+   "usableBottom": 779,
+   "rowsMounted": 48,
+   "rowsFullyInFirstScreen": 6,
+   "rowsPartlyInFirstScreen": 7,
+   "firstRow": {
+    "x": 17,
+    "y": 392,
+    "w": 341,
+    "h": 62
+   },
+   "rowHeights": [
+    62,
+    61
+   ],
+   "tabStopsPerRow": [
+    1
+   ],
+   "listWidth": 341,
+   "panelWidth": 343,
+   "nameToPricePx": 202,
+   "domNodes": {
+    "main": 817,
+    "panel": 715,
+    "document": 1071
+   },
+   "firstRowMs": {
+    "note": "Vite dev server, unbundled modules; first load of the page in a fresh browser context",
+    "inPage": 1713,
+    "wallClock": 1738
+   },
+   "keyboard": {
+    "slashFocuses": "INPUT:Buscar objetos",
+    "dialogsAfterSlash": 0
+   },
+   "searchAfterScroll": {
+    "searchAlwaysInViewWhileScrolling": true,
+    "searchYAtTheEnd": 8,
+    "lootButtonAlwaysInView": false
+   },
+   "longList": {
+    "windowed": true,
+    "onArrival": {
+     "rows": 48,
+     "nodes": 817,
+     "scrollHeight": 8519
+    },
+    "afterScrollingToTheEnd": {
+     "rows": 33,
+     "nodes": 606,
+     "scrollHeight": 8546,
+     "scrollY": 7702
+    },
+    "mostRowsMounted": 81,
+    "mostNodesInMain": 1261
+   }
+  },
+  "tablet-bestiary": {
+   "viewport": [
+    820,
+    1180
+   ],
+   "pageHeight": 1516,
+   "horizontalOverflow": false,
+   "panelTop": 198,
+   "panelHeight": 1296,
+   "searchFieldY": 198,
+   "firstControl": {
+    "x": 240,
+    "y": 198,
+    "w": 376,
+    "h": 48,
+    "label": "Goblin, dragón rojo, lobo…"
+   },
+   "firstControls": [
+    {
+     "x": 240,
+     "y": 198,
+     "w": 376,
+     "h": 48,
+     "label": "Goblin, dragón rojo, lobo…"
+    },
+    {
+     "x": 741,
+     "y": 198,
+     "w": 48,
+     "h": 48,
+     "label": "Más acciones del bestiario"
+    },
+    {
+     "x": 624,
+     "y": 202,
+     "w": 109,
+     "h": 44,
+     "label": "Filtros"
+    },
+    {
+     "x": 333,
+     "y": 312,
+     "w": 44,
+     "h": 44,
+     "label": "A"
+    },
+    {
+     "x": 377,
+     "y": 312,
+     "w": 44,
+     "h": 44,
+     "label": "B"
+    },
+    {
+     "x": 421,
+     "y": 312,
+     "w": 44,
+     "h": 44,
+     "label": "C"
+    },
+    {
+     "x": 465,
+     "y": 312,
+     "w": 44,
+     "h": 44,
+     "label": "D"
+    },
+    {
+     "x": 509,
+     "y": 312,
+     "w": 44,
+     "h": 44,
+     "label": "E"
+    },
+    {
+     "x": 553,
+     "y": 312,
+     "w": 44,
+     "h": 44,
+     "label": "F"
+    },
+    {
+     "x": 597,
+     "y": 312,
+     "w": 44,
+     "h": 44,
+     "label": "G"
+    },
+    {
+     "x": 641,
+     "y": 312,
+     "w": 44,
+     "h": 44,
+     "label": "H"
+    },
+    {
+     "x": 685,
+     "y": 312,
+     "w": 44,
+     "h": 44,
+     "label": "I"
+    },
+    {
+     "x": 729,
+     "y": 312,
+     "w": 44,
+     "h": 44,
+     "label": "J"
+    },
+    {
+     "x": 773,
+     "y": 312,
+     "w": 44,
+     "h": 44,
+     "label": "K"
+    },
+    {
+     "x": 817,
+     "y": 312,
+     "w": 44,
+     "h": 44,
+     "label": "L"
+    },
+    {
+     "x": 861,
+     "y": 312,
+     "w": 44,
+     "h": 44,
+     "label": "M"
+    }
+   ],
+   "controlsInMain": 113,
+   "controlsInPanel": 104,
+   "controlsOnFirstScreenRows": 50,
+   "filledButtons": [],
+   "badges": {
+    ".bst-cr": 77,
+    ".bst-group-count": 24
+   },
+   "badgeTotal": 101,
+   "badgesStillPaintedAsTags": {},
+   "badgesStillPaintedAsTagsTotal": 0,
+   "pillShapedElements": 0,
+   "helperTextOver40": [
+    "Esta obra incluye material procedente del documento de referencia del sistema 5.2.1 (“SRD 5.2.1”) de Wizards of the Coast LLC, disponible en https://www.dndbeyond.com/srd. La licencia sobre el SRD 5.2.1 se concede de acuerdo con la licencia internacional de atribución/reconocimiento 4.0 de Creative Commons, disponible en https://creativecommons.org/licenses/by/4.0/legalcode.",
+    "Rytta separa el texto oficial en campos, restaura un signo omitido (salvación de Inteligencia del dragón blanco joven) y en los rasgos reutilizables cambia el nombre de la criatura por «la criatura»."
+   ],
+   "helperTextOver40Chars": 576,
+   "controlsUnder44": [],
+   "visibleHeadings": [
+    "H1 138 Centro de mando DM",
+    "H2 198 Bestiario",
+    "H3 357 A23(23 en este grupo)",
+    "H3 1706 B14(14 en este grupo)",
+    "H3 2541 C40(40 en este grupo)",
+    "H3 4858 D47(47 en este grupo)",
+    "H3 7622 E30(30 en este grupo)",
+    "H3 9399 F3(3 en este grupo)",
+    "… 26 in total"
+   ],
+   "bottomBars": [
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 1706,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 2541,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 4858,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 7622,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 9399,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 9610,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 11562,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 12585,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 12738,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 13008,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 13103,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 13720,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 15034,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 15303,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 15862,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 16944,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 17097,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 17598,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 19086,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 19877,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 19972,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 20126,
+     "w": 530,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 242,
+     "y": 20221,
+     "w": 530,
+     "h": 33
+    }
+   ],
+   "usableBottom": 1180,
+   "rowsMounted": 77,
+   "rowsFullyInFirstScreen": 13,
+   "rowsPartlyInFirstScreen": 14,
+   "firstRow": {
+    "x": 242,
+    "y": 391,
+    "w": 530,
+    "h": 57
+   },
+   "rowHeights": [
+    57
+   ],
+   "tabStopsPerRow": [
+    1
+   ],
+   "listWidth": 549,
+   "domNodes": {
+    "main": 1211,
+    "panel": 1111,
+    "document": 1471
+   },
+   "firstRowMs": {
+    "note": "Vite dev server, unbundled modules; first load of the page in a fresh browser context",
+    "inPage": 1662,
+    "wallClock": 1716,
+    "reload": {
+     "firstRowWallMs": 1586,
+     "firstRowInPageMs": 1517
+    }
+   },
+   "axeViolations": [],
+   "keyboard": {
+    "tabStopsToSearch": 24,
+    "tabStopsToFirstRow": 29,
+    "slashFocuses": "INPUT:bestiary-search",
+    "arrowDownFromSearch": "BUTTON:AbolethAberración · CA 17 · PG 150 · VD 10",
+    "end": "BUTTON:ZombiMuerto viviente · CA 8 · PG 15 · VD 1/4",
+    "tabOrder": [
+     "other | A:Saltar al contenido | y 12",
+     "banner | A:RYTTA · Mis campañas | y 11",
+     "banner | A:Inicio de The Sunken Coast | y 11",
+     "banner | BUTTON:Buscar panel o acción | y 11",
+     "banner | INPUT:Vista jugador | y 11",
+     "banner | BUTTON:Perfil · Table_Hero · Sesión de dm@example.com | y 11",
+     "banner | A:Centro de mando DM | y 67",
+     "banner | A:Combate | y 67",
+     "banner | A:Mesa | y 67",
+     "banner | A:Grupo | y 67",
+     "banner | A:Inventario | y 67",
+     "banner | A:Tiendas | y 67",
+     "banner | A:Misiones | y 67",
+     "banner | A:Glosario | y 67",
+     "main | A:Resumen | y 200",
+     "main | A:Bestiario | y 284",
+     "main | A:Almacén de objetos | y 330",
+     "main | A:Miembros | y 414",
+     "main | A:Nivel del grupo | y 460",
+     "main | A:Módulos activos | y 543",
+     "main | A:Dados | y 589",
+     "main | A:Contenido | y 635",
+     "main | A:Auditoría | y 681",
+     "main | INPUT:Goblin, dragón rojo, lobo… | y 198",
+     "main | BUTTON:Filtros | y 202",
+     "main | BUTTON:Más acciones del bestiario | y 198",
+     "main | INPUT: | y 259",
+     "main | BUTTON:A | y 312",
+     "main | BUTTON:AbolethAberración · CA 17 · PG 150 · VD 10 | y 391",
+     "main | BUTTON:Acechador invisibleElemental · CA 14 · PG 97 · VD  | y 448",
+     "main | BUTTON:Acechador osgoFeérico · CA 15 · PG 65 · VD 3 | y 505",
+     "main | BUTTON:ÁguilaBestia · CA 12 · PG 4 · VD 0 | y 562"
+    ]
+   },
+   "searchAfterScroll": {
+    "scrollY": 0,
+    "listScrollTop": 1700,
+    "searchY": 198,
+    "searchInView": true,
+    "filtersInView": true,
+    "sourceSegmentsInView": true,
+    "jumpStripY": 312,
+    "rowsFullyVisible": 13,
+    "listAreaPx": 824
+   },
+   "longList": {
+    "scroller": "inside the panel",
+    "scrollerWithNothingOpen": "bst-list (1000px of 20004px)",
+    "scrollerWithThePaneOpen": "bst-list (1000px of 20356px)",
+    "windowed": true,
+    "onArrival": {
+     "rows": 77,
+     "nodes": 1211,
+     "scrollHeight": 20004
+    },
+    "afterScrollingToTheEnd": {
+     "rows": 43,
+     "nodes": 840,
+     "scrollHeight": 19751
+    },
+    "mostRowsMounted": 124,
+    "mostNodesInMain": 1729,
+    "screensScrolled": 21
+   },
+   "statBlockOpenedFromTheMiddle": {
+    "before": {
+     "name": "Marilith",
+     "top": 579,
+     "scrollY": 310,
+     "listTop": 13060
+    },
+    "detail": {
+     "kind": "side pane",
+     "pane": {
+      "x": 480,
+      "y": 0,
+      "w": 309,
+      "h": 1156
+     },
+     "listWidth": 224,
+     "header": null,
+     "scrollTop": 0,
+     "scrollHeight": 2255,
+     "clientHeight": 1154,
+     "pageScrollY": 310,
+     "name": "Marilith",
+     "core": {
+      "top": 190,
+      "bottom": 399,
+      "h": 209
+     },
+     "firstAttack": {
+      "name": "Ataque múltiple.",
+      "top": 455,
+      "bottom": 535,
+      "h": 80
+     },
+     "secondAttack": {
+      "name": "Cuchilla de pacto.",
+      "top": 543,
+      "bottom": 673,
+      "h": 130
+     },
+     "secondAttackInView": true,
+     "secondAttackAboveBar": true,
+     "barTop": 1,
+     "barHeight": 61,
+     "barBottom": 62,
+     "barPosition": "sticky",
+     "statusLine": null,
+     "barControls": [
+      {
+       "label": "Añadir a un encuentro",
+       "top": 9,
+       "bottom": 53,
+       "h": 44,
+       "w": 223,
+       "textLines": 2
+      },
+      {
+       "label": "Más acciones para Marilith",
+       "top": 9,
+       "bottom": 53,
+       "h": 44,
+       "w": 44
+      }
+     ],
+     "sectionOrder": [
+      "sb-core",
+      "Acciones",
+      "Acciones adicionales",
+      "Reacciones",
+      "Atributos",
+      "sb-abilities",
+      "sb-details"
+     ],
+     "overflowX": false,
+     "rowMetaVisible": false,
+     "rowAriaCurrent": "true",
+     "rowTop": 619,
+     "listRowsInView": 18
+    },
+    "arrows": {
+     "down": {
+      "focus": "BUTTON:MastínBestia · CA 12 · PG 5 · VD 1/8",
+      "pane": "Mastín",
+      "current": [
+       "Mastín"
+      ]
+     },
+     "up": {
+      "focus": "BUTTON:MarilithInfernal · CA 16 · PG 220 · VD 16",
+      "pane": "Marilith",
+      "current": [
+       "Marilith"
+      ]
+     }
+    },
+    "after": {
+     "paneOrSheetOpen": 0,
+     "rowStillMounted": true,
+     "top": 562,
+     "scrollY": 220,
+     "listTop": 13167,
+     "focusOnRow": true,
+     "ariaCurrent": null,
+     "listWidth": 549
+    }
+   }
+  },
+  "tablet-storeroom": {
+   "viewport": [
+    820,
+    1180
+   ],
+   "pageHeight": 1180,
+   "horizontalOverflow": false,
+   "panelTop": 198,
+   "panelHeight": 813,
+   "searchFieldY": 249,
+   "firstControl": {
+    "x": 240,
+    "y": 249,
+    "w": 378,
+    "h": 48,
+    "label": "Buscar objetos"
+   },
+   "firstControls": [
+    {
+     "x": 240,
+     "y": 249,
+     "w": 378,
+     "h": 48,
+     "label": "Buscar objetos"
+    },
+    {
+     "x": 626,
+     "y": 251,
+     "w": 111,
+     "h": 44,
+     "label": "Filtros"
+    },
+    {
+     "x": 745,
+     "y": 251,
+     "w": 44,
+     "h": 44,
+     "label": "Acciones del almacén"
+    },
+    {
+     "x": 240,
+     "y": 309,
+     "w": 549,
+     "h": 44,
+     "label": "Repartir botín"
+    },
+    {
+     "x": 240,
+     "y": 361,
+     "w": 549,
+     "h": 48,
+     "label": "1 propuesta de un jugador por revisar"
+    },
+    {
+     "x": 241,
+     "y": 450,
+     "w": 547,
+     "h": 61,
+     "label": "Anillo de la mareaTesorosRaroSin precio"
+    },
+    {
+     "x": 241,
+     "y": 512,
+     "w": 547,
+     "h": 61,
+     "label": "Armadura de cueroArmadurasComún5 kgSin precio"
+    },
+    {
+     "x": 241,
+     "y": 575,
+     "w": 547,
+     "h": 61,
+     "label": "Cuerda de cáñamoEquipo de aventuraComún5 kg1 po"
+    },
+    {
+     "x": 241,
+     "y": 637,
+     "w": 547,
+     "h": 61,
+     "label": "EscudoEscudosComún3 kgSin precio"
+    },
+    {
+     "x": 241,
+     "y": 700,
+     "w": 547,
+     "h": 61,
+     "label": "Espada larga · PlantillaArmasComún1,5 kg15 po"
+    },
+    {
+     "x": 241,
+     "y": 762,
+     "w": 547,
+     "h": 61,
+     "label": "FlechaMuniciónComún0,05 kgSin precio"
+    },
+    {
+     "x": 241,
+     "y": 824,
+     "w": 547,
+     "h": 61,
+     "label": "Mochila reforzadaEquipo de aventuraComún3 kg12,50 po"
+    },
+    {
+     "x": 241,
+     "y": 887,
+     "w": 547,
+     "h": 61,
+     "label": "Poción de curaciónConsumiblesPoco común0,25 kg50 po"
+    },
+    {
+     "x": 241,
+     "y": 949,
+     "w": 547,
+     "h": 61,
+     "label": "RacionesConsumiblesComún1 kg0,50 po"
+    }
+   ],
+   "controlsInMain": 23,
+   "controlsInPanel": 14,
+   "controlsOnFirstScreenRows": 23,
+   "filledButtons": [
+    "Repartir botín"
+   ],
+   "badges": {},
+   "badgeTotal": 0,
+   "badgesStillPaintedAsTags": {},
+   "badgesStillPaintedAsTagsTotal": 0,
+   "pillShapedElements": 0,
+   "helperTextOver40": [],
+   "helperTextOver40Chars": 0,
+   "controlsUnder44": [],
+   "visibleHeadings": [
+    "H1 138 Centro de mando DM",
+    "H2 198 Almacén de objetos"
+   ],
+   "bottomBars": [],
+   "usableBottom": 1180,
+   "rowsMounted": 9,
+   "rowsFullyInFirstScreen": 9,
+   "rowsPartlyInFirstScreen": 9,
+   "firstRow": {
+    "x": 241,
+    "y": 450,
+    "w": 547,
+    "h": 62
+   },
+   "rowHeights": [
+    62,
+    61
+   ],
+   "tabStopsPerRow": [
+    1
+   ],
+   "listWidth": 547,
+   "panelWidth": 549,
+   "nameToPricePx": 408,
+   "domNodes": {
+    "main": 282,
+    "panel": 180,
+    "document": 536
+   },
+   "firstRowMs": {
+    "note": "Vite dev server, unbundled modules; first load of the page in a fresh browser context",
+    "inPage": 1566,
+    "wallClock": 1668
+   },
+   "axeViolations": [],
+   "keyboard": {
+    "tabStopsToSearch": 24,
+    "tabStopsToFirstRow": 29,
+    "slashFocuses": "INPUT:Buscar objetos",
+    "dialogsAfterSlash": 0,
+    "tabOrder": [
+     "other | A:Saltar al contenido | y -94",
+     "banner | A:RYTTA · Mis campañas | y 11",
+     "banner | A:Inicio de The Sunken Coast | y 11",
+     "banner | BUTTON:Buscar panel o acción | y 11",
+     "banner | INPUT:Vista jugador | y 11",
+     "banner | BUTTON:Perfil · Table_Hero · Sesión de dm@example.com | y 11",
+     "banner | A:Centro de mando DM | y 67",
+     "banner | A:Combate | y 67",
+     "banner | A:Mesa | y 67",
+     "banner | A:Grupo | y 67",
+     "banner | A:Inventario | y 67",
+     "banner | A:Tiendas | y 67",
+     "banner | A:Misiones | y 67",
+     "banner | A:Glosario | y 67",
+     "main | A:Resumen | y 200",
+     "main | A:Bestiario | y 284",
+     "main | A:Almacén de objetos1 por revisar | y 330",
+     "main | A:Miembros | y 419",
+     "main | A:Nivel del grupo | y 465",
+     "main | A:Módulos activos | y 549",
+     "main | A:Dados | y 595",
+     "main | A:Contenido | y 641",
+     "main | A:Auditoría | y 687",
+     "main | INPUT:Buscar objetos | y 249",
+     "main | BUTTON:Filtros | y 251",
+     "main | BUTTON:Acciones del almacén | y 251",
+     "main | BUTTON:Repartir botín | y 309",
+     "main | BUTTON:1 propuesta de un jugador por revisar | y 361",
+     "main | BUTTON:Anillo de la mareaTesorosRaroSin precio | y 450",
+     "main | BUTTON:Armadura de cueroArmadurasComún5 kgSin precio | y 512",
+     "main | BUTTON:Cuerda de cáñamoEquipo de aventuraComún5 kg1 po | y 575",
+     "main | BUTTON:EscudoEscudosComún3 kgSin precio | y 637"
+    ]
+   },
+   "searchAfterScroll": {
+    "searchAlwaysInViewWhileScrolling": true,
+    "searchYAtTheEnd": 249,
+    "lootButtonAlwaysInView": true
+   },
+   "longList": {
+    "windowed": "not exercised: the 9 rows are all on screen",
+    "onArrival": {
+     "rows": 9,
+     "nodes": 282,
+     "scrollHeight": 1180
+    },
+    "afterScrollingToTheEnd": {
+     "rows": 9,
+     "nodes": 282,
+     "scrollHeight": 1180,
+     "scrollY": 0
+    },
+    "mostRowsMounted": 9,
+    "mostNodesInMain": 282
+   }
+  },
+  "tablet-storeroom-129-items": {
+   "viewport": [
+    820,
+    1180
+   ],
+   "pageHeight": 8488,
+   "horizontalOverflow": false,
+   "panelTop": 198,
+   "panelHeight": 8268,
+   "searchFieldY": 249,
+   "firstControl": {
+    "x": 240,
+    "y": 249,
+    "w": 378,
+    "h": 48,
+    "label": "Buscar objetos"
+   },
+   "firstControls": [
+    {
+     "x": 240,
+     "y": 249,
+     "w": 378,
+     "h": 48,
+     "label": "Buscar objetos"
+    },
+    {
+     "x": 626,
+     "y": 251,
+     "w": 111,
+     "h": 44,
+     "label": "Filtros"
+    },
+    {
+     "x": 745,
+     "y": 251,
+     "w": 44,
+     "h": 44,
+     "label": "Acciones del almacén"
+    },
+    {
+     "x": 240,
+     "y": 309,
+     "w": 549,
+     "h": 44,
+     "label": "Repartir botín"
+    },
+    {
+     "x": 240,
+     "y": 361,
+     "w": 549,
+     "h": 48,
+     "label": "1 propuesta de un jugador por revisar"
+    },
+    {
+     "x": 241,
+     "y": 450,
+     "w": 547,
+     "h": 61,
+     "label": "Anillo de la mareaTesorosRaroSin precio"
+    },
+    {
+     "x": 241,
+     "y": 512,
+     "w": 547,
+     "h": 61,
+     "label": "Antorcha 1ConsumiblesPoco común0,25 kg0 po"
+    },
+    {
+     "x": 241,
+     "y": 575,
+     "w": 547,
+     "h": 61,
+     "label": "Antorcha 2ConsumiblesComún1 kg48 po"
+    },
+    {
+     "x": 241,
+     "y": 637,
+     "w": 547,
+     "h": 61,
+     "label": "Antorcha 3EscudosComún3 kg96 po"
+    },
+    {
+     "x": 241,
+     "y": 700,
+     "w": 547,
+     "h": 61,
+     "label": "Antorcha 4ConsumiblesPoco común0,25 kg24 po"
+    },
+    {
+     "x": 241,
+     "y": 762,
+     "w": 547,
+     "h": 61,
+     "label": "Antorcha 5ConsumiblesComún1 kg72 po"
+    },
+    {
+     "x": 241,
+     "y": 824,
+     "w": 547,
+     "h": 61,
+     "label": "Armadura de cueroArmadurasComún5 kgSin precio"
+    },
+    {
+     "x": 241,
+     "y": 887,
+     "w": 547,
+     "h": 61,
+     "label": "Bolsa de canicas 1ArmasComún1,5 kg7 po"
+    },
+    {
+     "x": 241,
+     "y": 949,
+     "w": 547,
+     "h": 61,
+     "label": "Bolsa de canicas 2Equipo de aventuraComún3 kg55 po"
+    },
+    {
+     "x": 241,
+     "y": 1011,
+     "w": 547,
+     "h": 61,
+     "label": "Bolsa de canicas 3MuniciónComún0,05 kg103 po"
+    },
+    {
+     "x": 241,
+     "y": 1074,
+     "w": 547,
+     "h": 61,
+     "label": "Bolsa de canicas 4ArmasComún1,5 kg31 po"
+    }
+   ],
+   "controlsInMain": 62,
+   "controlsInPanel": 53,
+   "controlsOnFirstScreenRows": 26,
+   "filledButtons": [
+    "Repartir botín"
+   ],
+   "badges": {},
+   "badgeTotal": 0,
+   "badgesStillPaintedAsTags": {},
+   "badgesStillPaintedAsTagsTotal": 0,
+   "pillShapedElements": 0,
+   "helperTextOver40": [],
+   "helperTextOver40Chars": 0,
+   "controlsUnder44": [],
+   "visibleHeadings": [
+    "H1 138 Centro de mando DM",
+    "H2 198 Almacén de objetos"
+   ],
+   "bottomBars": [],
+   "usableBottom": 1180,
+   "rowsMounted": 48,
+   "rowsFullyInFirstScreen": 11,
+   "rowsPartlyInFirstScreen": 12,
+   "firstRow": {
+    "x": 241,
+    "y": 450,
+    "w": 547,
+    "h": 62
+   },
+   "rowHeights": [
+    62,
+    61
+   ],
+   "tabStopsPerRow": [
+    1
+   ],
+   "listWidth": 547,
+   "panelWidth": 549,
+   "nameToPricePx": 408,
+   "domNodes": {
+    "main": 817,
+    "panel": 715,
+    "document": 1071
+   },
+   "firstRowMs": {
+    "note": "Vite dev server, unbundled modules; first load of the page in a fresh browser context",
+    "inPage": 1716,
+    "wallClock": 1735
+   },
+   "keyboard": {
+    "slashFocuses": "INPUT:Buscar objetos",
+    "dialogsAfterSlash": 0
+   },
+   "searchAfterScroll": {
+    "searchAlwaysInViewWhileScrolling": true,
+    "searchYAtTheEnd": 8,
+    "lootButtonAlwaysInView": false
+   },
+   "longList": {
+    "windowed": true,
+    "onArrival": {
+     "rows": 48,
+     "nodes": 817,
+     "scrollHeight": 8488
+    },
+    "afterScrollingToTheEnd": {
+     "rows": 57,
+     "nodes": 936,
+     "scrollHeight": 8514,
+     "scrollY": 7334
+    },
+    "mostRowsMounted": 96,
+    "mostNodesInMain": 1472
+   }
+  },
+  "laptop-bestiary": {
+   "viewport": [
+    1280,
+    800
+   ],
+   "pageHeight": 1099,
+   "horizontalOverflow": false,
+   "panelTop": 212,
+   "panelHeight": 850,
+   "searchFieldY": 212,
+   "firstControl": {
+    "x": 300,
+    "y": 212,
+    "w": 764,
+    "h": 48,
+    "label": "Goblin, dragón rojo, lobo…"
+   },
+   "firstControls": [
+    {
+     "x": 300,
+     "y": 212,
+     "w": 764,
+     "h": 48,
+     "label": "Goblin, dragón rojo, lobo…"
+    },
+    {
+     "x": 1189,
+     "y": 212,
+     "w": 48,
+     "h": 48,
+     "label": "Más acciones del bestiario"
+    },
+    {
+     "x": 1072,
+     "y": 216,
+     "w": 109,
+     "h": 44,
+     "label": "Filtros"
+    },
+    {
+     "x": 393,
+     "y": 326,
+     "w": 44,
+     "h": 44,
+     "label": "A"
+    },
+    {
+     "x": 437,
+     "y": 326,
+     "w": 44,
+     "h": 44,
+     "label": "B"
+    },
+    {
+     "x": 481,
+     "y": 326,
+     "w": 44,
+     "h": 44,
+     "label": "C"
+    },
+    {
+     "x": 525,
+     "y": 326,
+     "w": 44,
+     "h": 44,
+     "label": "D"
+    },
+    {
+     "x": 569,
+     "y": 326,
+     "w": 44,
+     "h": 44,
+     "label": "E"
+    },
+    {
+     "x": 613,
+     "y": 326,
+     "w": 44,
+     "h": 44,
+     "label": "F"
+    },
+    {
+     "x": 657,
+     "y": 326,
+     "w": 44,
+     "h": 44,
+     "label": "G"
+    },
+    {
+     "x": 701,
+     "y": 326,
+     "w": 44,
+     "h": 44,
+     "label": "H"
+    },
+    {
+     "x": 745,
+     "y": 326,
+     "w": 44,
+     "h": 44,
+     "label": "I"
+    },
+    {
+     "x": 789,
+     "y": 326,
+     "w": 44,
+     "h": 44,
+     "label": "J"
+    },
+    {
+     "x": 833,
+     "y": 326,
+     "w": 44,
+     "h": 44,
+     "label": "K"
+    },
+    {
+     "x": 877,
+     "y": 326,
+     "w": 44,
+     "h": 44,
+     "label": "L"
+    },
+    {
+     "x": 921,
+     "y": 326,
+     "w": 44,
+     "h": 44,
+     "label": "M"
+    }
+   ],
+   "controlsInMain": 73,
+   "controlsInPanel": 64,
+   "controlsOnFirstScreenRows": 43,
+   "filledButtons": [],
+   "badges": {
+    ".bst-cr": 37,
+    ".bst-group-count": 24
+   },
+   "badgeTotal": 61,
+   "badgesStillPaintedAsTags": {},
+   "badgesStillPaintedAsTagsTotal": 0,
+   "pillShapedElements": 0,
+   "helperTextOver40": [
+    "Esta obra incluye material procedente del documento de referencia del sistema 5.2.1 (“SRD 5.2.1”) de Wizards of the Coast LLC, disponible en https://www.dndbeyond.com/srd. La licencia sobre el SRD 5.2.1 se concede de acuerdo con la licencia internacional de atribución/reconocimiento 4.0 de Creative Commons, disponible en https://creativecommons.org/licenses/by/4.0/legalcode.",
+    "Rytta separa el texto oficial en campos, restaura un signo omitido (salvación de Inteligencia del dragón blanco joven) y en los rasgos reutilizables cambia el nombre de la criatura por «la criatura»."
+   ],
+   "helperTextOver40Chars": 576,
+   "controlsUnder44": [],
+   "visibleHeadings": [
+    "H1 152 Centro de mando DM",
+    "H2 212 Bestiario",
+    "H3 371 A23(23 en este grupo)",
+    "H3 1720 B14(14 en este grupo)",
+    "H3 2555 C40(40 en este grupo)",
+    "H3 4912 D47(47 en este grupo)",
+    "H3 7676 E30(30 en este grupo)",
+    "H3 9453 F3(3 en este grupo)",
+    "… 26 in total"
+   ],
+   "bottomBars": [
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 1720,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 2555,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 4912,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 7676,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 9453,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 9664,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 11616,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 12639,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 12792,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 13062,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 13157,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 13774,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 15088,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 15357,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 15916,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 16998,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 17151,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 17652,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 19140,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 19931,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 20026,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 20180,
+     "w": 717,
+     "h": 33
+    },
+    {
+     "cls": "bst-group-head",
+     "tag": "H3",
+     "position": "sticky",
+     "x": 302,
+     "y": 20275,
+     "w": 717,
+     "h": 33
+    }
+   ],
+   "usableBottom": 800,
+   "rowsMounted": 37,
+   "rowsFullyInFirstScreen": 6,
+   "rowsPartlyInFirstScreen": 7,
+   "firstRow": {
+    "x": 302,
+    "y": 405,
+    "w": 717,
+    "h": 57
+   },
+   "rowHeights": [
+    57
+   ],
+   "tabStopsPerRow": [
+    1
+   ],
+   "listWidth": 736,
+   "domNodes": {
+    "main": 770,
+    "panel": 670,
+    "document": 1030
+   },
+   "firstRowMs": {
+    "note": "Vite dev server, unbundled modules; first load of the page in a fresh browser context",
+    "inPage": 1693,
+    "wallClock": 1784,
+    "reload": {
+     "firstRowWallMs": 1596,
+     "firstRowInPageMs": 1476
+    }
+   },
+   "axeViolations": [],
+   "keyboard": {
+    "tabStopsToSearch": 24,
+    "tabStopsToFirstRow": 29,
+    "slashFocuses": "INPUT:bestiary-search",
+    "arrowDownFromSearch": "BUTTON:AbolethAberración · CA 17 · PG 150 · VD 10",
+    "end": "BUTTON:ZombiMuerto viviente · CA 8 · PG 15 · VD 1/4",
+    "tabOrder": [
+     "other | A:Saltar al contenido | y -94",
+     "banner | A:RYTTA · Mis campañas | y 11",
+     "banner | A:Inicio de The Sunken Coast | y 11",
+     "banner | BUTTON:Buscar panel o acción | y 11",
+     "banner | INPUT:Vista jugador | y 11",
+     "banner | BUTTON:Perfil · Table_Hero · Sesión de dm@example.com | y 11",
+     "banner | A:Centro de mando DM | y 67",
+     "banner | A:Combate | y 67",
+     "banner | A:Mesa | y 67",
+     "banner | A:Grupo | y 67",
+     "banner | A:Inventario | y 67",
+     "banner | A:Tiendas | y 67",
+     "banner | A:Misiones | y 67",
+     "banner | A:Glosario | y 67",
+     "main | A:Resumen | y 214",
+     "main | A:Bestiario | y 298",
+     "main | A:Almacén de objetos | y 344",
+     "main | A:Miembros | y 428",
+     "main | A:Nivel del grupo | y 474",
+     "main | A:Módulos activos | y 557",
+     "main | A:Dados | y 603",
+     "main | A:Contenido | y 649",
+     "main | A:Auditoría | y 695",
+     "main | INPUT:Goblin, dragón rojo, lobo… | y 212",
+     "main | BUTTON:Filtros | y 216",
+     "main | BUTTON:Más acciones del bestiario | y 212",
+     "main | INPUT: | y 273",
+     "main | BUTTON:A | y 326",
+     "main | BUTTON:AbolethAberración · CA 17 · PG 150 · VD 10 | y 405",
+     "main | BUTTON:Acechador invisibleElemental · CA 14 · PG 97 · VD  | y 462",
+     "main | BUTTON:Acechador osgoFeérico · CA 15 · PG 65 · VD 3 | y 519",
+     "main | BUTTON:ÁguilaBestia · CA 12 · PG 4 · VD 0 | y 576"
+    ]
+   },
+   "searchAfterScroll": {
+    "scrollY": 0,
+    "listScrollTop": 1700,
+    "searchY": 212,
+    "searchInView": true,
+    "filtersInView": true,
+    "sourceSegmentsInView": true,
+    "jumpStripY": 326,
+    "rowsFullyVisible": 7,
+    "listAreaPx": 430
+   },
+   "longList": {
+    "scroller": "inside the panel",
+    "scrollerWithNothingOpen": "bst-list (620px of 20044px)",
+    "scrollerWithThePaneOpen": "bst-list (620px of 19751px)",
+    "windowed": true,
+    "onArrival": {
+     "rows": 37,
+     "nodes": 770,
+     "scrollHeight": 20044
+    },
+    "afterScrollingToTheEnd": {
+     "rows": 43,
+     "nodes": 840,
+     "scrollHeight": 19751
+    },
+    "mostRowsMounted": 113,
+    "mostNodesInMain": 1608,
+    "screensScrolled": 31
+   },
+   "statBlockOpenedFromTheMiddle": {
+    "before": {
+     "name": "Mamut",
+     "top": 376,
+     "scrollY": 299,
+     "listTop": 13060
+    },
+    "detail": {
+     "kind": "side pane",
+     "pane": {
+      "x": 668,
+      "y": 25,
+      "w": 569,
+      "h": 776
+     },
+     "listWidth": 352,
+     "header": null,
+     "scrollTop": 0,
+     "scrollHeight": 785,
+     "clientHeight": 774,
+     "pageScrollY": 299,
+     "name": "Mamut",
+     "core": {
+      "top": 171,
+      "bottom": 234,
+      "h": 63
+     },
+     "firstAttack": {
+      "name": "Ataque múltiple.",
+      "top": 291,
+      "bottom": 322,
+      "h": 31
+     },
+     "secondAttack": {
+      "name": "Colmillos.",
+      "top": 330,
+      "bottom": 435,
+      "h": 105
+     },
+     "secondAttackInView": true,
+     "secondAttackAboveBar": true,
+     "barTop": 26,
+     "barHeight": 61,
+     "barBottom": 87,
+     "barPosition": "sticky",
+     "statusLine": null,
+     "barControls": [
+      {
+       "label": "Añadir a un encuentro",
+       "top": 34,
+       "bottom": 78,
+       "h": 44,
+       "w": 483,
+       "textLines": 2
+      },
+      {
+       "label": "Más acciones para Mamut",
+       "top": 34,
+       "bottom": 78,
+       "h": 44,
+       "w": 44
+      }
+     ],
+     "sectionOrder": [
+      "sb-core",
+      "Acciones",
+      "Acciones adicionales",
+      "sb-abilities",
+      "sb-details"
+     ],
+     "overflowX": false,
+     "rowMetaVisible": true,
+     "rowAriaCurrent": "true",
+     "rowTop": 376,
+     "listRowsInView": 12
+    },
+    "arrows": {
+     "down": {
+      "focus": "BUTTON:MantícoraMonstruosidad · CA 14 · PG 68 · VD 3",
+      "pane": "Mantícora",
+      "current": [
+       "Mantícora"
+      ]
+     },
+     "up": {
+      "focus": "BUTTON:MamutBestia · CA 13 · PG 126 · VD 6",
+      "pane": "Mamut",
+      "current": [
+       "Mamut"
+      ]
+     }
+    },
+    "after": {
+     "paneOrSheetOpen": 0,
+     "rowStillMounted": true,
+     "top": 372,
+     "scrollY": 234,
+     "listTop": 13129,
+     "focusOnRow": true,
+     "ariaCurrent": null,
+     "listWidth": 736
+    }
+   }
+  },
+  "laptop-storeroom": {
+   "viewport": [
+    1280,
+    800
+   ],
+   "pageHeight": 1061,
+   "horizontalOverflow": false,
+   "panelTop": 212,
+   "panelHeight": 813,
+   "searchFieldY": 263,
+   "firstControl": {
+    "x": 300,
+    "y": 263,
+    "w": 533,
+    "h": 48,
+    "label": "Buscar objetos"
+   },
+   "firstControls": [
+    {
+     "x": 300,
+     "y": 263,
+     "w": 533,
+     "h": 48,
+     "label": "Buscar objetos"
+    },
+    {
+     "x": 841,
+     "y": 265,
+     "w": 111,
+     "h": 44,
+     "label": "Filtros"
+    },
+    {
+     "x": 960,
+     "y": 265,
+     "w": 44,
+     "h": 44,
+     "label": "Acciones del almacén"
+    },
+    {
+     "x": 300,
+     "y": 323,
+     "w": 704,
+     "h": 44,
+     "label": "Repartir botín"
+    },
+    {
+     "x": 300,
+     "y": 375,
+     "w": 704,
+     "h": 48,
+     "label": "1 propuesta de un jugador por revisar"
+    },
+    {
+     "x": 301,
+     "y": 464,
+     "w": 702,
+     "h": 61,
+     "label": "Anillo de la mareaTesorosRaroSin precio"
+    },
+    {
+     "x": 301,
+     "y": 526,
+     "w": 702,
+     "h": 61,
+     "label": "Armadura de cueroArmadurasComún5 kgSin precio"
+    },
+    {
+     "x": 301,
+     "y": 589,
+     "w": 702,
+     "h": 61,
+     "label": "Cuerda de cáñamoEquipo de aventuraComún5 kg1 po"
+    },
+    {
+     "x": 301,
+     "y": 651,
+     "w": 702,
+     "h": 61,
+     "label": "EscudoEscudosComún3 kgSin precio"
+    },
+    {
+     "x": 301,
+     "y": 714,
+     "w": 702,
+     "h": 61,
+     "label": "Espada larga · PlantillaArmasComún1,5 kg15 po"
+    },
+    {
+     "x": 301,
+     "y": 776,
+     "w": 702,
+     "h": 61,
+     "label": "FlechaMuniciónComún0,05 kgSin precio"
+    },
+    {
+     "x": 301,
+     "y": 838,
+     "w": 702,
+     "h": 61,
+     "label": "Mochila reforzadaEquipo de aventuraComún3 kg12,50 po"
+    },
+    {
+     "x": 301,
+     "y": 901,
+     "w": 702,
+     "h": 61,
+     "label": "Poción de curaciónConsumiblesPoco común0,25 kg50 po"
+    },
+    {
+     "x": 301,
+     "y": 963,
+     "w": 702,
+     "h": 61,
+     "label": "RacionesConsumiblesComún1 kg0,50 po"
+    }
+   ],
+   "controlsInMain": 23,
+   "controlsInPanel": 14,
+   "controlsOnFirstScreenRows": 20,
+   "filledButtons": [
+    "Repartir botín"
+   ],
+   "badges": {},
+   "badgeTotal": 0,
+   "badgesStillPaintedAsTags": {},
+   "badgesStillPaintedAsTagsTotal": 0,
+   "pillShapedElements": 0,
+   "helperTextOver40": [],
+   "helperTextOver40Chars": 0,
+   "controlsUnder44": [],
+   "visibleHeadings": [
+    "H1 152 Centro de mando DM",
+    "H2 212 Almacén de objetos"
+   ],
+   "bottomBars": [],
+   "usableBottom": 800,
+   "rowsMounted": 9,
+   "rowsFullyInFirstScreen": 5,
+   "rowsPartlyInFirstScreen": 6,
+   "firstRow": {
+    "x": 301,
+    "y": 464,
+    "w": 702,
+    "h": 62
+   },
+   "rowHeights": [
+    62,
+    61
+   ],
+   "tabStopsPerRow": [
+    1
+   ],
+   "listWidth": 702,
+   "panelWidth": 704,
+   "nameToPricePx": 563,
+   "domNodes": {
+    "main": 282,
+    "panel": 180,
+    "document": 536
+   },
+   "firstRowMs": {
+    "note": "Vite dev server, unbundled modules; first load of the page in a fresh browser context",
+    "inPage": 1561,
+    "wallClock": 1647
+   },
+   "axeViolations": [],
+   "keyboard": {
+    "tabStopsToSearch": 24,
+    "tabStopsToFirstRow": 29,
+    "slashFocuses": "INPUT:Buscar objetos",
+    "dialogsAfterSlash": 0,
+    "tabOrder": [
+     "other | A:Saltar al contenido | y -94",
+     "banner | A:RYTTA · Mis campañas | y 11",
+     "banner | A:Inicio de The Sunken Coast | y 11",
+     "banner | BUTTON:Buscar panel o acción | y 11",
+     "banner | INPUT:Vista jugador | y 11",
+     "banner | BUTTON:Perfil · Table_Hero · Sesión de dm@example.com | y 11",
+     "banner | A:Centro de mando DM | y 67",
+     "banner | A:Combate | y 67",
+     "banner | A:Mesa | y 67",
+     "banner | A:Grupo | y 67",
+     "banner | A:Inventario | y 67",
+     "banner | A:Tiendas | y 67",
+     "banner | A:Misiones | y 67",
+     "banner | A:Glosario | y 67",
+     "main | A:Resumen | y 214",
+     "main | A:Bestiario | y 298",
+     "main | A:Almacén de objetos1 por revisar | y 344",
+     "main | A:Miembros | y 433",
+     "main | A:Nivel del grupo | y 479",
+     "main | A:Módulos activos | y 563",
+     "main | A:Dados | y 609",
+     "main | A:Contenido | y 655",
+     "main | A:Auditoría | y 701",
+     "main | INPUT:Buscar objetos | y 263",
+     "main | BUTTON:Filtros | y 265",
+     "main | BUTTON:Acciones del almacén | y 265",
+     "main | BUTTON:Repartir botín | y 323",
+     "main | BUTTON:1 propuesta de un jugador por revisar | y 375",
+     "main | BUTTON:Anillo de la mareaTesorosRaroSin precio | y 464",
+     "main | BUTTON:Armadura de cueroArmadurasComún5 kgSin precio | y 526",
+     "main | BUTTON:Cuerda de cáñamoEquipo de aventuraComún5 kg1 po | y 589",
+     "main | BUTTON:EscudoEscudosComún3 kgSin precio | y 651"
+    ]
+   },
+   "searchAfterScroll": {
+    "searchAlwaysInViewWhileScrolling": true,
+    "searchYAtTheEnd": 8,
+    "lootButtonAlwaysInView": true
+   },
+   "longList": {
+    "windowed": "not exercised: the 9 rows are all on screen",
+    "onArrival": {
+     "rows": 9,
+     "nodes": 282,
+     "scrollHeight": 1061
+    },
+    "afterScrollingToTheEnd": {
+     "rows": 9,
+     "nodes": 282,
+     "scrollHeight": 1061,
+     "scrollY": 261
+    },
+    "mostRowsMounted": 9,
+    "mostNodesInMain": 282
+   }
+  },
+  "laptop-storeroom-129-items": {
+   "viewport": [
+    1280,
+    800
+   ],
+   "pageHeight": 8516,
+   "horizontalOverflow": false,
+   "panelTop": 212,
+   "panelHeight": 8268,
+   "searchFieldY": 263,
+   "firstControl": {
+    "x": 300,
+    "y": 263,
+    "w": 533,
+    "h": 48,
+    "label": "Buscar objetos"
+   },
+   "firstControls": [
+    {
+     "x": 300,
+     "y": 263,
+     "w": 533,
+     "h": 48,
+     "label": "Buscar objetos"
+    },
+    {
+     "x": 841,
+     "y": 265,
+     "w": 111,
+     "h": 44,
+     "label": "Filtros"
+    },
+    {
+     "x": 960,
+     "y": 265,
+     "w": 44,
+     "h": 44,
+     "label": "Acciones del almacén"
+    },
+    {
+     "x": 300,
+     "y": 323,
+     "w": 704,
+     "h": 44,
+     "label": "Repartir botín"
+    },
+    {
+     "x": 300,
+     "y": 375,
+     "w": 704,
+     "h": 48,
+     "label": "1 propuesta de un jugador por revisar"
+    },
+    {
+     "x": 301,
+     "y": 464,
+     "w": 702,
+     "h": 61,
+     "label": "Anillo de la mareaTesorosRaroSin precio"
+    },
+    {
+     "x": 301,
+     "y": 526,
+     "w": 702,
+     "h": 61,
+     "label": "Antorcha 1ConsumiblesPoco común0,25 kg0 po"
+    },
+    {
+     "x": 301,
+     "y": 589,
+     "w": 702,
+     "h": 61,
+     "label": "Antorcha 2ConsumiblesComún1 kg48 po"
+    },
+    {
+     "x": 301,
+     "y": 651,
+     "w": 702,
+     "h": 61,
+     "label": "Antorcha 3EscudosComún3 kg96 po"
+    },
+    {
+     "x": 301,
+     "y": 714,
+     "w": 702,
+     "h": 61,
+     "label": "Antorcha 4ConsumiblesPoco común0,25 kg24 po"
+    },
+    {
+     "x": 301,
+     "y": 776,
+     "w": 702,
+     "h": 61,
+     "label": "Antorcha 5ConsumiblesComún1 kg72 po"
+    },
+    {
+     "x": 301,
+     "y": 838,
+     "w": 702,
+     "h": 61,
+     "label": "Armadura de cueroArmadurasComún5 kgSin precio"
+    },
+    {
+     "x": 301,
+     "y": 901,
+     "w": 702,
+     "h": 61,
+     "label": "Bolsa de canicas 1ArmasComún1,5 kg7 po"
+    },
+    {
+     "x": 301,
+     "y": 963,
+     "w": 702,
+     "h": 61,
+     "label": "Bolsa de canicas 2Equipo de aventuraComún3 kg55 po"
+    },
+    {
+     "x": 301,
+     "y": 1025,
+     "w": 702,
+     "h": 61,
+     "label": "Bolsa de canicas 3MuniciónComún0,05 kg103 po"
+    },
+    {
+     "x": 301,
+     "y": 1088,
+     "w": 702,
+     "h": 61,
+     "label": "Bolsa de canicas 4ArmasComún1,5 kg31 po"
+    }
+   ],
+   "controlsInMain": 62,
+   "controlsInPanel": 53,
+   "controlsOnFirstScreenRows": 20,
+   "filledButtons": [
+    "Repartir botín"
+   ],
+   "badges": {},
+   "badgeTotal": 0,
+   "badgesStillPaintedAsTags": {},
+   "badgesStillPaintedAsTagsTotal": 0,
+   "pillShapedElements": 0,
+   "helperTextOver40": [],
+   "helperTextOver40Chars": 0,
+   "controlsUnder44": [],
+   "visibleHeadings": [
+    "H1 152 Centro de mando DM",
+    "H2 212 Almacén de objetos"
+   ],
+   "bottomBars": [],
+   "usableBottom": 800,
+   "rowsMounted": 48,
+   "rowsFullyInFirstScreen": 5,
+   "rowsPartlyInFirstScreen": 6,
+   "firstRow": {
+    "x": 301,
+    "y": 464,
+    "w": 702,
+    "h": 62
+   },
+   "rowHeights": [
+    62,
+    61
+   ],
+   "tabStopsPerRow": [
+    1
+   ],
+   "listWidth": 702,
+   "panelWidth": 704,
+   "nameToPricePx": 563,
+   "domNodes": {
+    "main": 817,
+    "panel": 715,
+    "document": 1071
+   },
+   "firstRowMs": {
+    "note": "Vite dev server, unbundled modules; first load of the page in a fresh browser context",
+    "inPage": 1685,
+    "wallClock": 1709
+   },
+   "keyboard": {
+    "slashFocuses": "INPUT:Buscar objetos",
+    "dialogsAfterSlash": 0
+   },
+   "searchAfterScroll": {
+    "searchAlwaysInViewWhileScrolling": true,
+    "searchYAtTheEnd": 8,
+    "lootButtonAlwaysInView": false
+   },
+   "longList": {
+    "windowed": true,
+    "onArrival": {
+     "rows": 48,
+     "nodes": 817,
+     "scrollHeight": 8516
+    },
+    "afterScrollingToTheEnd": {
+     "rows": 33,
+     "nodes": 606,
+     "scrollHeight": 8542,
+     "scrollY": 7742
+    },
+    "mostRowsMounted": 96,
+    "mostNodesInMain": 1472
+   }
+  }
+ },
+ "tasks": {
+  "a-read": {
+   "title": "a. Bestiary: find a creature by name and read its stat block",
+   "viewport": [
+    390,
+    844
+   ],
+   "taps": 2,
+   "typed": 1,
+   "scrolls": 0,
+   "steps": [
+    {
+     "kind": "tap",
+     "label": "Buscar criatura (focus the search)",
+     "x": 16,
+     "y": 183,
+     "w": 170,
+     "h": 48,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "type",
+     "label": "type goblin",
+     "text": "goblin",
+     "capture": "phone-bestiary-search-goblin.png"
+    },
+    {
+     "kind": "tap",
+     "label": "Row Guerrero goblin",
+     "x": 18,
+     "y": 324,
+     "w": 339,
+     "h": 56,
+     "visibleWithoutScroll": true,
+     "capture": "phone-bestiary-statblock.png"
+    }
+   ],
+   "resultOrder": [
+    "Guerrero goblin",
+    "Jefe goblin",
+    "Secuaz goblin",
+    "Capitán hobgoblin",
+    "Guerrero hobgoblin"
+   ],
+   "sheet": {
+    "kind": "sheet",
+    "pane": {
+     "x": 0,
+     "y": 68,
+     "w": 375,
+     "h": 776
+    },
+    "listWidth": 343,
+    "header": {
+     "top": 69,
+     "bottom": 125,
+     "h": 56
+    },
+    "scrollTop": 0,
+    "scrollHeight": 1093,
+    "clientHeight": 629,
+    "pageScrollY": 0,
+    "name": "Guerrero goblin",
+    "core": {
+     "top": 222,
+     "bottom": 345,
+     "h": 123
+    },
+    "firstAttack": {
+     "name": "Cimitarra.",
+     "top": 399,
+     "bottom": 505,
+     "h": 105
+    },
+    "secondAttack": {
+     "name": "Arco corto.",
+     "top": 513,
+     "bottom": 618,
+     "h": 105
+    },
+    "secondAttackInView": true,
+    "secondAttackAboveBar": true,
+    "barTop": 782,
+    "barHeight": 61,
+    "barBottom": 843,
+    "barPosition": "static",
+    "statusLine": null,
+    "barControls": [
+     {
+      "label": "Añadir a un encuentro",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 289
+     },
+     {
+      "label": "Más acciones para Guerrero goblin",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     }
+    ],
+    "sectionOrder": [
+     "sb-core",
+     "Acciones",
+     "Acciones adicionales",
+     "sb-abilities",
+     "sb-details"
+    ],
+    "overflowX": false
+   },
+   "escape:sheet": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "BUTTON:Guerrero goblinFeérico · CA 15 · PG 10 · VD 1/4"
+   },
+   "afterClose": {
+    "query": "goblin",
+    "focus": "BUTTON:Guerrero goblinFeérico · CA 15 · PG 10 · VD 1/4"
+   },
+   "enterOpens": "Guerrero goblin"
+  },
+  "a2-read-encounter": {
+   "title": "a. Bestiary: the same stat block with an encounter in progress",
+   "viewport": [
+    390,
+    844
+   ],
+   "taps": 2,
+   "typed": 1,
+   "scrolls": 0,
+   "steps": [
+    {
+     "kind": "tap",
+     "label": "Buscar criatura (focus the search)",
+     "x": 16,
+     "y": 183,
+     "w": 170,
+     "h": 48,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "type",
+     "label": "type goblin",
+     "text": "goblin"
+    },
+    {
+     "kind": "tap",
+     "label": "Row Guerrero goblin",
+     "x": 18,
+     "y": 324,
+     "w": 339,
+     "h": 56,
+     "visibleWithoutScroll": true
+    }
+   ],
+   "sheet": {
+    "kind": "sheet",
+    "pane": {
+     "x": 0,
+     "y": 68,
+     "w": 375,
+     "h": 776
+    },
+    "listWidth": 343,
+    "header": {
+     "top": 69,
+     "bottom": 125,
+     "h": 56
+    },
+    "scrollTop": 0,
+    "scrollHeight": 1093,
+    "clientHeight": 629,
+    "pageScrollY": 0,
+    "name": "Guerrero goblin",
+    "core": {
+     "top": 222,
+     "bottom": 345,
+     "h": 123
+    },
+    "firstAttack": {
+     "name": "Cimitarra.",
+     "top": 399,
+     "bottom": 505,
+     "h": 105
+    },
+    "secondAttack": {
+     "name": "Arco corto.",
+     "top": 513,
+     "bottom": 618,
+     "h": 105
+    },
+    "secondAttackInView": true,
+    "secondAttackAboveBar": true,
+    "barTop": 782,
+    "barHeight": 61,
+    "barBottom": 843,
+    "barPosition": "static",
+    "statusLine": null,
+    "barControls": [
+     {
+      "label": "Restar a Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 116
+     },
+     {
+      "label": "Sumar a Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Añadir a Cripta",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 165
+     },
+     {
+      "label": "Más acciones para Guerrero goblin",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     }
+    ],
+    "sectionOrder": [
+     "sb-core",
+     "Acciones",
+     "Acciones adicionales",
+     "sb-abilities",
+     "sb-details"
+    ],
+    "overflowX": false
+   }
+  },
+  "b0-in-progress": {
+   "title": "b. Bestiary: with an encounter in progress: row, \"Añadir a Cripta\", \"Deshacer\"",
+   "viewport": [
+    390,
+    844
+   ],
+   "taps": 4,
+   "typed": 1,
+   "scrolls": 0,
+   "steps": [
+    {
+     "kind": "tap",
+     "label": "Buscar criatura (focus the search)",
+     "x": 16,
+     "y": 183,
+     "w": 170,
+     "h": 48,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "type",
+     "label": "type goblin",
+     "text": "goblin"
+    },
+    {
+     "kind": "tap",
+     "label": "Row Guerrero goblin",
+     "x": 18,
+     "y": 324,
+     "w": 339,
+     "h": 56,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Añadir a Cripta (confirm)",
+     "x": 141,
+     "y": 791,
+     "w": 165,
+     "h": 44,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Deshacer",
+     "x": 98,
+     "y": 743,
+     "w": 112,
+     "h": 44,
+     "visibleWithoutScroll": true
+    }
+   ],
+   "feedback": [
+    {
+     "role": "status",
+     "text": "5 criaturas",
+     "y": 301,
+     "inView": true,
+     "covered": true,
+     "insideDialog": false
+    },
+    {
+     "role": "status",
+     "text": "1 × Guerrero goblin en Cripta",
+     "y": 721,
+     "inView": true,
+     "covered": false,
+     "insideDialog": true
+    }
+   ],
+   "combatantsAfterAdd": 1,
+   "focusAfterAdd": "BUTTON:Añadir a Cripta",
+   "feedbackAfterUndo": [
+    {
+     "role": "status",
+     "text": "5 criaturas",
+     "y": 301,
+     "inView": true,
+     "covered": true,
+     "insideDialog": false
+    },
+    {
+     "role": "status",
+     "text": "Quitada de Cripta",
+     "y": 721,
+     "inView": true,
+     "covered": false,
+     "insideDialog": true
+    }
+   ],
+   "combatantsAfterUndo": 0,
+   "undoStillOffered": 0,
+   "focusAfterUndo": "BUTTON:Añadir a Cripta",
+   "sheetBeforeAdd": {
+    "kind": "sheet",
+    "pane": {
+     "x": 0,
+     "y": 68,
+     "w": 375,
+     "h": 776
+    },
+    "listWidth": 343,
+    "header": {
+     "top": 69,
+     "bottom": 125,
+     "h": 56
+    },
+    "scrollTop": 0,
+    "scrollHeight": 1093,
+    "clientHeight": 629,
+    "pageScrollY": 0,
+    "name": "Guerrero goblin",
+    "core": {
+     "top": 222,
+     "bottom": 345,
+     "h": 123
+    },
+    "firstAttack": {
+     "name": "Cimitarra.",
+     "top": 399,
+     "bottom": 505,
+     "h": 105
+    },
+    "secondAttack": {
+     "name": "Arco corto.",
+     "top": 513,
+     "bottom": 618,
+     "h": 105
+    },
+    "secondAttackInView": true,
+    "secondAttackAboveBar": true,
+    "barTop": 782,
+    "barHeight": 61,
+    "barBottom": 843,
+    "barPosition": "static",
+    "statusLine": null,
+    "barControls": [
+     {
+      "label": "Restar a Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 116
+     },
+     {
+      "label": "Sumar a Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Añadir a Cripta",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 165
+     },
+     {
+      "label": "Más acciones para Guerrero goblin",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     }
+    ],
+    "sectionOrder": [
+     "sb-core",
+     "Acciones",
+     "Acciones adicionales",
+     "sb-abilities",
+     "sb-details"
+    ],
+    "overflowX": false
+   },
+   "sheetAfterAdd": {
+    "kind": "sheet",
+    "pane": {
+     "x": 0,
+     "y": 68,
+     "w": 375,
+     "h": 776
+    },
+    "listWidth": 343,
+    "header": {
+     "top": 69,
+     "bottom": 125,
+     "h": 56
+    },
+    "scrollTop": 0,
+    "scrollHeight": 1093,
+    "clientHeight": 560,
+    "pageScrollY": 0,
+    "name": "Guerrero goblin",
+    "core": {
+     "top": 222,
+     "bottom": 345,
+     "h": 123
+    },
+    "firstAttack": {
+     "name": "Cimitarra.",
+     "top": 399,
+     "bottom": 505,
+     "h": 105
+    },
+    "secondAttack": {
+     "name": "Arco corto.",
+     "top": 513,
+     "bottom": 618,
+     "h": 105
+    },
+    "secondAttackInView": true,
+    "secondAttackAboveBar": true,
+    "barTop": 712,
+    "barHeight": 131,
+    "barBottom": 843,
+    "barPosition": "static",
+    "statusLine": {
+     "text": "1 × Guerrero goblin en Cripta",
+     "top": 721,
+     "bottom": 787,
+     "h": 66,
+     "linesOfTheSentence": 1,
+     "inView": true
+    },
+    "barControls": [
+     {
+      "label": "Deshacer",
+      "top": 743,
+      "bottom": 787,
+      "h": 44,
+      "w": 112
+     },
+     {
+      "label": "Abrir el encuentro",
+      "top": 743,
+      "bottom": 787,
+      "h": 44,
+      "w": 143
+     },
+     {
+      "label": "Restar a Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 116
+     },
+     {
+      "label": "Sumar a Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Añadir a Cripta",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 165
+     },
+     {
+      "label": "Más acciones para Guerrero goblin",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     }
+    ],
+    "sectionOrder": [
+     "sb-core",
+     "Acciones",
+     "Acciones adicionales",
+     "sb-abilities",
+     "sb-details"
+    ],
+    "overflowX": false
+   },
+   "sheetAfterUndo": {
+    "kind": "sheet",
+    "pane": {
+     "x": 0,
+     "y": 68,
+     "w": 375,
+     "h": 776
+    },
+    "listWidth": 343,
+    "header": {
+     "top": 69,
+     "bottom": 125,
+     "h": 56
+    },
+    "scrollTop": 0,
+    "scrollHeight": 1093,
+    "clientHeight": 560,
+    "pageScrollY": 0,
+    "name": "Guerrero goblin",
+    "core": {
+     "top": 222,
+     "bottom": 345,
+     "h": 123
+    },
+    "firstAttack": {
+     "name": "Cimitarra.",
+     "top": 399,
+     "bottom": 505,
+     "h": 105
+    },
+    "secondAttack": {
+     "name": "Arco corto.",
+     "top": 513,
+     "bottom": 618,
+     "h": 105
+    },
+    "secondAttackInView": true,
+    "secondAttackAboveBar": true,
+    "barTop": 712,
+    "barHeight": 131,
+    "barBottom": 843,
+    "barPosition": "static",
+    "statusLine": {
+     "text": "Quitada de Cripta",
+     "top": 721,
+     "bottom": 787,
+     "h": 66,
+     "linesOfTheSentence": 1,
+     "inView": true
+    },
+    "barControls": [
+     {
+      "label": "Abrir el encuentro",
+      "top": 743,
+      "bottom": 787,
+      "h": 44,
+      "w": 143
+     },
+     {
+      "label": "Restar a Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 116
+     },
+     {
+      "label": "Sumar a Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Añadir a Cripta",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 165
+     },
+     {
+      "label": "Más acciones para Guerrero goblin",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     }
+    ],
+    "sectionOrder": [
+     "sb-core",
+     "Acciones",
+     "Acciones adicionales",
+     "sb-abilities",
+     "sb-details"
+    ],
+    "overflowX": false
+   },
+   "scrollHeldWhenAddingFrom200": {
+    "set": 200,
+    "afterAdd": 200,
+    "held": 200
+   },
+   "menu": [
+    "Otro encuentro o uno nuevo",
+    "Editar",
+    "Añadir Guerrero goblin a favoritas",
+    "Crear variante de campaña",
+    "Copiar como texto",
+    "Cambiar la imagen…",
+    "Copiar prompt de arte",
+    "Ocultar en esta campaña"
+   ],
+   "dialog:another": {
+    "title": "Añadir Guerrero goblin a un encuentro",
+    "box": {
+     "x": 0,
+     "y": 0,
+     "w": 375,
+     "h": 844
+    },
+    "textFields": 2,
+    "textFieldLabels": [
+     "Encuentro",
+     "Cuántas"
+    ],
+    "radioGroups": 2,
+    "checkboxes": 1,
+    "sliders": 0,
+    "controls": 10,
+    "scrollHeight": 844,
+    "clientHeight": 844,
+    "buttons": [
+     {
+      "label": "Cancelar",
+      "y": 17,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Restar a Cuántas",
+      "y": 191,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle",
+      "disabled": true
+     },
+     {
+      "label": "Sumar a Cuántas",
+      "y": 191,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Opciones de mesaEnemigo · visible · nombre real",
+      "y": 447,
+      "h": 62,
+      "w": 339,
+      "inView": true
+     },
+     {
+      "label": "Cancelar",
+      "y": 586,
+      "h": 44,
+      "w": 341,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Añadir a Cripta",
+      "y": 526,
+      "h": 44,
+      "w": 341,
+      "inView": true
+     }
+    ],
+    "small": [],
+    "openDialogs": 2
+   },
+   "escape:another": {
+    "dialogsBefore": 2,
+    "dialogsAfter": 1,
+    "focusAfter": "BUTTON:Más acciones para Guerrero goblin"
+   }
+  },
+  "b0b-dragon": {
+   "title": "b. Bestiary: adding the adult red dragon (a long stat block): does the sheet move",
+   "viewport": [
+    390,
+    844
+   ],
+   "taps": 0,
+   "typed": 0,
+   "scrolls": 0,
+   "steps": [],
+   "before": {
+    "name": "Dragón rojo adulto",
+    "scrollTop": 0,
+    "barTop": 782,
+    "barHeight": 61,
+    "statusLine": null,
+    "secondAttack": {
+     "name": "Desgarro.",
+     "top": 564,
+     "bottom": 644,
+     "h": 80
+    }
+   },
+   "after": {
+    "name": "Dragón rojo adulto",
+    "scrollTop": 0,
+    "barTop": 712,
+    "barHeight": 131,
+    "statusLine": {
+     "text": "1 × Dragón rojo adulto en Cripta",
+     "top": 721,
+     "bottom": 787,
+     "h": 66,
+     "linesOfTheSentence": 1,
+     "inView": true
+    },
+    "secondAttack": {
+     "name": "Desgarro.",
+     "top": 564,
+     "bottom": 644,
+     "h": 80
+    }
+   },
+   "undone": {
+    "name": "Dragón rojo adulto",
+    "scrollTop": 0,
+    "barTop": 712,
+    "barHeight": 131,
+    "statusLine": {
+     "text": "Quitada de Cripta",
+     "top": 721,
+     "bottom": 787,
+     "h": 66,
+     "linesOfTheSentence": 1,
+     "inView": true
+    },
+    "secondAttack": {
+     "name": "Desgarro.",
+     "top": 564,
+     "bottom": 644,
+     "h": 80
+    }
+   }
+  },
+  "b1-existing": {
+   "title": "b. Bestiary: send the creature to an existing encounter (in preparation, not opened in this session)",
+   "viewport": [
+    390,
+    844
+   ],
+   "taps": 4,
+   "typed": 1,
+   "scrolls": 0,
+   "steps": [
+    {
+     "kind": "tap",
+     "label": "Buscar criatura (focus the search)",
+     "x": 16,
+     "y": 183,
+     "w": 170,
+     "h": 48,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "type",
+     "label": "type goblin",
+     "text": "goblin"
+    },
+    {
+     "kind": "tap",
+     "label": "Row Guerrero goblin",
+     "x": 18,
+     "y": 324,
+     "w": 339,
+     "h": 56,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Añadir a un encuentro",
+     "x": 17,
+     "y": 791,
+     "w": 289,
+     "h": 44,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Añadir a Cripta (confirm)",
+     "x": 17,
+     "y": 526,
+     "w": 341,
+     "h": 44,
+     "visibleWithoutScroll": true
+    }
+   ],
+   "bar": [
+    "Añadir a un encuentro",
+    "Más acciones para Guerrero goblin"
+   ],
+   "filledLabel": "Añadir a un encuentro",
+   "dialog:add": {
+    "title": "Añadir Guerrero goblin a un encuentro",
+    "box": {
+     "x": 0,
+     "y": 0,
+     "w": 375,
+     "h": 844
+    },
+    "textFields": 2,
+    "textFieldLabels": [
+     "Encuentro",
+     "Cuántas"
+    ],
+    "radioGroups": 2,
+    "checkboxes": 1,
+    "sliders": 0,
+    "controls": 10,
+    "scrollHeight": 844,
+    "clientHeight": 844,
+    "buttons": [
+     {
+      "label": "Cancelar",
+      "y": 17,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Restar a Cuántas",
+      "y": 191,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle",
+      "disabled": true
+     },
+     {
+      "label": "Sumar a Cuántas",
+      "y": 191,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Opciones de mesaEnemigo · visible · nombre real",
+      "y": 447,
+      "h": 62,
+      "w": 339,
+      "inView": true
+     },
+     {
+      "label": "Cancelar",
+      "y": 586,
+      "h": 44,
+      "w": 341,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Añadir a Cripta",
+      "y": 526,
+      "h": 44,
+      "w": 341,
+      "inView": true
+     }
+    ],
+    "small": [],
+    "openDialogs": 2
+   },
+   "submitLabel": "Añadir a Cripta",
+   "feedback": [
+    {
+     "role": "status",
+     "text": "5 criaturas",
+     "y": 301,
+     "inView": true,
+     "covered": true,
+     "insideDialog": false
+    },
+    {
+     "role": "status",
+     "text": "1 × Guerrero goblin en Cripta",
+     "y": 721,
+     "inView": true,
+     "covered": false,
+     "insideDialog": true
+    }
+   ],
+   "dialogsAfter": 1,
+   "focusAfterAdd": "BUTTON:Añadir a Cripta",
+   "focusInsideTheSheet": true,
+   "sheetAfterAdd": {
+    "kind": "sheet",
+    "pane": {
+     "x": 0,
+     "y": 68,
+     "w": 375,
+     "h": 776
+    },
+    "listWidth": 343,
+    "header": {
+     "top": 69,
+     "bottom": 125,
+     "h": 56
+    },
+    "scrollTop": 0,
+    "scrollHeight": 1093,
+    "clientHeight": 560,
+    "pageScrollY": 0,
+    "name": "Guerrero goblin",
+    "core": {
+     "top": 222,
+     "bottom": 345,
+     "h": 123
+    },
+    "firstAttack": {
+     "name": "Cimitarra.",
+     "top": 399,
+     "bottom": 505,
+     "h": 105
+    },
+    "secondAttack": {
+     "name": "Arco corto.",
+     "top": 513,
+     "bottom": 618,
+     "h": 105
+    },
+    "secondAttackInView": true,
+    "secondAttackAboveBar": true,
+    "barTop": 712,
+    "barHeight": 131,
+    "barBottom": 843,
+    "barPosition": "static",
+    "statusLine": {
+     "text": "1 × Guerrero goblin en Cripta",
+     "top": 721,
+     "bottom": 787,
+     "h": 66,
+     "linesOfTheSentence": 1,
+     "inView": true
+    },
+    "barControls": [
+     {
+      "label": "Deshacer",
+      "top": 743,
+      "bottom": 787,
+      "h": 44,
+      "w": 112
+     },
+     {
+      "label": "Abrir el encuentro",
+      "top": 743,
+      "bottom": 787,
+      "h": 44,
+      "w": 143
+     },
+     {
+      "label": "Restar a Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 116
+     },
+     {
+      "label": "Sumar a Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Añadir a Cripta",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 165
+     },
+     {
+      "label": "Más acciones para Guerrero goblin",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     }
+    ],
+    "sectionOrder": [
+     "sb-core",
+     "Acciones",
+     "Acciones adicionales",
+     "sb-abilities",
+     "sb-details"
+    ],
+    "overflowX": false
+   },
+   "combatants": [
+    {
+     "name": "Cripta",
+     "n": 1
+    }
+   ]
+  },
+  "b2-new": {
+   "title": "b. Bestiary: send the creature when no encounter is open (a new one is named)",
+   "viewport": [
+    390,
+    844
+   ],
+   "taps": 4,
+   "typed": 2,
+   "scrolls": 0,
+   "steps": [
+    {
+     "kind": "tap",
+     "label": "Buscar criatura (focus the search)",
+     "x": 16,
+     "y": 183,
+     "w": 170,
+     "h": 48,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "type",
+     "label": "type goblin",
+     "text": "goblin"
+    },
+    {
+     "kind": "tap",
+     "label": "Row Guerrero goblin",
+     "x": 18,
+     "y": 324,
+     "w": 339,
+     "h": 56,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Añadir a un encuentro",
+     "x": 17,
+     "y": 791,
+     "w": 289,
+     "h": 44,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "type",
+     "label": "type the encounter name",
+     "text": "Emboscada"
+    },
+    {
+     "kind": "tap",
+     "label": "Añadir a Emboscada (confirm)",
+     "x": 17,
+     "y": 545,
+     "w": 341,
+     "h": 44,
+     "visibleWithoutScroll": true
+    }
+   ],
+   "dialog:add-empty": {
+    "title": "Añadir Guerrero goblin a un encuentro",
+    "box": {
+     "x": 0,
+     "y": 0,
+     "w": 375,
+     "h": 844
+    },
+    "textFields": 2,
+    "textFieldLabels": [
+     "Nuevo encuentro *",
+     "Cuántas"
+    ],
+    "radioGroups": 2,
+    "checkboxes": 1,
+    "sliders": 0,
+    "controls": 10,
+    "scrollHeight": 844,
+    "clientHeight": 844,
+    "buttons": [
+     {
+      "label": "Cancelar",
+      "y": 17,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Restar a Cuántas",
+      "y": 210,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle",
+      "disabled": true
+     },
+     {
+      "label": "Sumar a Cuántas",
+      "y": 210,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Opciones de mesaEnemigo · visible · nombre real",
+      "y": 466,
+      "h": 62,
+      "w": 339,
+      "inView": true
+     },
+     {
+      "label": "Cancelar",
+      "y": 605,
+      "h": 44,
+      "w": 341,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Añadir criatura",
+      "y": 545,
+      "h": 44,
+      "w": 341,
+      "inView": true,
+      "disabled": true
+     }
+    ],
+    "small": [],
+    "openDialogs": 2
+   },
+   "submitLabel": "Añadir a Emboscada",
+   "feedback": [
+    {
+     "role": "status",
+     "text": "5 criaturas",
+     "y": 301,
+     "inView": true,
+     "covered": true,
+     "insideDialog": false
+    },
+    {
+     "role": "status",
+     "text": "1 × Guerrero goblin en Emboscada",
+     "y": 721,
+     "inView": true,
+     "covered": false,
+     "insideDialog": true
+    }
+   ],
+   "dialogsAfter": 1,
+   "focusAfterAdd": "BUTTON:Añadir a Emboscada",
+   "barAfter": [
+    "Deshacer",
+    "Abrir el encuentro",
+    "Restar a Cuántas",
+    "Cuántas",
+    "Sumar a Cuántas",
+    "Añadir a Emboscada",
+    "Más acciones para Guerrero goblin"
+   ],
+   "encounters": [
+    {
+     "name": "Emboscada",
+     "n": 1
+    }
+   ]
+  },
+  "b3-combat": {
+   "title": "b. Bestiary: from Combat, with the encounter in the address",
+   "viewport": [
+    390,
+    844
+   ],
+   "taps": 5,
+   "typed": 1,
+   "scrolls": 1,
+   "steps": [
+    {
+     "kind": "scroll",
+     "toReach": "Añadir desde el bestiario (Combat)",
+     "targetY": 1001
+    },
+    {
+     "kind": "tap",
+     "label": "Añadir desde el bestiario (Combat)",
+     "x": 33,
+     "y": 1001,
+     "w": 203,
+     "h": 44,
+     "visibleWithoutScroll": false
+    },
+    {
+     "kind": "tap",
+     "label": "Buscar criatura (focus the search)",
+     "x": 16,
+     "y": 210,
+     "w": 226,
+     "h": 48,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "type",
+     "label": "type goblin",
+     "text": "goblin"
+    },
+    {
+     "kind": "tap",
+     "label": "Row Guerrero goblin",
+     "x": 18,
+     "y": 351,
+     "w": 295,
+     "h": 56,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Añadir a Cripta (confirm, 1 creature)",
+     "x": 141,
+     "y": 791,
+     "w": 165,
+     "h": 44,
+     "visibleWithoutScroll": true,
+     "capture": "phone-bestiary-encounter-context.png"
+    },
+    {
+     "kind": "tap",
+     "label": "Volver al encuentro",
+     "x": 16,
+     "y": 160,
+     "w": 343,
+     "h": 44,
+     "visibleWithoutScroll": true
+    }
+   ],
+   "url": "#/campaign/20000000-0000-4000-8000-000000000001/members?panel=bestiary&encounter=e1000000-0000-4000-8000-000000000024",
+   "sheet": {
+    "kind": "sheet",
+    "pane": {
+     "x": 0,
+     "y": 68,
+     "w": 375,
+     "h": 776
+    },
+    "listWidth": 343,
+    "header": {
+     "top": 69,
+     "bottom": 125,
+     "h": 56
+    },
+    "scrollTop": 0,
+    "scrollHeight": 1093,
+    "clientHeight": 629,
+    "pageScrollY": 0,
+    "name": "Guerrero goblin",
+    "core": {
+     "top": 222,
+     "bottom": 345,
+     "h": 123
+    },
+    "firstAttack": {
+     "name": "Cimitarra.",
+     "top": 399,
+     "bottom": 505,
+     "h": 105
+    },
+    "secondAttack": {
+     "name": "Arco corto.",
+     "top": 513,
+     "bottom": 618,
+     "h": 105
+    },
+    "secondAttackInView": true,
+    "secondAttackAboveBar": true,
+    "barTop": 782,
+    "barHeight": 61,
+    "barBottom": 843,
+    "barPosition": "static",
+    "statusLine": null,
+    "barControls": [
+     {
+      "label": "Restar a Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 116
+     },
+     {
+      "label": "Sumar a Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Añadir a Cripta",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 165
+     },
+     {
+      "label": "Más acciones para Guerrero goblin",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     }
+    ],
+    "sectionOrder": [
+     "sb-core",
+     "Acciones",
+     "Acciones adicionales",
+     "sb-abilities",
+     "sb-details"
+    ],
+    "overflowX": false
+   },
+   "addLabel": "Añadir a Cripta",
+   "feedback": [
+    {
+     "role": "status",
+     "text": "5 criaturas",
+     "y": 328,
+     "inView": true,
+     "covered": true,
+     "insideDialog": false
+    },
+    {
+     "role": "status",
+     "text": "1 × Guerrero goblin en Cripta",
+     "y": 721,
+     "inView": true,
+     "covered": false,
+     "insideDialog": true
+    }
+   ],
+   "sheetAfterAdd": {
+    "kind": "sheet",
+    "pane": {
+     "x": 0,
+     "y": 68,
+     "w": 375,
+     "h": 776
+    },
+    "listWidth": 343,
+    "header": {
+     "top": 69,
+     "bottom": 125,
+     "h": 56
+    },
+    "scrollTop": 0,
+    "scrollHeight": 1093,
+    "clientHeight": 560,
+    "pageScrollY": 0,
+    "name": "Guerrero goblin",
+    "core": {
+     "top": 222,
+     "bottom": 345,
+     "h": 123
+    },
+    "firstAttack": {
+     "name": "Cimitarra.",
+     "top": 399,
+     "bottom": 505,
+     "h": 105
+    },
+    "secondAttack": {
+     "name": "Arco corto.",
+     "top": 513,
+     "bottom": 618,
+     "h": 105
+    },
+    "secondAttackInView": true,
+    "secondAttackAboveBar": true,
+    "barTop": 712,
+    "barHeight": 131,
+    "barBottom": 843,
+    "barPosition": "static",
+    "statusLine": {
+     "text": "1 × Guerrero goblin en Cripta",
+     "top": 721,
+     "bottom": 787,
+     "h": 66,
+     "linesOfTheSentence": 1,
+     "inView": true
+    },
+    "barControls": [
+     {
+      "label": "Deshacer",
+      "top": 743,
+      "bottom": 787,
+      "h": 44,
+      "w": 112
+     },
+     {
+      "label": "Abrir el encuentro",
+      "top": 743,
+      "bottom": 787,
+      "h": 44,
+      "w": 143
+     },
+     {
+      "label": "Restar a Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 116
+     },
+     {
+      "label": "Sumar a Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Añadir a Cripta",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 165
+     },
+     {
+      "label": "Más acciones para Guerrero goblin",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     }
+    ],
+    "sectionOrder": [
+     "sb-core",
+     "Acciones",
+     "Acciones adicionales",
+     "sb-abilities",
+     "sb-details"
+    ],
+    "overflowX": false
+   },
+   "combatants": [
+    {
+     "name": "Cripta",
+     "n": 1
+    }
+   ],
+   "escape:sheet": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "BUTTON:Guerrero goblinFeérico · CA 15 · PG 10 · VD 1/4"
+   },
+   "queryKept": "goblin"
+  },
+  "c-filter": {
+   "title": "c. Bestiary: filters",
+   "viewport": [
+    390,
+    844
+   ],
+   "taps": 8,
+   "typed": 0,
+   "scrolls": 1,
+   "steps": [
+    {
+     "kind": "tap",
+     "label": "Filtros",
+     "x": 194,
+     "y": 187,
+     "w": 109,
+     "h": 44,
+     "visibleWithoutScroll": true,
+     "capture": "phone-bestiary-filters.png"
+    },
+    {
+     "kind": "tap",
+     "label": "Tipo: Muerto viviente",
+     "x": 238,
+     "y": 713,
+     "w": 101,
+     "h": 17,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Ver N criaturas",
+     "x": 202,
+     "y": 787,
+     "w": 156,
+     "h": 44,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Filtros (again)",
+     "x": 179,
+     "y": 187,
+     "w": 124,
+     "h": 44,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Banda de VD: Épicas",
+     "x": 133,
+     "y": 295,
+     "w": 110,
+     "h": 48,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "scroll",
+     "toReach": "Ordenar por VD",
+     "targetY": 1058
+    },
+    {
+     "kind": "tap",
+     "label": "Ordenar por VD",
+     "x": 58,
+     "y": 1058,
+     "w": 121,
+     "h": 25,
+     "visibleWithoutScroll": false
+    },
+    {
+     "kind": "tap",
+     "label": "Ver N criaturas (2)",
+     "x": 218,
+     "y": 770,
+     "w": 140,
+     "h": 44,
+     "visibleWithoutScroll": true,
+     "capture": "phone-bestiary-filters-applied.png"
+    },
+    {
+     "kind": "tap",
+     "label": "Quitar filtros",
+     "x": 20,
+     "y": 325,
+     "w": 96,
+     "h": 44,
+     "visibleWithoutScroll": true
+    }
+   ],
+   "firstRowYNoFilter": 379,
+   "dialog:filters": {
+    "title": "Filtros",
+    "box": {
+     "x": 0,
+     "y": 68,
+     "w": 375,
+     "h": 776
+    },
+    "textFields": 0,
+    "textFieldLabels": [],
+    "radioGroups": 1,
+    "checkboxes": 20,
+    "sliders": 2,
+    "controls": 32,
+    "scrollHeight": 1125,
+    "clientHeight": 774,
+    "buttons": [
+     {
+      "label": "Cerrar",
+      "y": 85,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Débiles0–1",
+      "y": 241,
+      "h": 48,
+      "w": 110,
+      "inView": true
+     },
+     {
+      "label": "Menores2–4",
+      "y": 241,
+      "h": 48,
+      "w": 110,
+      "inView": true
+     },
+     {
+      "label": "Medias5–10",
+      "y": 241,
+      "h": 48,
+      "w": 110,
+      "inView": true
+     },
+     {
+      "label": "Mayores11–16",
+      "y": 295,
+      "h": 48,
+      "w": 110,
+      "inView": true
+     },
+     {
+      "label": "Épicas17–30",
+      "y": 295,
+      "h": 48,
+      "w": 110,
+      "inView": true
+     },
+     {
+      "label": "Quitar filtros",
+      "y": 787,
+      "h": 44,
+      "w": 138,
+      "inView": true,
+      "variant": "subtle",
+      "disabled": true
+     },
+     {
+      "label": "Ver 330 criaturas",
+      "y": 787,
+      "h": 44,
+      "w": 167,
+      "inView": true
+     }
+    ],
+    "small": [],
+    "openDialogs": 1
+   },
+   "seeLabel": "Ver 19 criaturas",
+   "cost": {
+    "source": {
+     "taps": 1,
+     "scrolls": 0
+    },
+    "type": {
+     "taps": 3,
+     "scrolls": 0
+    },
+    "bandAndSort": {
+     "taps": 4,
+     "scrolls": 1
+    }
+   },
+   "oneFilter": {
+    "line": {
+     "text": "Muerto vivienteQuitar filtros",
+     "y": 303,
+     "h": 44,
+     "clear": {
+      "y": 303,
+      "h": 44,
+      "w": 96
+     }
+    },
+    "firstRowY": 433,
+    "chips": 0
+   },
+   "seeLabel2": "Ver 1 criatura",
+   "threeFilters": {
+    "line": {
+     "text": "Muerto viviente · VD 17–30 · por desafíoQuitar filtros",
+     "y": 303,
+     "h": 66,
+     "clear": {
+      "y": 325,
+      "h": 44,
+      "w": 96
+     }
+    },
+    "firstRowY": 433,
+    "firstGroupHeadingY": 399,
+    "filtersButton": "Filtros33 filtros activos"
+   },
+   "afterClear": {
+    "focus": "BUTTON:Filtros",
+    "firstRowY": 379
+   },
+   "escape:filters": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "BUTTON:Filtros"
+   }
+  },
+  "d1-quick": {
+   "title": "d. Bestiary: create a quick creature",
+   "viewport": [
+    390,
+    844
+   ],
+   "taps": 4,
+   "typed": 1,
+   "scrolls": 0,
+   "steps": [
+    {
+     "kind": "tap",
+     "label": "Menu of the bestiary (three dots)",
+     "x": 311,
+     "y": 183,
+     "w": 48,
+     "h": 48,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Nueva criatura",
+     "x": 172,
+     "y": 244,
+     "w": 182,
+     "h": 44,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Rápida",
+     "x": 17,
+     "y": 77,
+     "w": 341,
+     "h": 96,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "type",
+     "label": "type the name",
+     "text": "Bandido"
+    },
+    {
+     "kind": "tap",
+     "label": "Guardar (confirm)",
+     "x": 17,
+     "y": 624,
+     "w": 341,
+     "h": 44,
+     "visibleWithoutScroll": true
+    }
+   ],
+   "menu": [
+    "Nueva criatura",
+    "Paquetes de criaturas"
+   ],
+   "dialog:start": {
+    "title": "¿Cómo quieres empezar?",
+    "box": {
+     "x": 0,
+     "y": 0,
+     "w": 375,
+     "h": 844
+    },
+    "textFields": 0,
+    "textFieldLabels": [],
+    "radioGroups": 0,
+    "checkboxes": 0,
+    "sliders": 0,
+    "controls": 5,
+    "scrollHeight": 844,
+    "clientHeight": 844,
+    "buttons": [
+     {
+      "label": "Cancelar",
+      "y": 17,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "RápidaNombre, PG, CA e iniciativa. Lista en un minuto.",
+      "y": 77,
+      "h": 96,
+      "w": 341,
+      "inView": true
+     },
+     {
+      "label": "Desde el SRDCopia una criatura oficial y ajústala a tu campa",
+      "y": 183,
+      "h": 96,
+      "w": 341,
+      "inView": true
+     },
+     {
+      "label": "Arquetipo y VDNúmeros equilibrados para el VD que elijas.",
+      "y": 289,
+      "h": 96,
+      "w": 341,
+      "inView": true
+     },
+     {
+      "label": "Pegar textoDe un libro que tengas: Rytta lee la ficha por ti",
+      "y": 396,
+      "h": 96,
+      "w": 341,
+      "inView": true
+     }
+    ],
+    "small": [],
+    "openDialogs": 1
+   },
+   "dialog:quick": {
+    "title": "Criatura rápida",
+    "box": {
+     "x": 0,
+     "y": 0,
+     "w": 375,
+     "h": 844
+    },
+    "textFields": 6,
+    "textFieldLabels": [
+     "Nombre *",
+     "Puntos de golpe",
+     "Clase de armadura",
+     "Bonificador de iniciativa",
+     "Acciones legendarias por ronda",
+     "Notas"
+    ],
+    "radioGroups": 1,
+    "checkboxes": 0,
+    "sliders": 0,
+    "controls": 19,
+    "scrollHeight": 844,
+    "clientHeight": 844,
+    "buttons": [
+     {
+      "label": "Cancelar",
+      "y": 17,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Restar a Puntos de golpe",
+      "y": 336,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Sumar a Puntos de golpe",
+      "y": 336,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Restar a Clase de armadura",
+      "y": 336,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Sumar a Clase de armadura",
+      "y": 336,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Restar a Bonificador de iniciativa",
+      "y": 439,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Sumar a Bonificador de iniciativa",
+      "y": 439,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Restar a Acciones legendarias por ronda",
+      "y": 439,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle",
+      "disabled": true
+     },
+     {
+      "label": "Sumar a Acciones legendarias por ronda",
+      "y": 439,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Cancelar",
+      "y": 684,
+      "h": 44,
+      "w": 341,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Guardar criatura",
+      "y": 624,
+      "h": 44,
+      "w": 341,
+      "inView": true,
+      "disabled": true
+     }
+    ],
+    "small": [],
+    "openDialogs": 1
+   },
+   "saveLabel": "Guardar criatura",
+   "feedback": [
+    {
+     "role": "status",
+     "text": "331 criaturas",
+     "y": 312,
+     "inView": true,
+     "covered": true,
+     "insideDialog": false
+    },
+    {
+     "role": "status",
+     "text": "Guardado en el bestiario: Bandido.",
+     "y": 152,
+     "inView": true,
+     "covered": false,
+     "insideDialog": true
+    }
+   ],
+   "templates": [
+    "Bandido"
+   ],
+   "afterSave": {
+    "dialogs": 1,
+    "sheetOpen": 1,
+    "focus": "BUTTON:Volver a la lista"
+   }
+  },
+  "d2-editor": {
+   "title": "d. Bestiary: create a creature in the full editor (archetype)",
+   "viewport": [
+    390,
+    844
+   ],
+   "taps": 5,
+   "typed": 1,
+   "scrolls": 1,
+   "steps": [
+    {
+     "kind": "tap",
+     "label": "Menu of the bestiary (three dots)",
+     "x": 311,
+     "y": 183,
+     "w": 48,
+     "h": 48,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Nueva criatura",
+     "x": 172,
+     "y": 244,
+     "w": 182,
+     "h": 44,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Arquetipo y VD",
+     "x": 17,
+     "y": 289,
+     "w": 341,
+     "h": 96,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "type",
+     "label": "type the name",
+     "text": "Capitán orco"
+    },
+    {
+     "kind": "scroll",
+     "toReach": "Crear borrador",
+     "targetY": 1495
+    },
+    {
+     "kind": "tap",
+     "label": "Crear borrador",
+     "x": 17,
+     "y": 1495,
+     "w": 341,
+     "h": 44,
+     "visibleWithoutScroll": false
+    },
+    {
+     "kind": "tap",
+     "label": "Guardar criatura (confirm)",
+     "x": 17,
+     "y": 731,
+     "w": 164,
+     "h": 44,
+     "visibleWithoutScroll": true
+    }
+   ],
+   "menu": [
+    "Nueva criatura",
+    "Paquetes de criaturas"
+   ],
+   "dialog:archetype": {
+    "title": "Arquetipo y valor de desafío",
+    "box": {
+     "x": 0,
+     "y": 0,
+     "w": 375,
+     "h": 844
+    },
+    "textFields": 1,
+    "textFieldLabels": [
+     "Nombre *"
+    ],
+    "radioGroups": 3,
+    "checkboxes": 0,
+    "sliders": 0,
+    "controls": 26,
+    "scrollHeight": 1614,
+    "clientHeight": 842,
+    "buttons": [
+     {
+      "label": "Cancelar",
+      "y": 17,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Restar a VD",
+      "y": 724,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Sumar a VD",
+      "y": 724,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Otras formas",
+      "y": 1555,
+      "h": 44,
+      "w": 341,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Crear borrador",
+      "y": 1495,
+      "h": 44,
+      "w": 341,
+      "inView": false,
+      "disabled": true
+     }
+    ],
+    "small": [],
+    "openDialogs": 1
+   },
+   "dialog:editor": {
+    "title": "Nueva criatura",
+    "box": {
+     "x": 0,
+     "y": 0,
+     "w": 375,
+     "h": 844
+    },
+    "textFields": 22,
+    "textFieldLabels": [
+     "Nombre *",
+     "Etiquetas",
+     "Alineamiento",
+     "Línea de tipo",
+     "Clase de armadura",
+     "Nota de CA",
+     "Dados de golpe",
+     "Bonificador extra de iniciativa",
+     "Velocidad",
+     "Puntuación de Fuerza",
+     "Puntuación de Destreza",
+     "Puntuación de Constitución",
+     "Puntuación de Inteligencia",
+     "Puntuación de Sabiduría",
+     "Puntuación de Carisma",
+     "Desde la biblioteca",
+     "Nombre",
+     "Usos",
+     "Texto",
+     "Nombre",
+     "Usos",
+     "Texto"
+    ],
+    "radioGroups": 5,
+    "checkboxes": 6,
+    "sliders": 0,
+    "controls": 96,
+    "scrollHeight": 4980,
+    "clientHeight": 842,
+    "buttons": [
+     {
+      "label": "Cancelar",
+      "y": 17,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Identidad",
+      "y": 195,
+      "h": 49,
+      "w": 339,
+      "inView": true
+     },
+     {
+      "label": "Restar a VD",
+      "y": 1244,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Sumar a VD",
+      "y": 1244,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Defensa y movimiento",
+      "y": 1458,
+      "h": 49,
+      "w": 339,
+      "inView": false
+     },
+     {
+      "label": "Restar a Clase de armadura",
+      "y": 1541,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Sumar a Clase de armadura",
+      "y": 1541,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Restar a Dados de golpe",
+      "y": 1727,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Sumar a Dados de golpe",
+      "y": 1727,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Restar a Bonificador extra de iniciativa",
+      "y": 1965,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Sumar a Bonificador extra de iniciativa",
+      "y": 1965,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Características",
+      "y": 2126,
+      "h": 49,
+      "w": 339,
+      "inView": false
+     },
+     {
+      "label": "Restar a Puntuación de Fuerza",
+      "y": 2215,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Sumar a Puntuación de Fuerza",
+      "y": 2215,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Restar a Puntuación de Destreza",
+      "y": 2402,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Sumar a Puntuación de Destreza",
+      "y": 2402,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Restar a Puntuación de Constitución",
+      "y": 2589,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Sumar a Puntuación de Constitución",
+      "y": 2589,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Restar a Puntuación de Inteligencia",
+      "y": 2776,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Sumar a Puntuación de Inteligencia",
+      "y": 2776,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Restar a Puntuación de Sabiduría",
+      "y": 2963,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Sumar a Puntuación de Sabiduría",
+      "y": 2963,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Restar a Puntuación de Carisma",
+      "y": 3150,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Sumar a Puntuación de Carisma",
+      "y": 3150,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Habilidades, defensas y sentidos",
+      "y": 3326,
+      "h": 49,
+      "w": 339,
+      "inView": false
+     },
+     {
+      "label": "Atributos y acciones",
+      "y": 3392,
+      "h": 49,
+      "w": 339,
+      "inView": false
+     },
+     {
+      "label": "Añadir",
+      "y": 3484,
+      "h": 44,
+      "w": 113,
+      "inView": false,
+      "variant": "light"
+     },
+     {
+      "label": "Añadir",
+      "y": 3585,
+      "h": 44,
+      "w": 113,
+      "inView": false,
+      "variant": "light"
+     },
+     {
+      "label": "Subir Ataque múltiple",
+      "y": 3932,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle",
+      "disabled": true
+     },
+     {
+      "label": "Bajar Ataque múltiple",
+      "y": 3932,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Quitar Ataque múltiple",
+      "y": 3932,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Subir Golpe",
+      "y": 4302,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Bajar Golpe",
+      "y": 4302,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle",
+      "disabled": true
+     },
+     {
+      "label": "Quitar Golpe",
+      "y": 4302,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Añadir",
+      "y": 4424,
+      "h": 44,
+      "w": 113,
+      "inView": false,
+      "variant": "light"
+     },
+     {
+      "label": "Añadir",
+      "y": 4525,
+      "h": 44,
+      "w": 113,
+      "inView": false,
+      "variant": "light"
+     },
+     {
+      "label": "Añadir",
+      "y": 4664,
+      "h": 44,
+      "w": 113,
+      "inView": false,
+      "variant": "light"
+     },
+     {
+      "label": "Notas privadas",
+      "y": 4767,
+      "h": 49,
+      "w": 339,
+      "inView": false
+     },
+     {
+      "label": "Cancelar",
+      "y": 787,
+      "h": 44,
+      "w": 164,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Guardar criatura",
+      "y": 731,
+      "h": 44,
+      "w": 164,
+      "inView": true
+     }
+    ],
+    "small": [],
+    "openDialogs": 1
+   },
+   "feedback": [
+    {
+     "role": "status",
+     "text": "331 criaturas",
+     "y": 312,
+     "inView": true,
+     "covered": true,
+     "insideDialog": false
+    },
+    {
+     "role": "status",
+     "text": "Guardado en el bestiario: Capitán orco.",
+     "y": 152,
+     "inView": true,
+     "covered": false,
+     "insideDialog": true
+    }
+   ],
+   "templates": [
+    "Capitán orco"
+   ]
+  },
+  "e-give": {
+   "title": "e. Storeroom: find an item and give it to one character",
+   "viewport": [
+    390,
+    844
+   ],
+   "taps": 5,
+   "typed": 1,
+   "scrolls": 0,
+   "steps": [
+    {
+     "kind": "tap",
+     "label": "Buscar objetos (focus the search)",
+     "x": 16,
+     "y": 191,
+     "w": 172,
+     "h": 48,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "type",
+     "label": "type poci",
+     "text": "poci"
+    },
+    {
+     "kind": "tap",
+     "label": "Row Poción de curación",
+     "x": 17,
+     "y": 392,
+     "w": 341,
+     "h": 61,
+     "visibleWithoutScroll": true,
+     "capture": "phone-store-item-sheet.png"
+    },
+    {
+     "kind": "tap",
+     "label": "Dar",
+     "x": 17,
+     "y": 783,
+     "w": 141,
+     "h": 44,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Recipient Arin (far end of the row)",
+     "x": 18,
+     "y": 560,
+     "w": 339,
+     "h": 49,
+     "visibleWithoutScroll": true,
+     "tappedAtX": 330,
+     "capture": "phone-store-give.png"
+    },
+    {
+     "kind": "tap",
+     "label": "Dar a Arin (confirm)",
+     "x": 17,
+     "y": 723,
+     "w": 341,
+     "h": 44,
+     "visibleWithoutScroll": true,
+     "capture": "phone-store-give-done.png"
+    }
+   ],
+   "rowsAfterSearch": [
+    "Poción de curación"
+   ],
+   "dialog:item-sheet": {
+    "title": "Poción de curación",
+    "box": {
+     "x": 0,
+     "y": 601,
+     "w": 375,
+     "h": 243
+    },
+    "textFields": 0,
+    "textFieldLabels": [],
+    "radioGroups": 0,
+    "checkboxes": 0,
+    "sliders": 0,
+    "controls": 4,
+    "scrollHeight": 243,
+    "clientHeight": 243,
+    "buttons": [
+     {
+      "label": "Cerrar",
+      "y": 618,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Dar",
+      "y": 783,
+      "h": 44,
+      "w": 141,
+      "inView": true
+     },
+     {
+      "label": "Editar",
+      "y": 783,
+      "h": 44,
+      "w": 141,
+      "inView": true,
+      "variant": "outline"
+     },
+     {
+      "label": "Más acciones para Poción de curación",
+      "y": 783,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "default"
+     }
+    ],
+    "small": [],
+    "openDialogs": 1
+   },
+   "dialog:give": {
+    "title": "Dar Poción de curación",
+    "box": {
+     "x": 0,
+     "y": 308,
+     "w": 375,
+     "h": 536
+    },
+    "textFields": 1,
+    "textFieldLabels": [
+     "Cantidad"
+    ],
+    "radioGroups": 1,
+    "checkboxes": 0,
+    "sliders": 0,
+    "controls": 10,
+    "scrollHeight": 536,
+    "clientHeight": 536,
+    "buttons": [
+     {
+      "label": "Cerrar",
+      "y": 325,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Volver",
+      "y": 385,
+      "h": 44,
+      "w": 110,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Cantidad: uno menos",
+      "y": 470,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "disabled": true
+     },
+     {
+      "label": "Cantidad: uno más",
+      "y": 470,
+      "h": 44,
+      "w": 44,
+      "inView": true
+     },
+     {
+      "label": "Elige un personaje",
+      "y": 723,
+      "h": 44,
+      "w": 341,
+      "inView": true,
+      "disabled": true
+     },
+     {
+      "label": "Repartir entre varios",
+      "y": 783,
+      "h": 44,
+      "w": 172,
+      "inView": true
+     }
+    ],
+    "small": [],
+    "openDialogs": 1
+   },
+   "giveRows": [
+    {
+     "text": "Arin",
+     "y": 560,
+     "h": 49,
+     "w": 339,
+     "labelWidth": 37,
+     "farEdgeHits": "LABEL inside the label"
+    },
+    {
+     "text": "Bea",
+     "y": 609,
+     "h": 49,
+     "w": 339,
+     "labelWidth": 34,
+     "farEdgeHits": "LABEL inside the label"
+    },
+    {
+     "text": "Cato",
+     "y": 658,
+     "h": 48,
+     "w": 339,
+     "labelWidth": 41,
+     "farEdgeHits": "LABEL inside the label"
+    }
+   ],
+   "arinCheckedByTheRowTap": true,
+   "feedback": [
+    {
+     "role": "status",
+     "text": "Arin recibe Poción de curación.",
+     "y": 255,
+     "inView": true,
+     "covered": false,
+     "insideDialog": false
+    }
+   ],
+   "grants": 1,
+   "afterGive": {
+    "dialogs": 0,
+    "focus": "BUTTON:Poción de curaciónConsumiblesPoco común0,25 kg50 po",
+    "query": "poci"
+   },
+   "back": {
+    "title": "Escudo",
+    "focus": "BUTTON:Dar"
+   },
+   "escape:give-step": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "BUTTON:EscudoEscudosComún3 kgSin precio"
+   }
+  },
+  "f-loot": {
+   "title": "f. Storeroom: distribute loot (2 items, 3 recipients)",
+   "viewport": [
+    390,
+    844
+   ],
+   "taps": 8,
+   "typed": 0,
+   "scrolls": 0,
+   "steps": [
+    {
+     "kind": "tap",
+     "label": "Repartir botín",
+     "x": 16,
+     "y": 251,
+     "w": 343,
+     "h": 44,
+     "visibleWithoutScroll": true,
+     "capture": "phone-store-loot-list.png"
+    },
+    {
+     "kind": "tap",
+     "label": "Pick Poción de curación",
+     "x": 18,
+     "y": 582,
+     "w": 339,
+     "h": 48,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Poción: Arin",
+     "x": 97,
+     "y": 226,
+     "w": 54,
+     "h": 44,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Poción: Bea",
+     "x": 155,
+     "y": 226,
+     "w": 51,
+     "h": 44,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Añadir objeto (open the picker)",
+     "x": 17,
+     "y": 370,
+     "w": 341,
+     "h": 44,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Pick Espada larga",
+     "x": 18,
+     "y": 435,
+     "w": 339,
+     "h": 48,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Espada: Cato",
+     "x": 210,
+     "y": 418,
+     "w": 58,
+     "h": 44,
+     "visibleWithoutScroll": true,
+     "capture": "phone-store-loot-two-items.png"
+    },
+    {
+     "kind": "tap",
+     "label": "Entregar 3 objetos (confirm)",
+     "x": 17,
+     "y": 779,
+     "w": 341,
+     "h": 44,
+     "visibleWithoutScroll": true
+    }
+   ],
+   "dialog:loot-opens-on-the-picker": {
+    "title": "Repartir botín",
+    "box": {
+     "x": 0,
+     "y": 101,
+     "w": 375,
+     "h": 743
+    },
+    "textFields": 1,
+    "textFieldLabels": [
+     "Buscar objeto para añadir"
+    ],
+    "radioGroups": 0,
+    "checkboxes": 0,
+    "sliders": 0,
+    "controls": 13,
+    "scrollHeight": 743,
+    "clientHeight": 743,
+    "buttons": [
+     {
+      "label": "Cerrar",
+      "y": 118,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Anillo de la mareaTesoros",
+      "y": 239,
+      "h": 48,
+      "w": 339,
+      "inView": true
+     },
+     {
+      "label": "Armadura de cueroArmaduras",
+      "y": 288,
+      "h": 48,
+      "w": 339,
+      "inView": true
+     },
+     {
+      "label": "Cuerda de cáñamoEquipo de aventura",
+      "y": 337,
+      "h": 48,
+      "w": 339,
+      "inView": true
+     },
+     {
+      "label": "EscudoEscudos",
+      "y": 386,
+      "h": 48,
+      "w": 339,
+      "inView": true
+     },
+     {
+      "label": "Espada largaArmas",
+      "y": 435,
+      "h": 48,
+      "w": 339,
+      "inView": true
+     },
+     {
+      "label": "FlechaMunición",
+      "y": 484,
+      "h": 48,
+      "w": 339,
+      "inView": true
+     },
+     {
+      "label": "Mochila reforzadaEquipo de aventura",
+      "y": 533,
+      "h": 48,
+      "w": 339,
+      "inView": true
+     },
+     {
+      "label": "Poción de curaciónConsumibles",
+      "y": 582,
+      "h": 48,
+      "w": 339,
+      "inView": true
+     },
+     {
+      "label": "RacionesConsumibles",
+      "y": 631,
+      "h": 48,
+      "w": 339,
+      "inView": true
+     },
+     {
+      "label": "Usar un lote guardado",
+      "y": 692,
+      "h": 44,
+      "w": 166,
+      "inView": true
+     },
+     {
+      "label": "Volver",
+      "y": 748,
+      "h": 44,
+      "w": 341,
+      "inView": true,
+      "variant": "subtle"
+     }
+    ],
+    "small": [],
+    "openDialogs": 1
+   },
+   "opensOn": "the picker",
+   "pickerFocus": "INPUT:Buscar objeto para añadir",
+   "picker": [
+    {
+     "text": "Anillo de la marea",
+     "y": 239,
+     "h": 48
+    },
+    {
+     "text": "Armadura de cuero",
+     "y": 288,
+     "h": 48
+    },
+    {
+     "text": "Cuerda de cáñamo",
+     "y": 337,
+     "h": 48
+    },
+    {
+     "text": "Escudo",
+     "y": 386,
+     "h": 48
+    },
+    {
+     "text": "Espada larga",
+     "y": 435,
+     "h": 48
+    },
+    {
+     "text": "Flecha",
+     "y": 484,
+     "h": 48
+    },
+    {
+     "text": "Mochila reforzada",
+     "y": 533,
+     "h": 48
+    },
+    {
+     "text": "Poción de curación",
+     "y": 582,
+     "h": 48
+    },
+    {
+     "text": "Raciones",
+     "y": 631,
+     "h": 48
+    }
+   ],
+   "oneLineNoRecipient": {
+    "label": "Entregar 0 objetos",
+    "disabled": true,
+    "top": 779,
+    "bottom": 823,
+    "viewBottom": 844,
+    "gapToTheBottomOfTheView": 21,
+    "inView": true,
+    "reason": "Elige quién recibe Poción de curación.",
+    "summary": null,
+    "contentScrolls": "no"
+   },
+   "lineHeight": 180,
+   "oneLine": {
+    "label": "Entregar 2 objetos",
+    "disabled": false,
+    "top": 779,
+    "bottom": 823,
+    "viewBottom": 844,
+    "gapToTheBottomOfTheView": 21,
+    "inView": true,
+    "reason": null,
+    "summary": "Arin: 1 Poción de curación · Bea: 1 Poción de curación",
+    "contentScrolls": "no"
+   },
+   "twoLinesOneWithoutRecipient": {
+    "label": "Entregar 2 objetos",
+    "disabled": true,
+    "top": 779,
+    "bottom": 823,
+    "viewBottom": 844,
+    "gapToTheBottomOfTheView": 21,
+    "inView": true,
+    "reason": "Elige quién recibe Espada larga.",
+    "summary": "Arin: 1 Poción de curación · Bea: 1 Poción de curación",
+    "contentScrolls": "no"
+   },
+   "dialog:loot-filled": {
+    "title": "Repartir botín",
+    "box": {
+     "x": 0,
+     "y": 101,
+     "w": 375,
+     "h": 743
+    },
+    "textFields": 2,
+    "textFieldLabels": [
+     "Cantidad por destinatario",
+     "Cantidad por destinatario"
+    ],
+    "radioGroups": 0,
+    "checkboxes": 1,
+    "sliders": 0,
+    "controls": 20,
+    "scrollHeight": 743,
+    "clientHeight": 743,
+    "buttons": [
+     {
+      "label": "Cerrar",
+      "y": 118,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Quitar Poción de curación del reparto",
+      "y": 178,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Todos",
+      "y": 226,
+      "h": 44,
+      "w": 68,
+      "inView": true
+     },
+     {
+      "label": "Arin",
+      "y": 226,
+      "h": 44,
+      "w": 54,
+      "inView": true
+     },
+     {
+      "label": "Bea",
+      "y": 226,
+      "h": 44,
+      "w": 51,
+      "inView": true
+     },
+     {
+      "label": "Cato",
+      "y": 226,
+      "h": 44,
+      "w": 58,
+      "inView": true
+     },
+     {
+      "label": "Cantidad por destinatario: uno menos",
+      "y": 300,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "disabled": true
+     },
+     {
+      "label": "Cantidad por destinatario: uno más",
+      "y": 300,
+      "h": 44,
+      "w": 44,
+      "inView": true
+     },
+     {
+      "label": "Quitar Espada larga del reparto",
+      "y": 370,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Todos",
+      "y": 418,
+      "h": 44,
+      "w": 68,
+      "inView": true
+     },
+     {
+      "label": "Arin",
+      "y": 418,
+      "h": 44,
+      "w": 54,
+      "inView": true
+     },
+     {
+      "label": "Bea",
+      "y": 418,
+      "h": 44,
+      "w": 51,
+      "inView": true
+     },
+     {
+      "label": "Cato",
+      "y": 418,
+      "h": 44,
+      "w": 58,
+      "inView": true
+     },
+     {
+      "label": "Cantidad por destinatario: uno menos",
+      "y": 492,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "disabled": true
+     },
+     {
+      "label": "Cantidad por destinatario: uno más",
+      "y": 492,
+      "h": 44,
+      "w": 44,
+      "inView": true
+     },
+     {
+      "label": "Añadir objeto",
+      "y": 562,
+      "h": 44,
+      "w": 341,
+      "inView": true,
+      "variant": "default"
+     },
+     {
+      "label": "Entregar 3 objetos",
+      "y": 779,
+      "h": 44,
+      "w": 341,
+      "inView": true
+     }
+    ],
+    "small": [],
+    "openDialogs": 1
+   },
+   "twoLines": {
+    "label": "Entregar 3 objetos",
+    "disabled": false,
+    "top": 779,
+    "bottom": 823,
+    "viewBottom": 844,
+    "gapToTheBottomOfTheView": 21,
+    "inView": true,
+    "reason": null,
+    "summary": "Arin: 1 Poción de curación · Bea: 1 Poción de curación · Cato: 1 Espada larga",
+    "contentScrolls": "no"
+   },
+   "deliverLabel": "Entregar 3 objetos",
+   "feedback": [
+    {
+     "role": "status",
+     "text": "Botín entregado. Arin: 1 Poción de curación · Bea: 1 Poción de curación · Cato: 1 Espada larga",
+     "y": 245,
+     "inView": true,
+     "covered": false,
+     "insideDialog": false
+    }
+   ],
+   "grants": 3,
+   "afterDeliver": {
+    "dialogs": 0,
+    "focus": "BUTTON:Repartir botín"
+   },
+   "threeLines": {
+    "label": "Entregar 9 objetos",
+    "disabled": false,
+    "top": 795,
+    "bottom": 839,
+    "viewBottom": 844,
+    "gapToTheBottomOfTheView": 5,
+    "inView": true,
+    "reason": null,
+    "summary": "Arin: 1 Anillo de la marea, 1 Escudo, 1 Flecha · Bea: 1 Anillo de la marea, 1 Escudo, 1 Flecha · Cato: 1 Anillo de la marea, 1 Escudo, 1 Flecha",
+    "contentScrolls": "741px of 874px"
+   },
+   "fourLines": {
+    "label": "Entregar 12 objetos",
+    "disabled": false,
+    "top": 779,
+    "bottom": 823,
+    "viewBottom": 844,
+    "gapToTheBottomOfTheView": 21,
+    "inView": true,
+    "reason": null,
+    "summary": "Arin: 1 Anillo de la marea, 1 Escudo, 1 Flecha, 1 Raciones · Bea: 1 Anillo de la marea, 1 Escudo, 1 Flecha, 1 Raciones · Cato: 1 Anillo de la marea, 1 Escudo, 1 Flecha, 1 Raciones",
+    "contentScrolls": "741px of 1088px"
+   },
+   "allPathTaps": "Repartir botín, pick, Todos, Entregar: 4 taps for one item to everybody",
+   "escape:loot-with-choices": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "BUTTON:Repartir botín"
+   }
+  },
+  "g1-accept": {
+   "title": "g. Storeroom: accept a pending proposal",
+   "viewport": [
+    390,
+    844
+   ],
+   "taps": 2,
+   "typed": 0,
+   "scrolls": 0,
+   "steps": [
+    {
+     "kind": "tap",
+     "label": "Proposals row (1 propuesta…)",
+     "x": 16,
+     "y": 303,
+     "w": 343,
+     "h": 48,
+     "visibleWithoutScroll": true,
+     "capture": "phone-store-proposal.png"
+    },
+    {
+     "kind": "tap",
+     "label": "Aceptar y dar a Arin (confirm)",
+     "x": 17,
+     "y": 510,
+     "w": 341,
+     "h": 44,
+     "visibleWithoutScroll": true
+    }
+   ],
+   "proposalsRow": {
+    "text": "1 propuesta de un jugador por revisar",
+    "y": 303,
+    "h": 48
+   },
+   "dialog:opens": {
+    "title": "Propuestas de jugadores",
+    "box": {
+     "x": 0,
+     "y": 68,
+     "w": 375,
+     "h": 776
+    },
+    "textFields": 0,
+    "textFieldLabels": [],
+    "radioGroups": 0,
+    "checkboxes": 0,
+    "sliders": 0,
+    "controls": 6,
+    "scrollHeight": 776,
+    "clientHeight": 776,
+    "buttons": [
+     {
+      "label": "Cerrar",
+      "y": 85,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Todas las propuestas",
+      "y": 145,
+      "h": 44,
+      "w": 215,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Aceptar y dar a Arin",
+      "y": 510,
+      "h": 44,
+      "w": 341,
+      "inView": true
+     },
+     {
+      "label": "Revisar antes",
+      "y": 566,
+      "h": 44,
+      "w": 341,
+      "inView": true,
+      "variant": "outline"
+     },
+     {
+      "label": "Dar un objeto existente en su lugar",
+      "y": 622,
+      "h": 44,
+      "w": 277,
+      "inView": true
+     },
+     {
+      "label": "Rechazar",
+      "y": 676,
+      "h": 44,
+      "w": 93,
+      "inView": true
+     }
+    ],
+    "small": [],
+    "openDialogs": 1
+   },
+   "rowOpens": "the proposal card",
+   "cardFocus": "H3:Amuleto de la abuela",
+   "feedback": [
+    {
+     "role": "status",
+     "text": "Arin recibe Amuleto de la abuela.",
+     "y": 255,
+     "inView": true,
+     "covered": false,
+     "insideDialog": false
+    }
+   ],
+   "afterAccept": {
+    "dialogs": 0,
+    "focus": "BUTTON:Acciones del almacén",
+    "proposalsRowLeft": 0,
+    "definitions": 10,
+    "grants": 1
+   }
+  },
+  "g2-reject": {
+   "title": "g. Storeroom: reject a pending proposal",
+   "viewport": [
+    390,
+    844
+   ],
+   "taps": 3,
+   "typed": 0,
+   "scrolls": 0,
+   "steps": [
+    {
+     "kind": "tap",
+     "label": "Proposals row (1 propuesta…)",
+     "x": 16,
+     "y": 303,
+     "w": 343,
+     "h": 48,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Rechazar",
+     "x": 17,
+     "y": 676,
+     "w": 93,
+     "h": 44,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Rechazar propuesta (confirm)",
+     "x": 169,
+     "y": 633,
+     "w": 189,
+     "h": 44,
+     "visibleWithoutScroll": true
+    }
+   ],
+   "dialog:reject": {
+    "title": "Propuestas de jugadores",
+    "box": {
+     "x": 0,
+     "y": 68,
+     "w": 375,
+     "h": 776
+    },
+    "textFields": 1,
+    "textFieldLabels": [
+     "Motivo (opcional)"
+    ],
+    "radioGroups": 0,
+    "checkboxes": 0,
+    "sliders": 0,
+    "controls": 4,
+    "scrollHeight": 776,
+    "clientHeight": 776,
+    "buttons": [
+     {
+      "label": "Cerrar",
+      "y": 85,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Volver",
+      "y": 145,
+      "h": 44,
+      "w": 110,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Rechazar propuesta",
+      "y": 633,
+      "h": 44,
+      "w": 189,
+      "inView": true,
+      "variant": "light"
+     }
+    ],
+    "small": [],
+    "openDialogs": 1
+   },
+   "feedback": [
+    {
+     "role": "status",
+     "text": "Propuesta de Amuleto de la abuela rechazada.",
+     "y": 245,
+     "inView": true,
+     "covered": false,
+     "insideDialog": false
+    }
+   ],
+   "afterReject": {
+    "dialogs": 0,
+    "focus": "BUTTON:Acciones del almacén"
+   }
+  },
+  "g3-review-first": {
+   "title": "g. Storeroom: accept a proposal through \"Revisar antes\"",
+   "viewport": [
+    390,
+    844
+   ],
+   "taps": 3,
+   "typed": 0,
+   "scrolls": 0,
+   "steps": [
+    {
+     "kind": "tap",
+     "label": "Proposals row (1 propuesta…)",
+     "x": 16,
+     "y": 303,
+     "w": 343,
+     "h": 48,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Revisar antes",
+     "x": 17,
+     "y": 566,
+     "w": 341,
+     "h": 44,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Crear y dar a Arin (confirm)",
+     "x": 17,
+     "y": 795,
+     "w": 341,
+     "h": 44,
+     "visibleWithoutScroll": true
+    }
+   ],
+   "dialog:accept-forge": {
+    "title": "Aceptar Amuleto de la abuela",
+    "box": {
+     "x": 0,
+     "y": 68,
+     "w": 375,
+     "h": 776
+    },
+    "textFields": 8,
+    "textFieldLabels": [
+     "Nombre *",
+     "Peso (kg)",
+     "Valor (po)",
+     "Dónde se lleva",
+     "Bonificador a la CA",
+     "Bonificador al movimiento (pies)",
+     "Descripción",
+     "Unidades para Arin"
+    ],
+    "radioGroups": 2,
+    "checkboxes": 0,
+    "sliders": 0,
+    "controls": 65,
+    "scrollHeight": 2061,
+    "clientHeight": 774,
+    "buttons": [
+     {
+      "label": "Cerrar",
+      "y": 85,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Peso (kg): uno menos",
+      "y": 1305,
+      "h": 44,
+      "w": 44,
+      "inView": false
+     },
+     {
+      "label": "Peso (kg): uno más",
+      "y": 1305,
+      "h": 44,
+      "w": 44,
+      "inView": false
+     },
+     {
+      "label": "Valor (po): uno menos",
+      "y": 1396,
+      "h": 44,
+      "w": 44,
+      "inView": false
+     },
+     {
+      "label": "Valor (po): uno más",
+      "y": 1396,
+      "h": 44,
+      "w": 44,
+      "inView": false
+     },
+     {
+      "label": "Bonificador a la CA: uno menos",
+      "y": 1602,
+      "h": 44,
+      "w": 44,
+      "inView": false
+     },
+     {
+      "label": "Bonificador a la CA: uno más",
+      "y": 1602,
+      "h": 44,
+      "w": 44,
+      "inView": false
+     },
+     {
+      "label": "Bonificador al movimiento (pies): uno menos",
+      "y": 1685,
+      "h": 44,
+      "w": 44,
+      "inView": false
+     },
+     {
+      "label": "Bonificador al movimiento (pies): uno más",
+      "y": 1685,
+      "h": 44,
+      "w": 44,
+      "inView": false
+     },
+     {
+      "label": "Nombre en inglésOpcional. Quien use la app en inglés lo leer",
+      "y": 1865,
+      "h": 80,
+      "w": 341,
+      "inView": false
+     },
+     {
+      "label": "Unidades para Arin: uno menos",
+      "y": 1991,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "disabled": true
+     },
+     {
+      "label": "Unidades para Arin: uno más",
+      "y": 1991,
+      "h": 44,
+      "w": 44,
+      "inView": false
+     },
+     {
+      "label": "Crear y dar a Arin",
+      "y": 795,
+      "h": 44,
+      "w": 341,
+      "inView": true
+     }
+    ],
+    "small": [],
+    "openDialogs": 1
+   },
+   "acceptLabel": "Crear y dar a Arin",
+   "feedback": [
+    {
+     "role": "status",
+     "text": "Arin recibe Amuleto de la abuela.",
+     "y": 255,
+     "inView": true,
+     "covered": false,
+     "insideDialog": false
+    }
+   ],
+   "dialogsAfter": 0
+  },
+  "h-create": {
+   "title": "h. Storeroom: create an item",
+   "viewport": [
+    390,
+    844
+   ],
+   "taps": 3,
+   "typed": 1,
+   "scrolls": 0,
+   "steps": [
+    {
+     "kind": "tap",
+     "label": "Menu of the storeroom (three dots)",
+     "x": 315,
+     "y": 193,
+     "w": 44,
+     "h": 44,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Nuevo objeto",
+     "x": 186,
+     "y": 250,
+     "w": 168,
+     "h": 44,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "type",
+     "label": "type the name",
+     "text": "Piedra lunar"
+    },
+    {
+     "kind": "tap",
+     "label": "Forjar objeto (confirm)",
+     "x": 17,
+     "y": 795,
+     "w": 341,
+     "h": 44,
+     "visibleWithoutScroll": true
+    }
+   ],
+   "menu": [
+    "Nuevo objeto",
+    "Gestionar catálogo"
+   ],
+   "dialog:forge": {
+    "title": "Forjar objeto",
+    "box": {
+     "x": 0,
+     "y": 68,
+     "w": 375,
+     "h": 776
+    },
+    "textFields": 6,
+    "textFieldLabels": [
+     "Partir de un objeto existente",
+     "Nombre *",
+     "Peso (kg)",
+     "Valor (po)",
+     "Dónde se lleva",
+     "Descripción"
+    ],
+    "radioGroups": 2,
+    "checkboxes": 1,
+    "sliders": 0,
+    "controls": 62,
+    "scrollHeight": 2390,
+    "clientHeight": 774,
+    "buttons": [
+     {
+      "label": "Cerrar",
+      "y": 85,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Copiar prompt de arte",
+      "y": 1124,
+      "h": 44,
+      "w": 192,
+      "inView": false,
+      "variant": "subtle"
+     },
+     {
+      "label": "Peso (kg): uno menos",
+      "y": 1670,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "disabled": true
+     },
+     {
+      "label": "Peso (kg): uno más",
+      "y": 1670,
+      "h": 44,
+      "w": 44,
+      "inView": false
+     },
+     {
+      "label": "Valor (po): uno menos",
+      "y": 1761,
+      "h": 44,
+      "w": 44,
+      "inView": false,
+      "disabled": true
+     },
+     {
+      "label": "Valor (po): uno más",
+      "y": 1761,
+      "h": 44,
+      "w": 44,
+      "inView": false
+     },
+     {
+      "label": "Nombre en inglésOpcional. Quien use la app en inglés lo leer",
+      "y": 2129,
+      "h": 80,
+      "w": 341,
+      "inView": false
+     },
+     {
+      "label": "AArin",
+      "y": 2274,
+      "h": 52,
+      "w": 97,
+      "inView": false
+     },
+     {
+      "label": "BBea",
+      "y": 2274,
+      "h": 52,
+      "w": 94,
+      "inView": false
+     },
+     {
+      "label": "CCato",
+      "y": 2274,
+      "h": 52,
+      "w": 101,
+      "inView": false
+     },
+     {
+      "label": "Forjar objeto",
+      "y": 795,
+      "h": 44,
+      "w": 341,
+      "inView": true,
+      "disabled": true
+     }
+    ],
+    "small": [],
+    "openDialogs": 1
+   },
+   "feedback": [
+    {
+     "role": "status",
+     "text": "Objeto guardado: Piedra lunar.",
+     "y": 255,
+     "inView": true,
+     "covered": false,
+     "insideDialog": false
+    }
+   ],
+   "afterSave": {
+    "dialogs": 0,
+    "focus": "BUTTON:Acciones del almacén",
+    "definitions": 10
+   }
+  },
+  "i-options": {
+   "title": "Storeroom: filters, sort and manage catalogue",
+   "viewport": [
+    390,
+    844
+   ],
+   "taps": 7,
+   "typed": 0,
+   "scrolls": 0,
+   "steps": [
+    {
+     "kind": "tap",
+     "label": "Filtros",
+     "x": 196,
+     "y": 193,
+     "w": 111,
+     "h": 44,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Category Armas",
+     "x": 192,
+     "y": 388,
+     "w": 167,
+     "h": 44,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Sort by Precio",
+     "x": 293,
+     "y": 634,
+     "w": 39,
+     "h": 17,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Ver N objetos",
+     "x": 17,
+     "y": 783,
+     "w": 341,
+     "h": 44,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Quitar filtros",
+     "x": 141,
+     "y": 241,
+     "w": 52,
+     "h": 44,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Menu of the storeroom (three dots)",
+     "x": 315,
+     "y": 193,
+     "w": 44,
+     "h": 44,
+     "visibleWithoutScroll": true
+    },
+    {
+     "kind": "tap",
+     "label": "Gestionar catálogo",
+     "x": 186,
+     "y": 294,
+     "w": 168,
+     "h": 44,
+     "visibleWithoutScroll": true
+    }
+   ],
+   "dialog:filters": {
+    "title": "Filtros",
+    "box": {
+     "x": 0,
+     "y": 280,
+     "w": 375,
+     "h": 564
+    },
+    "textFields": 0,
+    "textFieldLabels": [],
+    "radioGroups": 2,
+    "checkboxes": 0,
+    "sliders": 0,
+    "controls": 10,
+    "scrollHeight": 564,
+    "clientHeight": 564,
+    "buttons": [
+     {
+      "label": "Cerrar",
+      "y": 297,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Todo9",
+      "y": 388,
+      "h": 44,
+      "w": 167,
+      "inView": true
+     },
+     {
+      "label": "Armas1",
+      "y": 388,
+      "h": 44,
+      "w": 167,
+      "inView": true
+     },
+     {
+      "label": "Armaduras1",
+      "y": 432,
+      "h": 44,
+      "w": 167,
+      "inView": true
+     },
+     {
+      "label": "Escudos1",
+      "y": 432,
+      "h": 44,
+      "w": 167,
+      "inView": true
+     },
+     {
+      "label": "Equipo de aventura2",
+      "y": 476,
+      "h": 50,
+      "w": 167,
+      "inView": true
+     },
+     {
+      "label": "Consumibles2",
+      "y": 476,
+      "h": 50,
+      "w": 167,
+      "inView": true
+     },
+     {
+      "label": "Munición1",
+      "y": 525,
+      "h": 44,
+      "w": 167,
+      "inView": true
+     },
+     {
+      "label": "Tesoros1",
+      "y": 525,
+      "h": 44,
+      "w": 167,
+      "inView": true
+     },
+     {
+      "label": "Ver 9 objetos",
+      "y": 783,
+      "h": 44,
+      "w": 341,
+      "inView": true
+     }
+    ],
+    "small": [],
+    "openDialogs": 1
+   },
+   "seeLabel": "Ver 1 objeto",
+   "afterFilter": {
+    "rows": 1,
+    "line": "Armas · por precioQuitar",
+    "count": "1 de 9 objetos",
+    "filtersButton": "Filtros22 filtros activos",
+    "firstRowY": 438
+   },
+   "dialog:manage": {
+    "title": "Gestionar catálogo",
+    "box": {
+     "x": 0,
+     "y": 561,
+     "w": 375,
+     "h": 283
+    },
+    "textFields": 1,
+    "textFieldLabels": [
+     "Objeto duplicado"
+    ],
+    "radioGroups": 0,
+    "checkboxes": 0,
+    "sliders": 0,
+    "controls": 4,
+    "scrollHeight": 283,
+    "clientHeight": 283,
+    "buttons": [
+     {
+      "label": "Cerrar",
+      "y": 578,
+      "h": 44,
+      "w": 44,
+      "inView": true,
+      "variant": "subtle"
+     },
+     {
+      "label": "Importar objetos",
+      "y": 638,
+      "h": 44,
+      "w": 341,
+      "inView": true,
+      "variant": "light"
+     },
+     {
+      "label": "Fusionar con…",
+      "y": 783,
+      "h": 44,
+      "w": 341,
+      "inView": true,
+      "variant": "default",
+      "disabled": true
+     }
+    ],
+    "small": [],
+    "openDialogs": 1
+   },
+   "escape:manage": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "BUTTON:Acciones del almacén"
+   }
+  }
+ },
+ "keyboardAndEscape": {
+  "phone-bestiary": {
+   "searchLatencyMs": [
+    206,
+    106,
+    75
+   ],
+   "resultOrder": [
+    "Guerrero goblin",
+    "Jefe goblin",
+    "Secuaz goblin",
+    "Capitán hobgoblin",
+    "Guerrero hobgoblin"
+   ],
+   "arrowDownOnce": "BUTTON:Guerrero goblinFeérico · CA 15 · PG 10 · VD 1/4",
+   "enterOnRowOpens": "Guerrero goblin",
+   "focusInDetailAfterOpen": "BUTTON:Volver a la lista",
+   "barNoOpenEncounter": {
+    "kind": "sheet",
+    "pane": {
+     "x": 0,
+     "y": 68,
+     "w": 375,
+     "h": 776
+    },
+    "listWidth": 343,
+    "name": "Guerrero goblin",
+    "scrollTop": 0,
+    "pageScrollY": 0,
+    "barTop": 782,
+    "barHeight": 61,
+    "barPosition": "static",
+    "statusLine": null,
+    "firstAttack": {
+     "name": "Cimitarra.",
+     "top": 399,
+     "bottom": 505,
+     "h": 105
+    },
+    "secondAttack": {
+     "name": "Arco corto.",
+     "top": 513,
+     "bottom": 618,
+     "h": 105
+    },
+    "secondAttackInView": true,
+    "barControls": [
+     {
+      "label": "Añadir a un encuentro",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 289
+     },
+     {
+      "label": "Más acciones para Guerrero goblin",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     }
+    ],
+    "overflowX": false
+   },
+   "addDialogFocus": "INPUT:(field)",
+   "escapeAddDialog": {
+    "dialogsBefore": 2,
+    "dialogsAfter": 1,
+    "focusAfter": "BUTTON:Añadir a un encuentro"
+   },
+   "focusAfterDialogAdd": "BUTTON:Añadir a Cripta",
+   "focusInsideDetailAfterDialogAdd": true,
+   "afterDialogAdd": {
+    "kind": "sheet",
+    "pane": {
+     "x": 0,
+     "y": 68,
+     "w": 375,
+     "h": 776
+    },
+    "listWidth": 343,
+    "name": "Guerrero goblin",
+    "scrollTop": 0,
+    "pageScrollY": 0,
+    "barTop": 712,
+    "barHeight": 131,
+    "barPosition": "static",
+    "statusLine": {
+     "text": "1 × Guerrero goblin en Cripta",
+     "top": 721,
+     "bottom": 787,
+     "h": 66,
+     "linesOfTheSentence": 1,
+     "inView": true
+    },
+    "firstAttack": {
+     "name": "Cimitarra.",
+     "top": 399,
+     "bottom": 505,
+     "h": 105
+    },
+    "secondAttack": {
+     "name": "Arco corto.",
+     "top": 513,
+     "bottom": 618,
+     "h": 105
+    },
+    "secondAttackInView": true,
+    "barControls": [
+     {
+      "label": "Deshacer",
+      "top": 743,
+      "bottom": 787,
+      "h": 44,
+      "w": 112
+     },
+     {
+      "label": "Abrir el encuentro",
+      "top": 743,
+      "bottom": 787,
+      "h": 44,
+      "w": 143
+     },
+     {
+      "label": "Restar a Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 116
+     },
+     {
+      "label": "Sumar a Cuántas",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Añadir a Cripta",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 165
+     },
+     {
+      "label": "Más acciones para Guerrero goblin",
+      "top": 791,
+      "bottom": 835,
+      "h": 44,
+      "w": 44
+     }
+    ],
+    "overflowX": false
+   },
+   "escapeDetail": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "BUTTON:Guerrero goblinFeérico · CA 15 · PG 10 · VD 1/4"
+   },
+   "queryAfter": "goblin",
+   "startFocus": "BUTTON:RápidaNombre, PG, CA e iniciativa. Lista en un minuto.",
+   "escapeQuickWithText": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 2,
+    "focusAfter": "BUTTON:Seguir editando",
+    "asks": 1
+   }
+  },
+  "phone-storeroom": {
+   "slash": "INPUT:Buscar objetos",
+   "rankingForCue": [
+    "Cuerda de cáñamo",
+    "Armadura de cuero"
+   ],
+   "enterOpens": "Poción de curación",
+   "escapeItemSheet": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "INPUT:Buscar objetos"
+   },
+   "itemSheetBox": {
+    "x": 0,
+    "y": 601.203125,
+    "width": 375,
+    "height": 242.796875
+   },
+   "giveFocus": "INPUT:(field)",
+   "giveRows": [
+    {
+     "name": "Arin",
+     "row": {
+      "x": 18,
+      "y": 560,
+      "w": 339,
+      "h": 49
+     },
+     "labelWidth": 37,
+     "centreSelects": true,
+     "farEdgeSelects": true,
+     "nearEdgeSelects": true
+    },
+    {
+     "name": "Bea",
+     "row": {
+      "x": 18,
+      "y": 609,
+      "w": 339,
+      "h": 49
+     },
+     "labelWidth": 34,
+     "centreSelects": true,
+     "farEdgeSelects": true,
+     "nearEdgeSelects": true
+    },
+    {
+     "name": "Cato",
+     "row": {
+      "x": 18,
+      "y": 658,
+      "w": 339,
+      "h": 48
+     },
+     "labelWidth": 41,
+     "centreSelects": true,
+     "farEdgeSelects": true,
+     "nearEdgeSelects": true
+    }
+   ],
+   "tapOnTheRowSelectsBea": {
+    "far edge": true,
+    "centre": true
+   },
+   "confirmLabel": "Dar a Bea",
+   "escapeGiveWithChoice": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "BUTTON:Poción de curaciónConsumiblesPoco común0,25 kg50 po"
+   },
+   "lootFocus": "INPUT:Buscar objeto para añadir",
+   "escapeLootPicker": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "BUTTON:Repartir botín"
+   },
+   "proposalFocus": "H3:Amuleto de la abuela",
+   "escapeProposalCard": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "BUTTON:1 propuesta de un jugador por revisar"
+   },
+   "escapeForgeWithText": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 2,
+    "focusAfter": "BUTTON:Seguir editando",
+    "asks": 1
+   }
+  },
+  "phone-storeroom-129-items": {
+   "count": "129 objetos",
+   "rowsMountedOnArrival": 48,
+   "scrollKept": {
+    "before": {
+     "scrollY": 4268,
+     "top": 426,
+     "name": "Maza 4",
+     "rowsMounted": 96,
+     "nodesInMain": 1472,
+     "searchY": 8,
+     "searchInView": true
+    },
+    "opened": "Maza 4",
+    "after": {
+     "scrollY": 4268,
+     "rowStillMounted": true,
+     "top": 426,
+     "focusOnRow": true
+    }
+   },
+   "slashFromTheMiddle": {
+    "focus": "INPUT:Buscar objetos",
+    "scrollY": 3424,
+    "searchInView": true
+   },
+   "searchLatencyMs": [
+    37,
+    11
+   ]
+  },
+  "tablet-bestiary": {
+   "searchLatencyMs": [
+    260,
+    104,
+    48
+   ],
+   "resultOrder": [
+    "Guerrero goblin",
+    "Jefe goblin",
+    "Secuaz goblin",
+    "Capitán hobgoblin",
+    "Guerrero hobgoblin"
+   ],
+   "arrowDownOnce": "BUTTON:Guerrero goblinFeérico · CA 15 · PG 10 · VD 1/4",
+   "enterOnRowOpens": "Guerrero goblin",
+   "focusInDetailAfterOpen": "BUTTON:Guerrero goblinFeérico · CA 15 · PG 10 · VD 1/4",
+   "barNoOpenEncounter": {
+    "kind": "side pane",
+    "pane": {
+     "x": 480,
+     "y": 310,
+     "w": 309,
+     "h": 1156
+    },
+    "listWidth": 224,
+    "name": "Guerrero goblin",
+    "scrollTop": 0,
+    "pageScrollY": 0,
+    "barTop": 311,
+    "barHeight": 61,
+    "barPosition": "sticky",
+    "statusLine": null,
+    "firstAttack": {
+     "name": "Cimitarra.",
+     "top": 738,
+     "bottom": 868,
+     "h": 130
+    },
+    "secondAttack": {
+     "name": "Arco corto.",
+     "top": 876,
+     "bottom": 1006,
+     "h": 130
+    },
+    "secondAttackInView": true,
+    "barControls": [
+     {
+      "label": "Añadir a un encuentro",
+      "top": 319,
+      "bottom": 363,
+      "h": 44,
+      "w": 223
+     },
+     {
+      "label": "Más acciones para Guerrero goblin",
+      "top": 319,
+      "bottom": 363,
+      "h": 44,
+      "w": 44
+     }
+    ],
+    "overflowX": false
+   },
+   "addDialogFocus": "INPUT:(field)",
+   "escapeAddDialog": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "BUTTON:Añadir a un encuentro"
+   },
+   "focusAfterDialogAdd": "BUTTON:Añadir a Cripta",
+   "focusInsideDetailAfterDialogAdd": true,
+   "afterDialogAdd": {
+    "kind": "side pane",
+    "pane": {
+     "x": 480,
+     "y": 310,
+     "w": 309,
+     "h": 1156
+    },
+    "listWidth": 224,
+    "name": "Guerrero goblin",
+    "scrollTop": 0,
+    "pageScrollY": 0,
+    "barTop": 311,
+    "barHeight": 131,
+    "barPosition": "sticky",
+    "statusLine": {
+     "text": "1 × Guerrero goblin en Cripta",
+     "top": 319,
+     "bottom": 385,
+     "h": 66,
+     "linesOfTheSentence": 1,
+     "inView": true
+    },
+    "firstAttack": {
+     "name": "Cimitarra.",
+     "top": 808,
+     "bottom": 938,
+     "h": 130
+    },
+    "secondAttack": {
+     "name": "Arco corto.",
+     "top": 946,
+     "bottom": 1076,
+     "h": 130
+    },
+    "secondAttackInView": true,
+    "barControls": [
+     {
+      "label": "Deshacer",
+      "top": 341,
+      "bottom": 385,
+      "h": 44,
+      "w": 112
+     },
+     {
+      "label": "Abrir el encuentro",
+      "top": 341,
+      "bottom": 385,
+      "h": 44,
+      "w": 143
+     },
+     {
+      "label": "Restar a Cuántas",
+      "top": 0,
+      "bottom": 0,
+      "h": 0,
+      "w": 0
+     },
+     {
+      "label": "Cuántas",
+      "top": 389,
+      "bottom": 433,
+      "h": 44,
+      "w": 52
+     },
+     {
+      "label": "Sumar a Cuántas",
+      "top": 0,
+      "bottom": 0,
+      "h": 0,
+      "w": 0
+     },
+     {
+      "label": "Añadir a Cripta",
+      "top": 389,
+      "bottom": 433,
+      "h": 44,
+      "w": 163
+     },
+     {
+      "label": "Más acciones para Guerrero goblin",
+      "top": 389,
+      "bottom": 433,
+      "h": 44,
+      "w": 44
+     }
+    ],
+    "overflowX": false
+   },
+   "escapeDetail": {
+    "dialogsBefore": 0,
+    "dialogsAfter": 0,
+    "focusAfter": "BUTTON:Guerrero goblinFeérico · CA 15 · PG 10 · VD 1/4"
+   },
+   "queryAfter": "goblin",
+   "startFocus": "BUTTON:RápidaNombre, PG, CA e iniciativa. Lista en un minuto.",
+   "escapeQuickWithText": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 2,
+    "focusAfter": "BUTTON:Seguir editando",
+    "asks": 1
+   }
+  },
+  "tablet-storeroom": {
+   "slash": "INPUT:Buscar objetos",
+   "rankingForCue": [
+    "Cuerda de cáñamo",
+    "Armadura de cuero"
+   ],
+   "enterOpens": "Poción de curación",
+   "escapeItemSheet": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "INPUT:Buscar objetos"
+   },
+   "itemSheetBox": {
+    "x": 182.5,
+    "y": 468.59375,
+    "width": 440,
+    "height": 242.796875
+   },
+   "giveFocus": "INPUT:(field)",
+   "giveRows": [
+    {
+     "name": "Arin",
+     "row": {
+      "x": 201,
+      "y": 574,
+      "w": 404,
+      "h": 49
+     },
+     "labelWidth": 37,
+     "centreSelects": true,
+     "farEdgeSelects": true,
+     "nearEdgeSelects": true
+    },
+    {
+     "name": "Bea",
+     "row": {
+      "x": 201,
+      "y": 623,
+      "w": 404,
+      "h": 49
+     },
+     "labelWidth": 34,
+     "centreSelects": true,
+     "farEdgeSelects": true,
+     "nearEdgeSelects": true
+    },
+    {
+     "name": "Cato",
+     "row": {
+      "x": 201,
+      "y": 672,
+      "w": 404,
+      "h": 48
+     },
+     "labelWidth": 41,
+     "centreSelects": true,
+     "farEdgeSelects": true,
+     "nearEdgeSelects": true
+    }
+   ],
+   "tapOnTheRowSelectsBea": {
+    "far edge": true,
+    "centre": true
+   },
+   "confirmLabel": "Dar a Bea",
+   "escapeGiveWithChoice": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "BUTTON:Poción de curaciónConsumiblesPoco común0,25 kg50 po"
+   },
+   "lootFocus": "INPUT:Buscar objeto para añadir",
+   "escapeLootPicker": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "BUTTON:Repartir botín"
+   },
+   "proposalFocus": "H3:Amuleto de la abuela",
+   "escapeProposalCard": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "BUTTON:1 propuesta de un jugador por revisar"
+   },
+   "escapeForgeWithText": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 2,
+    "focusAfter": "BUTTON:Seguir editando",
+    "asks": 1
+   }
+  },
+  "tablet-storeroom-129-items": {
+   "count": "129 objetos",
+   "rowsMountedOnArrival": 48,
+   "scrollKept": {
+    "before": {
+     "scrollY": 4252,
+     "top": 563,
+     "name": "Maza 5",
+     "rowsMounted": 96,
+     "nodesInMain": 1472,
+     "searchY": 8,
+     "searchInView": true
+    },
+    "opened": "Maza 5",
+    "after": {
+     "scrollY": 4252,
+     "rowStillMounted": true,
+     "top": 563,
+     "focusOnRow": true
+    }
+   },
+   "slashFromTheMiddle": {
+    "focus": "INPUT:Buscar objetos",
+    "scrollY": 2992,
+    "searchInView": true
+   },
+   "searchLatencyMs": [
+    34,
+    11
+   ]
+  },
+  "laptop-bestiary": {
+   "searchLatencyMs": [
+    254,
+    86,
+    50
+   ],
+   "resultOrder": [
+    "Guerrero goblin",
+    "Jefe goblin",
+    "Secuaz goblin",
+    "Capitán hobgoblin",
+    "Guerrero hobgoblin"
+   ],
+   "arrowDownOnce": "BUTTON:Guerrero goblinFeérico · CA 15 · PG 10 · VD 1/4",
+   "enterOnRowOpens": "Guerrero goblin",
+   "focusInDetailAfterOpen": "BUTTON:Guerrero goblinFeérico · CA 15 · PG 10 · VD 1/4",
+   "barNoOpenEncounter": {
+    "kind": "side pane",
+    "pane": {
+     "x": 668,
+     "y": 324,
+     "w": 569,
+     "h": 776
+    },
+    "listWidth": 352,
+    "name": "Guerrero goblin",
+    "scrollTop": 0,
+    "pageScrollY": 0,
+    "barTop": 325,
+    "barHeight": 61,
+    "barPosition": "sticky",
+    "statusLine": null,
+    "firstAttack": {
+     "name": "Cimitarra.",
+     "top": 590,
+     "bottom": 671,
+     "h": 80
+    },
+    "secondAttack": {
+     "name": "Arco corto.",
+     "top": 679,
+     "bottom": 759,
+     "h": 80
+    },
+    "secondAttackInView": true,
+    "barControls": [
+     {
+      "label": "Añadir a un encuentro",
+      "top": 333,
+      "bottom": 377,
+      "h": 44,
+      "w": 483
+     },
+     {
+      "label": "Más acciones para Guerrero goblin",
+      "top": 333,
+      "bottom": 377,
+      "h": 44,
+      "w": 44
+     }
+    ],
+    "overflowX": false
+   },
+   "addDialogFocus": "INPUT:(field)",
+   "escapeAddDialog": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "BUTTON:Añadir a un encuentro"
+   },
+   "focusAfterDialogAdd": "BUTTON:Añadir a Cripta",
+   "focusInsideDetailAfterDialogAdd": true,
+   "afterDialogAdd": {
+    "kind": "side pane",
+    "pane": {
+     "x": 668,
+     "y": 324,
+     "w": 569,
+     "h": 776
+    },
+    "listWidth": 352,
+    "name": "Guerrero goblin",
+    "scrollTop": 0,
+    "pageScrollY": 0,
+    "barTop": 325,
+    "barHeight": 109,
+    "barPosition": "sticky",
+    "statusLine": {
+     "text": "1 × Guerrero goblin en Cripta",
+     "top": 333,
+     "bottom": 377,
+     "h": 44,
+     "linesOfTheSentence": 1,
+     "inView": true
+    },
+    "firstAttack": {
+     "name": "Cimitarra.",
+     "top": 638,
+     "bottom": 719,
+     "h": 80
+    },
+    "secondAttack": {
+     "name": "Arco corto.",
+     "top": 727,
+     "bottom": 807,
+     "h": 80
+    },
+    "secondAttackInView": false,
+    "barControls": [
+     {
+      "label": "Deshacer",
+      "top": 333,
+      "bottom": 377,
+      "h": 44,
+      "w": 112
+     },
+     {
+      "label": "Abrir el encuentro",
+      "top": 333,
+      "bottom": 377,
+      "h": 44,
+      "w": 143
+     },
+     {
+      "label": "Restar a Cuántas",
+      "top": 381,
+      "bottom": 425,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Cuántas",
+      "top": 381,
+      "bottom": 425,
+      "h": 44,
+      "w": 140
+     },
+     {
+      "label": "Sumar a Cuántas",
+      "top": 381,
+      "bottom": 425,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Añadir a Cripta",
+      "top": 381,
+      "bottom": 425,
+      "h": 44,
+      "w": 335
+     },
+     {
+      "label": "Más acciones para Guerrero goblin",
+      "top": 381,
+      "bottom": 425,
+      "h": 44,
+      "w": 44
+     }
+    ],
+    "overflowX": false
+   },
+   "escapeDetail": {
+    "dialogsBefore": 0,
+    "dialogsAfter": 0,
+    "focusAfter": "BUTTON:Guerrero goblinFeérico · CA 15 · PG 10 · VD 1/4"
+   },
+   "queryAfter": "goblin",
+   "startFocus": "BUTTON:RápidaNombre, PG, CA e iniciativa. Lista en un minuto.",
+   "escapeQuickWithText": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 2,
+    "focusAfter": "BUTTON:Seguir editando",
+    "asks": 1
+   }
+  },
+  "laptop-storeroom": {
+   "slash": "INPUT:Buscar objetos",
+   "rankingForCue": [
+    "Cuerda de cáñamo",
+    "Armadura de cuero"
+   ],
+   "enterOpens": "Poción de curación",
+   "escapeItemSheet": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "INPUT:Buscar objetos"
+   },
+   "itemSheetBox": {
+    "x": 412.5,
+    "y": 278.59375,
+    "width": 440,
+    "height": 242.796875
+   },
+   "giveFocus": "INPUT:(field)",
+   "giveRows": [
+    {
+     "name": "Arin",
+     "row": {
+      "x": 431,
+      "y": 384,
+      "w": 404,
+      "h": 49
+     },
+     "labelWidth": 37,
+     "centreSelects": true,
+     "farEdgeSelects": true,
+     "nearEdgeSelects": true
+    },
+    {
+     "name": "Bea",
+     "row": {
+      "x": 431,
+      "y": 433,
+      "w": 404,
+      "h": 49
+     },
+     "labelWidth": 34,
+     "centreSelects": true,
+     "farEdgeSelects": true,
+     "nearEdgeSelects": true
+    },
+    {
+     "name": "Cato",
+     "row": {
+      "x": 431,
+      "y": 482,
+      "w": 404,
+      "h": 48
+     },
+     "labelWidth": 41,
+     "centreSelects": true,
+     "farEdgeSelects": true,
+     "nearEdgeSelects": true
+    }
+   ],
+   "tapOnTheRowSelectsBea": {
+    "far edge": true,
+    "centre": true
+   },
+   "confirmLabel": "Dar a Bea",
+   "escapeGiveWithChoice": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "BUTTON:Poción de curaciónConsumiblesPoco común0,25 kg50 po"
+   },
+   "lootFocus": "INPUT:Buscar objeto para añadir",
+   "escapeLootPicker": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "BUTTON:Repartir botín"
+   },
+   "proposalFocus": "H3:Amuleto de la abuela",
+   "escapeProposalCard": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 0,
+    "focusAfter": "BUTTON:1 propuesta de un jugador por revisar"
+   },
+   "escapeForgeWithText": {
+    "dialogsBefore": 1,
+    "dialogsAfter": 2,
+    "focusAfter": "BUTTON:Seguir editando",
+    "asks": 1
+   }
+  },
+  "laptop-storeroom-129-items": {
+   "count": "129 objetos",
+   "rowsMountedOnArrival": 48,
+   "scrollKept": {
+    "before": {
+     "scrollY": 4266,
+     "top": 376,
+     "name": "Maza 2",
+     "rowsMounted": 72,
+     "nodesInMain": 1149,
+     "searchY": 8,
+     "searchInView": true
+    },
+    "opened": "Maza 2",
+    "after": {
+     "scrollY": 4266,
+     "rowStillMounted": true,
+     "top": 376,
+     "focusOnRow": true
+    }
+   },
+   "slashFromTheMiddle": {
+    "focus": "INPUT:Buscar objetos",
+    "scrollY": 3386,
+    "searchInView": true
+   },
+   "searchLatencyMs": [
+    34,
+    12
+   ]
+  }
+ },
+ "newMeasurements": {
+  "rowsFullyVisibleInTheFirstPhoneScreen": {
+   "bestiary": 7,
+   "storeroom": 6
+  },
+  "goblinStatBlockAt390x844": {
+   "withoutAnOpenEncounter": {
+    "sheetScrollTop": 0,
+    "sheetScrollHeight": 1093,
+    "sheetClientHeight": 629,
+    "armorClassAndHitPoints": {
+     "top": 222,
+     "bottom": 345,
+     "h": 123
+    },
+    "firstAttack": {
+     "name": "Cimitarra.",
+     "top": 399,
+     "bottom": 505,
+     "h": 105
+    },
+    "secondAttack": {
+     "name": "Arco corto.",
+     "top": 513,
+     "bottom": 618,
+     "h": 105
+    },
+    "barTop": 782,
+    "barHeight": 61,
+    "statusLine": null,
+    "barControls": [
+     {
+      "label": "Añadir a un encuentro",
+      "top": 791,
+      "h": 44,
+      "w": 289
+     },
+     {
+      "label": "Más acciones para Guerrero goblin",
+      "top": 791,
+      "h": 44,
+      "w": 44
+     }
+    ],
+    "sectionOrder": [
+     "sb-core",
+     "Acciones",
+     "Acciones adicionales",
+     "sb-abilities",
+     "sb-details"
+    ]
+   },
+   "withAnEncounterInProgress": {
+    "sheetScrollTop": 0,
+    "sheetScrollHeight": 1093,
+    "sheetClientHeight": 629,
+    "armorClassAndHitPoints": {
+     "top": 222,
+     "bottom": 345,
+     "h": 123
+    },
+    "firstAttack": {
+     "name": "Cimitarra.",
+     "top": 399,
+     "bottom": 505,
+     "h": 105
+    },
+    "secondAttack": {
+     "name": "Arco corto.",
+     "top": 513,
+     "bottom": 618,
+     "h": 105
+    },
+    "barTop": 782,
+    "barHeight": 61,
+    "statusLine": null,
+    "barControls": [
+     {
+      "label": "Restar a Cuántas",
+      "top": 791,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Cuántas",
+      "top": 791,
+      "h": 44,
+      "w": 116
+     },
+     {
+      "label": "Sumar a Cuántas",
+      "top": 791,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Añadir a Cripta",
+      "top": 791,
+      "h": 44,
+      "w": 165
+     },
+     {
+      "label": "Más acciones para Guerrero goblin",
+      "top": 791,
+      "h": 44,
+      "w": 44
+     }
+    ],
+    "sectionOrder": [
+     "sb-core",
+     "Acciones",
+     "Acciones adicionales",
+     "sb-abilities",
+     "sb-details"
+    ]
+   },
+   "afterAdding": {
+    "sheetScrollTop": 0,
+    "sheetScrollHeight": 1093,
+    "sheetClientHeight": 560,
+    "armorClassAndHitPoints": {
+     "top": 222,
+     "bottom": 345,
+     "h": 123
+    },
+    "firstAttack": {
+     "name": "Cimitarra.",
+     "top": 399,
+     "bottom": 505,
+     "h": 105
+    },
+    "secondAttack": {
+     "name": "Arco corto.",
+     "top": 513,
+     "bottom": 618,
+     "h": 105
+    },
+    "barTop": 712,
+    "barHeight": 131,
+    "statusLine": {
+     "text": "1 × Guerrero goblin en Cripta",
+     "top": 721,
+     "bottom": 787,
+     "h": 66,
+     "linesOfTheSentence": 1,
+     "inView": true
+    },
+    "barControls": [
+     {
+      "label": "Deshacer",
+      "top": 743,
+      "h": 44,
+      "w": 112
+     },
+     {
+      "label": "Abrir el encuentro",
+      "top": 743,
+      "h": 44,
+      "w": 143
+     },
+     {
+      "label": "Restar a Cuántas",
+      "top": 791,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Cuántas",
+      "top": 791,
+      "h": 44,
+      "w": 116
+     },
+     {
+      "label": "Sumar a Cuántas",
+      "top": 791,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Añadir a Cripta",
+      "top": 791,
+      "h": 44,
+      "w": 165
+     },
+     {
+      "label": "Más acciones para Guerrero goblin",
+      "top": 791,
+      "h": 44,
+      "w": 44
+     }
+    ],
+    "sectionOrder": [
+     "sb-core",
+     "Acciones",
+     "Acciones adicionales",
+     "sb-abilities",
+     "sb-details"
+    ]
+   },
+   "afterUndo": {
+    "sheetScrollTop": 0,
+    "sheetScrollHeight": 1093,
+    "sheetClientHeight": 560,
+    "armorClassAndHitPoints": {
+     "top": 222,
+     "bottom": 345,
+     "h": 123
+    },
+    "firstAttack": {
+     "name": "Cimitarra.",
+     "top": 399,
+     "bottom": 505,
+     "h": 105
+    },
+    "secondAttack": {
+     "name": "Arco corto.",
+     "top": 513,
+     "bottom": 618,
+     "h": 105
+    },
+    "barTop": 712,
+    "barHeight": 131,
+    "statusLine": {
+     "text": "Quitada de Cripta",
+     "top": 721,
+     "bottom": 787,
+     "h": 66,
+     "linesOfTheSentence": 1,
+     "inView": true
+    },
+    "barControls": [
+     {
+      "label": "Abrir el encuentro",
+      "top": 743,
+      "h": 44,
+      "w": 143
+     },
+     {
+      "label": "Restar a Cuántas",
+      "top": 791,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Cuántas",
+      "top": 791,
+      "h": 44,
+      "w": 116
+     },
+     {
+      "label": "Sumar a Cuántas",
+      "top": 791,
+      "h": 44,
+      "w": 44
+     },
+     {
+      "label": "Añadir a Cripta",
+      "top": 791,
+      "h": 44,
+      "w": 165
+     },
+     {
+      "label": "Más acciones para Guerrero goblin",
+      "top": 791,
+      "h": 44,
+      "w": 44
+     }
+    ],
+    "sectionOrder": [
+     "sb-core",
+     "Acciones",
+     "Acciones adicionales",
+     "sb-abilities",
+     "sb-details"
+    ]
+   },
+   "scrollHeldWhenAddingFrom200": {
+    "set": 200,
+    "afterAdd": 200,
+    "held": 200
+   },
+   "adultRedDragon": {
+    "before": {
+     "name": "Dragón rojo adulto",
+     "scrollTop": 0,
+     "barTop": 782,
+     "barHeight": 61,
+     "statusLine": null,
+     "secondAttack": {
+      "name": "Desgarro.",
+      "top": 564,
+      "bottom": 644,
+      "h": 80
+     }
+    },
+    "after": {
+     "name": "Dragón rojo adulto",
+     "scrollTop": 0,
+     "barTop": 712,
+     "barHeight": 131,
+     "statusLine": {
+      "text": "1 × Dragón rojo adulto en Cripta",
+      "top": 721,
+      "bottom": 787,
+      "h": 66,
+      "linesOfTheSentence": 1,
+      "inView": true
+     },
+     "secondAttack": {
+      "name": "Desgarro.",
+      "top": 564,
+      "bottom": 644,
+      "h": 80
+     }
+    },
+    "undone": {
+     "name": "Dragón rojo adulto",
+     "scrollTop": 0,
+     "barTop": 712,
+     "barHeight": 131,
+     "statusLine": {
+      "text": "Quitada de Cripta",
+      "top": 721,
+      "bottom": 787,
+      "h": 66,
+      "linesOfTheSentence": 1,
+      "inView": true
+     },
+     "secondAttack": {
+      "name": "Desgarro.",
+      "top": 564,
+      "bottom": 644,
+      "h": 80
+     }
+    }
+   }
+  },
+  "goblinPlusEnter": {
+   "resultOrder": [
+    "Guerrero goblin",
+    "Jefe goblin",
+    "Secuaz goblin",
+    "Capitán hobgoblin",
+    "Guerrero hobgoblin"
+   ],
+   "enterOpens": "Guerrero goblin",
+   "inEnglish": [
+    "Goblin Boss",
+    "Goblin Minion",
+    "Goblin Warrior",
+    "Hobgoblin Captain",
+    "Hobgoblin Warrior"
+   ]
+  },
+  "earlierProblemsRechecked": {
+   "1 give row hit area": {
+    "phone": {
+     "rows": [
+      {
+       "name": "Arin",
+       "row": {
+        "x": 18,
+        "y": 560,
+        "w": 339,
+        "h": 49
+       },
+       "labelWidth": 37,
+       "centreSelects": true,
+       "farEdgeSelects": true,
+       "nearEdgeSelects": true
+      },
+      {
+       "name": "Bea",
+       "row": {
+        "x": 18,
+        "y": 609,
+        "w": 339,
+        "h": 49
+       },
+       "labelWidth": 34,
+       "centreSelects": true,
+       "farEdgeSelects": true,
+       "nearEdgeSelects": true
+      },
+      {
+       "name": "Cato",
+       "row": {
+        "x": 18,
+        "y": 658,
+        "w": 339,
+        "h": 48
+       },
+       "labelWidth": 41,
+       "centreSelects": true,
+       "farEdgeSelects": true,
+       "nearEdgeSelects": true
+      }
+     ],
+     "tapOnTheRowSelectsBea": {
+      "far edge": true,
+      "centre": true
+     }
+    },
+    "tablet": {
+     "rows": [
+      {
+       "name": "Arin",
+       "row": {
+        "x": 201,
+        "y": 574,
+        "w": 404,
+        "h": 49
+       },
+       "labelWidth": 37,
+       "centreSelects": true,
+       "farEdgeSelects": true,
+       "nearEdgeSelects": true
+      },
+      {
+       "name": "Bea",
+       "row": {
+        "x": 201,
+        "y": 623,
+        "w": 404,
+        "h": 49
+       },
+       "labelWidth": 34,
+       "centreSelects": true,
+       "farEdgeSelects": true,
+       "nearEdgeSelects": true
+      },
+      {
+       "name": "Cato",
+       "row": {
+        "x": 201,
+        "y": 672,
+        "w": 404,
+        "h": 48
+       },
+       "labelWidth": 41,
+       "centreSelects": true,
+       "farEdgeSelects": true,
+       "nearEdgeSelects": true
+      }
+     ],
+     "tapOnTheRowSelectsBea": {
+      "far edge": true,
+      "centre": true
+     }
+    },
+    "laptop": {
+     "rows": [
+      {
+       "name": "Arin",
+       "row": {
+        "x": 431,
+        "y": 384,
+        "w": 404,
+        "h": 49
+       },
+       "labelWidth": 37,
+       "centreSelects": true,
+       "farEdgeSelects": true,
+       "nearEdgeSelects": true
+      },
+      {
+       "name": "Bea",
+       "row": {
+        "x": 431,
+        "y": 433,
+        "w": 404,
+        "h": 49
+       },
+       "labelWidth": 34,
+       "centreSelects": true,
+       "farEdgeSelects": true,
+       "nearEdgeSelects": true
+      },
+      {
+       "name": "Cato",
+       "row": {
+        "x": 431,
+        "y": 482,
+        "w": 404,
+        "h": 48
+       },
+       "labelWidth": 41,
+       "centreSelects": true,
+       "farEdgeSelects": true,
+       "nearEdgeSelects": true
+      }
+     ],
+     "tapOnTheRowSelectsBea": {
+      "far edge": true,
+      "centre": true
+     }
+    }
+   },
+   "2 scroll after adding on the phone": {
+    "goblin": {
+     "before": 0,
+     "afterAdd": 0,
+     "afterUndo": 0
+    },
+    "from200": {
+     "set": 200,
+     "afterAdd": 200,
+     "held": 200
+    },
+    "adultRedDragon": {
+     "before": 0,
+     "afterAdd": 0,
+     "afterUndo": 0
+    }
+   },
+   "3 the 820px pane with an open encounter": {
+    "before": {
+     "kind": "side pane",
+     "pane": {
+      "x": 480,
+      "y": 310,
+      "w": 309,
+      "h": 1156
+     },
+     "listWidth": 224,
+     "name": "Guerrero goblin",
+     "scrollTop": 0,
+     "pageScrollY": 0,
+     "barTop": 311,
+     "barHeight": 61,
+     "barPosition": "sticky",
+     "statusLine": null,
+     "firstAttack": {
+      "name": "Cimitarra.",
+      "top": 738,
+      "bottom": 868,
+      "h": 130
+     },
+     "secondAttack": {
+      "name": "Arco corto.",
+      "top": 876,
+      "bottom": 1006,
+      "h": 130
+     },
+     "secondAttackInView": true,
+     "barControls": [
+      {
+       "label": "Restar a Cuántas",
+       "top": 0,
+       "bottom": 0,
+       "h": 0,
+       "w": 0
+      },
+      {
+       "label": "Cuántas",
+       "top": 319,
+       "bottom": 363,
+       "h": 44,
+       "w": 52
+      },
+      {
+       "label": "Sumar a Cuántas",
+       "top": 0,
+       "bottom": 0,
+       "h": 0,
+       "w": 0
+      },
+      {
+       "label": "Añadir a Cripta",
+       "top": 319,
+       "bottom": 363,
+       "h": 44,
+       "w": 163
+      },
+      {
+       "label": "Más acciones para Guerrero goblin",
+       "top": 319,
+       "bottom": 363,
+       "h": 44,
+       "w": 44
+      }
+     ],
+     "overflowX": false
+    },
+    "afterAdd": {
+     "kind": "side pane",
+     "pane": {
+      "x": 480,
+      "y": 310,
+      "w": 309,
+      "h": 1156
+     },
+     "listWidth": 224,
+     "name": "Guerrero goblin",
+     "scrollTop": 0,
+     "pageScrollY": 0,
+     "barTop": 311,
+     "barHeight": 131,
+     "barPosition": "sticky",
+     "statusLine": {
+      "text": "1 × Guerrero goblin en Cripta",
+      "top": 319,
+      "bottom": 385,
+      "h": 66,
+      "linesOfTheSentence": 1,
+      "inView": true
+     },
+     "firstAttack": {
+      "name": "Cimitarra.",
+      "top": 808,
+      "bottom": 938,
+      "h": 130
+     },
+     "secondAttack": {
+      "name": "Arco corto.",
+      "top": 946,
+      "bottom": 1076,
+      "h": 130
+     },
+     "secondAttackInView": true,
+     "barControls": [
+      {
+       "label": "Deshacer",
+       "top": 341,
+       "bottom": 385,
+       "h": 44,
+       "w": 112
+      },
+      {
+       "label": "Abrir el encuentro",
+       "top": 341,
+       "bottom": 385,
+       "h": 44,
+       "w": 143
+      },
+      {
+       "label": "Restar a Cuántas",
+       "top": 0,
+       "bottom": 0,
+       "h": 0,
+       "w": 0
+      },
+      {
+       "label": "Cuántas",
+       "top": 389,
+       "bottom": 433,
+       "h": 44,
+       "w": 52
+      },
+      {
+       "label": "Sumar a Cuántas",
+       "top": 0,
+       "bottom": 0,
+       "h": 0,
+       "w": 0
+      },
+      {
+       "label": "Añadir a Cripta",
+       "top": 389,
+       "bottom": 433,
+       "h": 44,
+       "w": 163
+      },
+      {
+       "label": "Más acciones para Guerrero goblin",
+       "top": 389,
+       "bottom": 433,
+       "h": 44,
+       "w": 44
+      }
+     ],
+     "overflowX": false
+    },
+    "afterUndo": {
+     "kind": "side pane",
+     "pane": {
+      "x": 480,
+      "y": 310,
+      "w": 309,
+      "h": 1156
+     },
+     "listWidth": 224,
+     "name": "Guerrero goblin",
+     "scrollTop": 0,
+     "pageScrollY": 0,
+     "barTop": 311,
+     "barHeight": 131,
+     "barPosition": "sticky",
+     "statusLine": {
+      "text": "Quitada de Cripta",
+      "top": 319,
+      "bottom": 385,
+      "h": 66,
+      "linesOfTheSentence": 1,
+      "inView": true
+     },
+     "firstAttack": {
+      "name": "Cimitarra.",
+      "top": 808,
+      "bottom": 938,
+      "h": 130
+     },
+     "secondAttack": {
+      "name": "Arco corto.",
+      "top": 946,
+      "bottom": 1076,
+      "h": 130
+     },
+     "secondAttackInView": true,
+     "barControls": [
+      {
+       "label": "Abrir el encuentro",
+       "top": 341,
+       "bottom": 385,
+       "h": 44,
+       "w": 143
+      },
+      {
+       "label": "Restar a Cuántas",
+       "top": 0,
+       "bottom": 0,
+       "h": 0,
+       "w": 0
+      },
+      {
+       "label": "Cuántas",
+       "top": 389,
+       "bottom": 433,
+       "h": 44,
+       "w": 52
+      },
+      {
+       "label": "Sumar a Cuántas",
+       "top": 0,
+       "bottom": 0,
+       "h": 0,
+       "w": 0
+      },
+      {
+       "label": "Añadir a Cripta",
+       "top": 389,
+       "bottom": 433,
+       "h": 44,
+       "w": 163
+      },
+      {
+       "label": "Más acciones para Guerrero goblin",
+       "top": 389,
+       "bottom": 433,
+       "h": 44,
+       "w": 44
+      }
+     ],
+     "overflowX": false
+    }
+   },
+   "4 mid-word breaks in the narrow list": {
+    "phone": "no pane",
+    "tablet": {
+     "goblin": [],
+     "manto": [],
+     "namesManto": [
+      {
+       "name": "Manto",
+       "h": 20,
+       "w": 145
+      },
+      {
+       "name": "Mantoscuro",
+       "h": 20,
+       "w": 145
+      }
+     ],
+     "groupsADMT": []
+    },
+    "laptop": {
+     "goblin": [],
+     "manto": [],
+     "namesManto": [
+      {
+       "name": "Manto",
+       "h": 20,
+       "w": 230
+      },
+      {
+       "name": "Mantoscuro",
+       "h": 20,
+       "w": 217
+      }
+     ],
+     "groupsADMT": []
+    }
+   },
+   "5 focus": {
+    "phone": {
+     "afterAdd": "BUTTON:Añadir a Cripta",
+     "afterUndo": "BUTTON:Añadir a Cripta",
+     "afterAddingThroughTheDialog": "BUTTON:Añadir a Cripta",
+     "insideTheStatBlock": true
+    },
+    "tablet": {
+     "afterAdd": "BUTTON:Añadir a Cripta",
+     "afterUndo": "BUTTON:Añadir a Cripta",
+     "afterAddingThroughTheDialog": "BUTTON:Añadir a Cripta",
+     "insideTheStatBlock": true
+    },
+    "laptop": {
+     "afterAdd": "BUTTON:Añadir a Cripta",
+     "afterUndo": "BUTTON:Añadir a Cripta",
+     "afterAddingThroughTheDialog": "BUTTON:Añadir a Cripta",
+     "insideTheStatBlock": true
+    }
+   },
+   "6 bar height with an encounter": {
+    "phone": {
+     "before": 61,
+     "afterAdd": 131,
+     "afterUndo": 131,
+     "statusLineAfterAdd": {
+      "text": "1 × Guerrero goblin en Cripta",
+      "top": 721,
+      "bottom": 787,
+      "h": 66,
+      "linesOfTheSentence": 1,
+      "inView": true
+     },
+     "controlsBefore": [
+      {
+       "label": "Restar a Cuántas",
+       "top": 791,
+       "bottom": 835,
+       "h": 44,
+       "w": 44
+      },
+      {
+       "label": "Cuántas",
+       "top": 791,
+       "bottom": 835,
+       "h": 44,
+       "w": 116
+      },
+      {
+       "label": "Sumar a Cuántas",
+       "top": 791,
+       "bottom": 835,
+       "h": 44,
+       "w": 44
+      },
+      {
+       "label": "Añadir a Cripta",
+       "top": 791,
+       "bottom": 835,
+       "h": 44,
+       "w": 165
+      },
+      {
+       "label": "Más acciones para Guerrero goblin",
+       "top": 791,
+       "bottom": 835,
+       "h": 44,
+       "w": 44
+      }
+     ]
+    },
+    "tablet": {
+     "before": 61,
+     "afterAdd": 131,
+     "afterUndo": 131,
+     "statusLineAfterAdd": {
+      "text": "1 × Guerrero goblin en Cripta",
+      "top": 319,
+      "bottom": 385,
+      "h": 66,
+      "linesOfTheSentence": 1,
+      "inView": true
+     },
+     "controlsBefore": [
+      {
+       "label": "Restar a Cuántas",
+       "top": 0,
+       "bottom": 0,
+       "h": 0,
+       "w": 0
+      },
+      {
+       "label": "Cuántas",
+       "top": 319,
+       "bottom": 363,
+       "h": 44,
+       "w": 52
+      },
+      {
+       "label": "Sumar a Cuántas",
+       "top": 0,
+       "bottom": 0,
+       "h": 0,
+       "w": 0
+      },
+      {
+       "label": "Añadir a Cripta",
+       "top": 319,
+       "bottom": 363,
+       "h": 44,
+       "w": 163
+      },
+      {
+       "label": "Más acciones para Guerrero goblin",
+       "top": 319,
+       "bottom": 363,
+       "h": 44,
+       "w": 44
+      }
+     ]
+    },
+    "laptop": {
+     "before": 61,
+     "afterAdd": 109,
+     "afterUndo": 109,
+     "statusLineAfterAdd": {
+      "text": "1 × Guerrero goblin en Cripta",
+      "top": 333,
+      "bottom": 377,
+      "h": 44,
+      "linesOfTheSentence": 1,
+      "inView": true
+     },
+     "controlsBefore": [
+      {
+       "label": "Restar a Cuántas",
+       "top": 333,
+       "bottom": 377,
+       "h": 44,
+       "w": 44
+      },
+      {
+       "label": "Cuántas",
+       "top": 333,
+       "bottom": 377,
+       "h": 44,
+       "w": 140
+      },
+      {
+       "label": "Sumar a Cuántas",
+       "top": 333,
+       "bottom": 377,
+       "h": 44,
+       "w": 44
+      },
+      {
+       "label": "Añadir a Cripta",
+       "top": 333,
+       "bottom": 377,
+       "h": 44,
+       "w": 335
+      },
+      {
+       "label": "Más acciones para Guerrero goblin",
+       "top": 333,
+       "bottom": 377,
+       "h": 44,
+       "w": 44
+      }
+     ]
+    }
+   },
+   "7 laptop storeroom row width": {
+    "phone": {
+     "rowWidth": 341,
+     "listWidth": 341,
+     "panelWidth": 343,
+     "nameToPricePx": 202
+    },
+    "tablet": {
+     "rowWidth": 547,
+     "listWidth": 547,
+     "panelWidth": 549,
+     "nameToPricePx": 408
+    },
+    "laptop": {
+     "rowWidth": 702,
+     "listWidth": 702,
+     "panelWidth": 704,
+     "nameToPricePx": 563
+    }
+   },
+   "8 second attack against the fold on the laptop, encounter in progress, page at the top": {
+    "viewportHeight": 800,
+    "paneTop": 324,
+    "before": {
+     "name": "Arco corto.",
+     "top": 679,
+     "bottom": 759,
+     "h": 80
+    },
+    "beforeInView": true,
+    "afterAdd": {
+     "name": "Arco corto.",
+     "top": 727,
+     "bottom": 807,
+     "h": 80
+    },
+    "afterAddInView": false,
+    "tablet": {
+     "viewportHeight": 1180,
+     "before": {
+      "name": "Arco corto.",
+      "top": 876,
+      "bottom": 1006,
+      "h": 130
+     },
+     "afterAdd": {
+      "name": "Arco corto.",
+      "top": 946,
+      "bottom": 1076,
+      "h": 130
+     }
+    }
+   },
+   "9 taps to accept a single proposal": {
+    "taps": 2,
+    "rowOpens": "the proposal card",
+    "reject": 3,
+    "reviewFirst": 3
+   }
+  },
+  "firstCreatureRowWithFiltersAt390": {
+   "noFilter": 379,
+   "oneFilter": {
+    "line": {
+     "text": "Muerto vivienteQuitar filtros",
+     "y": 303,
+     "h": 44,
+     "clear": {
+      "y": 303,
+      "h": 44,
+      "w": 96
+     }
+    },
+    "firstRowY": 433,
+    "chips": 0
+   },
+   "threeFilters": {
+    "line": {
+     "text": "Muerto viviente · VD 17–30 · por desafíoQuitar filtros",
+     "y": 303,
+     "h": 66,
+     "clear": {
+      "y": 325,
+      "h": 44,
+      "w": 96
+     }
+    },
+    "firstRowY": 433,
+    "firstGroupHeadingY": 399,
+    "filtersButton": "Filtros33 filtros activos"
+   },
+   "afterClear": {
+    "focus": "BUTTON:Filtros",
+    "firstRowY": 379
+   }
+  },
+  "searchPlaceholderContrast": {
+   "parchment-en": {
+    "bestiary": {
+     "placeholder": "Goblin, red dragon, wolf…",
+     "placeholderColor": "rgb(102, 79, 58)",
+     "placeholderOpacity": "1",
+     "paintedText": "#664f3a",
+     "paintedBackground": "#fffdf9",
+     "ratio": 7.53,
+     "typedTextColor": "rgb(42, 28, 17)"
+    },
+    "storeroom": {
+     "placeholder": "Search items",
+     "placeholderColor": "rgb(102, 79, 58)",
+     "placeholderOpacity": "1",
+     "paintedText": "#664f3a",
+     "paintedBackground": "#fffdf9",
+     "ratio": 7.53,
+     "typedTextColor": "rgb(42, 28, 17)"
+    }
+   },
+   "parchment-es": {
+    "bestiary": {
+     "placeholder": "Goblin, dragón rojo, lobo…",
+     "placeholderColor": "rgb(102, 79, 58)",
+     "placeholderOpacity": "1",
+     "paintedText": "#664f3a",
+     "paintedBackground": "#fffdf9",
+     "ratio": 7.53,
+     "typedTextColor": "rgb(42, 28, 17)"
+    },
+    "storeroom": {
+     "placeholder": "Buscar objetos",
+     "placeholderColor": "rgb(102, 79, 58)",
+     "placeholderOpacity": "1",
+     "paintedText": "#664f3a",
+     "paintedBackground": "#fffdf9",
+     "ratio": 7.53,
+     "typedTextColor": "rgb(42, 28, 17)"
+    }
+   },
+   "default-es": {
+    "bestiary": {
+     "placeholder": "Goblin, dragón rojo, lobo…",
+     "placeholderColor": "rgb(168, 143, 112)",
+     "placeholderOpacity": "1",
+     "paintedText": "#a88f70",
+     "paintedBackground": "#2a1f16",
+     "ratio": 5.23,
+     "typedTextColor": "rgb(245, 235, 214)"
+    },
+    "storeroom": {
+     "placeholder": "Buscar objetos",
+     "placeholderColor": "rgb(168, 143, 112)",
+     "placeholderOpacity": "1",
+     "paintedText": "#a88f70",
+     "paintedBackground": "#2a1f16",
+     "ratio": 5.23,
+     "typedTextColor": "rgb(245, 235, 214)"
+    }
+   }
+  },
+  "lootAction": {
+   "viewport": [
+    390,
+    844
+   ],
+   "opensOn": "the picker",
+   "oneLineWithoutRecipient": {
+    "label": "Entregar 0 objetos",
+    "disabled": true,
+    "top": 779,
+    "bottom": 823,
+    "viewBottom": 844,
+    "gapToTheBottomOfTheView": 21,
+    "reason": "Elige quién recibe Poción de curación.",
+    "summary": null,
+    "contentScrolls": "no"
+   },
+   "oneLine": {
+    "label": "Entregar 2 objetos",
+    "disabled": false,
+    "top": 779,
+    "bottom": 823,
+    "viewBottom": 844,
+    "gapToTheBottomOfTheView": 21,
+    "reason": null,
+    "summary": "Arin: 1 Poción de curación · Bea: 1 Poción de curación",
+    "contentScrolls": "no"
+   },
+   "twoLinesOneWithoutRecipient": {
+    "label": "Entregar 2 objetos",
+    "disabled": true,
+    "top": 779,
+    "bottom": 823,
+    "viewBottom": 844,
+    "gapToTheBottomOfTheView": 21,
+    "reason": "Elige quién recibe Espada larga.",
+    "summary": "Arin: 1 Poción de curación · Bea: 1 Poción de curación",
+    "contentScrolls": "no"
+   },
+   "twoLines": {
+    "label": "Entregar 3 objetos",
+    "disabled": false,
+    "top": 779,
+    "bottom": 823,
+    "viewBottom": 844,
+    "gapToTheBottomOfTheView": 21,
+    "reason": null,
+    "summary": "Arin: 1 Poción de curación · Bea: 1 Poción de curación · Cato: 1 Espada larga",
+    "contentScrolls": "no"
+   },
+   "threeLines": {
+    "label": "Entregar 9 objetos",
+    "disabled": false,
+    "top": 795,
+    "bottom": 839,
+    "viewBottom": 844,
+    "gapToTheBottomOfTheView": 5,
+    "reason": null,
+    "summary": "Arin: 1 Anillo de la marea, 1 Escudo, 1 Flecha · Bea: 1 Anillo de la marea, 1 Escudo, 1 Flecha · Cato: 1 Anillo de la marea, 1 Escudo, 1 Flecha",
+    "contentScrolls": "741px of 874px"
+   },
+   "fourLines": {
+    "label": "Entregar 12 objetos",
+    "disabled": false,
+    "top": 779,
+    "bottom": 823,
+    "viewBottom": 844,
+    "gapToTheBottomOfTheView": 21,
+    "reason": null,
+    "summary": "Arin: 1 Anillo de la marea, 1 Escudo, 1 Flecha, 1 Raciones · Bea: 1 Anillo de la marea, 1 Escudo, 1 Flecha, 1 Raciones · Cato: 1 Anillo de la marea, 1 Escudo, 1 Flecha, 1 Raciones",
+    "contentScrolls": "741px of 1088px"
+   }
+  },
+  "noCharactersAndEmptyStoreroom": {
+   "emptyStoreroom": {
+    "text": "El almacén está vacío. Importa objetos de los paquetes de la campaña o forja los tuyos.",
+    "buttons": [
+     {
+      "label": "Importar objetos",
+      "variant": "light",
+      "y": 394,
+      "h": 44,
+      "w": 169
+     },
+     {
+      "label": "Nuevo objeto",
+      "variant": "outline",
+      "y": 448,
+      "h": 44,
+      "w": 166
+     }
+    ],
+    "controlsInPanel": [
+     "Buscar objetos",
+     "Acciones del almacén",
+     "Importar objetos",
+     "Nuevo objeto"
+    ],
+    "lootButtonShown": false,
+    "filtersButtonShown": false,
+    "countLine": null,
+    "pageHeight": 844,
+    "overflowX": false
+   },
+   "giveStep": {
+    "title": "Dar Moonstone",
+    "text": [
+     "Dar Moonstone",
+     "Volver",
+     "Crea un personaje en Grupo para dar objetos."
+    ],
+    "radios": 0,
+    "fields": 0,
+    "buttons": [
+     "Cerrar",
+     "Volver"
+    ],
+    "links": [
+     "Grupo -> #/campaign/20000000-0000-4000-8000-000000000001/party"
+    ],
+    "focus": "BODY"
+   },
+   "lootView": {
+    "text": [
+     "Repartir botín",
+     "Crea un personaje en Grupo para dar objetos."
+    ],
+    "buttons": [
+     "Cerrar"
+    ],
+    "links": [
+     "Grupo -> #/campaign/20000000-0000-4000-8000-000000000001/party"
+    ],
+    "deliverButtons": 0,
+    "focus": "BUTTON:Cerrar"
+   },
+   "focusWhenTheGiveStepOpens": {
+    "run 1": "BODY",
+    "run 1 first Tab": "BUTTON:Volver",
+    "run 2": "BODY",
+    "run 2 first Tab": "BUTTON:Volver"
+   }
+  },
+  "addButtonLabel": {
+   "phone": {
+    "button": {
+     "top": 791,
+     "bottom": 835,
+     "h": 44
+    },
+    "label": {
+     "top": 799.390625,
+     "bottom": 826.59375,
+     "h": 27.203125,
+     "overflow": "hidden",
+     "lineHeight": "44px",
+     "fontSize": "16px",
+     "whiteSpace": "nowrap",
+     "scrollHeight": 27,
+     "clientHeight": 27,
+     "scrollWidth": 109,
+     "clientWidth": 109
+    },
+    "text": {
+     "top": 801.59375,
+     "bottom": 822.59375,
+     "h": 21
+    },
+    "inner": {
+     "overflow": "visible",
+     "h": 42
+    },
+    "viewportBottom": 844
+   },
+   "tablet": {
+    "button": {
+     "top": 319,
+     "bottom": 363,
+     "h": 44
+    },
+    "label": {
+     "top": 327.578125,
+     "bottom": 354.78125,
+     "h": 27.203125,
+     "overflow": "hidden",
+     "lineHeight": "44px",
+     "fontSize": "16px",
+     "whiteSpace": "nowrap",
+     "scrollHeight": 27,
+     "clientHeight": 27,
+     "scrollWidth": 109,
+     "clientWidth": 109
+    },
+    "text": {
+     "top": 329.78125,
+     "bottom": 350.78125,
+     "h": 21
+    },
+    "inner": {
+     "overflow": "visible",
+     "h": 42
+    },
+    "viewportBottom": 1180
+   },
+   "laptop": {
+    "button": {
+     "top": 333,
+     "bottom": 377,
+     "h": 44
+    },
+    "label": {
+     "top": 341.578125,
+     "bottom": 368.78125,
+     "h": 27.203125,
+     "overflow": "hidden",
+     "lineHeight": "44px",
+     "fontSize": "16px",
+     "whiteSpace": "nowrap",
+     "scrollHeight": 27,
+     "clientHeight": 27,
+     "scrollWidth": 109,
+     "clientWidth": 109
+    },
+    "text": {
+     "top": 343.78125,
+     "bottom": 364.78125,
+     "h": 21
+    },
+    "inner": {
+     "overflow": "visible",
+     "h": 42
+    },
+    "viewportBottom": 800
+   }
+  },
+  "widePane": {
+   "tablet": {
+    "listWidthWithNothingOpen": 549,
+    "listWidthWithThePane": 224,
+    "pane": {
+     "x": 480,
+     "y": 0,
+     "w": 309,
+     "h": 1156
+    },
+    "rowMetaLineVisible": false,
+    "selectedRowAriaCurrent": "true",
+    "arrows": {
+     "down": {
+      "focus": "BUTTON:MastínBestia · CA 12 · PG 5 · VD 1/8",
+      "pane": "Mastín",
+      "current": [
+       "Mastín"
+      ]
+     },
+     "up": {
+      "focus": "BUTTON:MarilithInfernal · CA 16 · PG 220 · VD 16",
+      "pane": "Marilith",
+      "current": [
+       "Marilith"
+      ]
+     }
+    },
+    "escape": {
+     "paneOrSheetOpen": 0,
+     "rowStillMounted": true,
+     "top": 562,
+     "scrollY": 220,
+     "listTop": 13167,
+     "focusOnRow": true,
+     "ariaCurrent": null,
+     "listWidth": 549
+    },
+    "rowTopBeforeOpenAndAfterClose": [
+     579,
+     619,
+     562
+    ],
+    "escapeWithFocusInTheSearch": {
+     "pane": 1,
+     "query": "",
+     "focus": "INPUT:bestiary-search"
+    }
+   },
+   "laptop": {
+    "listWidthWithNothingOpen": 736,
+    "listWidthWithThePane": 352,
+    "pane": {
+     "x": 668,
+     "y": 25,
+     "w": 569,
+     "h": 776
+    },
+    "rowMetaLineVisible": true,
+    "selectedRowAriaCurrent": "true",
+    "arrows": {
+     "down": {
+      "focus": "BUTTON:MantícoraMonstruosidad · CA 14 · PG 68 · VD 3",
+      "pane": "Mantícora",
+      "current": [
+       "Mantícora"
+      ]
+     },
+     "up": {
+      "focus": "BUTTON:MamutBestia · CA 13 · PG 126 · VD 6",
+      "pane": "Mamut",
+      "current": [
+       "Mamut"
+      ]
+     }
+    },
+    "escape": {
+     "paneOrSheetOpen": 0,
+     "rowStillMounted": true,
+     "top": 372,
+     "scrollY": 234,
+     "listTop": 13129,
+     "focusOnRow": true,
+     "ariaCurrent": null,
+     "listWidth": 736
+    },
+    "rowTopBeforeOpenAndAfterClose": [
+     376,
+     376,
+     372
+    ],
+    "escapeWithFocusInTheSearch": {
+     "pane": 1,
+     "query": "",
+     "focus": "INPUT:bestiary-search"
+    }
+   }
+  },
+  "storeroom129Items": {
+   "phone": {
+    "nodesInMainOnArrival": 817,
+    "rowsMountedOnArrival": 48,
+    "mostRowsMounted": 81,
+    "mostNodesInMain": 1261,
+    "searchStaysInView": true,
+    "slash": {
+     "focus": "INPUT:Buscar objetos",
+     "scrollY": 3424,
+     "searchInView": true
+    },
+    "scrollKept": {
+     "before": {
+      "scrollY": 4268,
+      "top": 426,
+      "name": "Maza 4",
+      "rowsMounted": 96,
+      "nodesInMain": 1472,
+      "searchY": 8,
+      "searchInView": true
+     },
+     "opened": "Maza 4",
+     "after": {
+      "scrollY": 4268,
+      "rowStillMounted": true,
+      "top": 426,
+      "focusOnRow": true
+     }
+    }
+   },
+   "tablet": {
+    "nodesInMainOnArrival": 817,
+    "rowsMountedOnArrival": 48,
+    "mostRowsMounted": 96,
+    "mostNodesInMain": 1472,
+    "searchStaysInView": true,
+    "slash": {
+     "focus": "INPUT:Buscar objetos",
+     "scrollY": 2992,
+     "searchInView": true
+    },
+    "scrollKept": {
+     "before": {
+      "scrollY": 4252,
+      "top": 563,
+      "name": "Maza 5",
+      "rowsMounted": 96,
+      "nodesInMain": 1472,
+      "searchY": 8,
+      "searchInView": true
+     },
+     "opened": "Maza 5",
+     "after": {
+      "scrollY": 4252,
+      "rowStillMounted": true,
+      "top": 563,
+      "focusOnRow": true
+     }
+    }
+   },
+   "laptop": {
+    "nodesInMainOnArrival": 817,
+    "rowsMountedOnArrival": 48,
+    "mostRowsMounted": 96,
+    "mostNodesInMain": 1472,
+    "searchStaysInView": true,
+    "slash": {
+     "focus": "INPUT:Buscar objetos",
+     "scrollY": 3386,
+     "searchInView": true
+    },
+    "scrollKept": {
+     "before": {
+      "scrollY": 4266,
+      "top": 376,
+      "name": "Maza 2",
+      "rowsMounted": 72,
+      "nodesInMain": 1149,
+      "searchY": 8,
+      "searchInView": true
+     },
+     "opened": "Maza 2",
+     "after": {
+      "scrollY": 4266,
+      "rowStillMounted": true,
+      "top": 376,
+      "focusOnRow": true
+     }
+    }
+   }
+  },
+  "parchmentEnglishAt390": {
+   "bestiary": {
+    "listOverflow": false,
+    "listRowsInFirstScreen": 7,
+    "resultOrder": [
+     "Goblin Boss",
+     "Goblin Minion",
+     "Goblin Warrior",
+     "Hobgoblin Captain",
+     "Hobgoblin Warrior"
+    ],
+    "statBlock": {
+     "barTop": 782,
+     "barHeight": 61,
+     "secondAttack": {
+      "name": "Shortbow.",
+      "top": 513,
+      "bottom": 618,
+      "h": 105
+     },
+     "barControls": [
+      {
+       "label": "Decrease How many",
+       "top": 791,
+       "bottom": 835,
+       "h": 44,
+       "w": 44
+      },
+      {
+       "label": "How many",
+       "top": 791,
+       "bottom": 835,
+       "h": 44,
+       "w": 116
+      },
+      {
+       "label": "Increase How many",
+       "top": 791,
+       "bottom": 835,
+       "h": 44,
+       "w": 44
+      },
+      {
+       "label": "Add to Crypt",
+       "top": 791,
+       "bottom": 835,
+       "h": 44,
+       "w": 165
+      },
+      {
+       "label": "More actions for Goblin Warrior",
+       "top": 791,
+       "bottom": 835,
+       "h": 44,
+       "w": 44
+      }
+     ]
+    },
+    "added": {
+     "barTop": 712,
+     "barHeight": 131,
+     "statusLine": {
+      "text": "1 × Goblin Warrior in Crypt",
+      "top": 721,
+      "bottom": 787,
+      "h": 66,
+      "linesOfTheSentence": 1,
+      "inView": true
+     },
+     "scrollTop": 0
+    }
+   },
+   "storeroom": {
+    "overflow": false,
+    "sheetButtons": [
+     "Close",
+     "Give",
+     "Edit",
+     "More actions for Espada larga"
+    ],
+    "giveButtons": [
+     "Close",
+     "Back",
+     "Amount: one fewer",
+     "Amount: one more",
+     "Give to Bea",
+     "Share among several"
+    ],
+    "lootButtons": [
+     "Close",
+     "Remove Poción de curación from distribution",
+     "All",
+     "Arin",
+     "Bea",
+     "Cato",
+     "Quantity for each recipient: one fewer",
+     "Quantity for each recipient: one more",
+     "Remove Espada larga from distribution",
+     "All",
+     "Arin",
+     "Bea",
+     "Cato",
+     "Quantity for each recipient: one fewer",
+     "Quantity for each recipient: one more",
+     "Add item",
+     "Deliver 3 items"
+    ],
+    "lootReason": "Choose who receives Espada larga.",
+    "lootSummary": "Arin: 1 Poción de curación · Bea: 1 Poción de curación · Cato: 1 Poción de curación"
+   }
+  }
+ }
+}

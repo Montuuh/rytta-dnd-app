@@ -51,10 +51,12 @@ export {
   useInventoryAction,
   useItemTemplate,
   usePendingProposalCount,
+  proposalsQuery,
 } from './api'
 export type { CatalogueItem, ImportItem, ImportResult } from './domain/catalogue'
 export { toImportItem } from './domain/catalogue'
 export { BasicImport } from './ui/basic-import'
+export { PackFinds } from './ui/pack-finds'
 export { MergeItems } from './ui/merge-items'
 export { ProposalReview } from './ui/proposal-review'
 export { GpInput, WeightFields } from './ui/amount-fields'
@@ -80,3 +82,6 @@ export {
 
 export { LootDrawer } from './ui/loot-drawer'
 export { SquareImageEditor } from './ui/portrait-editor'
+export { ItemSheet } from './ui/item-sheet'
+export { StoreFilters, type StoreSort, type StoreView } from './ui/store-filters'
+export { useItemText } from './ui/item-text'

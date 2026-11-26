@@ -79,8 +79,9 @@ export function BasicImport({
   const [unticked, setUnticked] = useState<Set<string>>(() => new Set())
   const ticked = changes.filter((change) => !unticked.has(change.item.key))
   const open = groups.filter((group) => group.done < group.total)
-  const [chosen, setChosen] = useState<Set<ItemCategory> | null>(null)
-  const selected = chosen ?? new Set(open.map((group) => group.category))
+  // RYT-184: nothing is ticked on opening; the DM picks what to bring in.
+  const [chosen, setChosen] = useState<Set<ItemCategory>>(() => new Set())
+  const selected = chosen
   const [failed, setFailed] = useState<{ run: Run; cents: boolean } | null>(null)
   const [busy, setBusy] = useState<Run | null>(null)
   // One idempotency key per exact payload, kept across retries: a payload that changed (another
@@ -192,7 +193,7 @@ export function BasicImport({
             disabled={Boolean(busy)}
             onChange={(event) => {
               setSource(event.currentTarget.value)
-              setChosen(null)
+              setChosen(new Set())
               setFailed(null)
             }}
             data={[

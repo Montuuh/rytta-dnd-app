@@ -8,8 +8,8 @@ import { combatServer } from './fixtures/combat.ts'
 // keeps its own versions of them, and hides single creatures.
 const size = (project: string) =>
   project === 'identity-mobile' ? 'mobile' : project === 'identity-tablet' ? 'tablet' : null
-/** Below 62em the stat block opens in a full screen sheet instead of the side pane. */
-const sheet = (info: TestInfo) => (info.project.use.viewport?.width ?? 1440) < 992
+/** Phones open the stat block in a full screen sheet; from 48em it opens in a pane beside the list. */
+const sheet = (info: TestInfo) => (info.project.use.viewport?.width ?? 1440) < 768
 async function evidence(page: Page, info: TestInfo, name: string) {
   const s = size(info.project.name)
   if (s && process.env.RYT_EVIDENCE)
@@ -32,6 +32,20 @@ const detail = (page: Page, info: TestInfo): Locator =>
 const rows = (page: Page, name: string) =>
   page.locator('.bst-row').filter({ has: page.getByText(name, { exact: true }) })
 const content = `#/campaign/${campaignId}/members?panel=content`
+
+/** Picks a source by name: from the list when the sources are one, else from the segments. */
+async function chooseSource(page: Page, name: string) {
+  const list = page.getByRole('combobox', { name: /^(Origen|Source)$/ })
+  const segment = page.locator('.bst-source label', { hasText: name })
+  // The toolbar measures its width before it picks segments or a list: wait for one of them.
+  await expect(list.or(segment)).toBeVisible()
+  if (await list.isVisible()) {
+    await list.click()
+    await page.getByRole('option', { name, exact: true }).click()
+  } else {
+    await segment.click()
+  }
+}
 
 async function open(page: Page, info: TestInfo, query: string, name: string) {
   await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill(query)
@@ -61,16 +75,22 @@ test('RYT-094 the bestiary reads the SRD pack, edits a creature in place and hid
 
   // The SRD creatures pack, loaded from the library at the campaign's version.
   await expect(page.getByText('330 criaturas', { exact: true })).toBeVisible({ timeout: 15_000 })
-  const packs = page.getByRole('link', { name: 'Paquetes de criaturas' })
-  await expect(packs).toHaveAttribute('href', content)
-  await expectTouchTargets(page, '.bst-head-actions a')
+  // The way to the packs: an entry of the `···` menu beside Filters, at every width.
+  await page.getByRole('button', { name: 'Más acciones del bestiario' }).click()
+  await expect(page.getByRole('menuitem', { name: 'Paquetes de criaturas' })).toHaveAttribute(
+    'href',
+    content,
+  )
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('menu')).toHaveCount(0)
   await audit(page)
   await evidence(page, info, 'list')
 
   // Edit in place: the change is a campaign version listed instead of the pack's wolf.
   let pane = await open(page, info, 'lobo', 'Lobo')
   await expect(pane.getByRole('button', { name: 'Personalizar' })).toHaveCount(0)
-  await pane.getByRole('button', { name: 'Editar', exact: true }).click()
+  await pane.getByRole('button', { name: 'Más acciones para Lobo' }).click()
+  await page.getByRole('menuitem', { name: 'Editar', exact: true }).click()
   const editor = page.getByRole('dialog', { name: 'Editar Lobo en esta campaña' })
   await editor.getByRole('textbox', { name: 'Clase de armadura' }).fill('14')
   await editor.getByRole('button', { name: 'Guardar criatura' }).click()
@@ -83,9 +103,9 @@ test('RYT-094 the bestiary reads the SRD pack, edits a creature in place and hid
   await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('lobo')
   await expect(rows(page, 'Lobo')).toHaveCount(1)
   // The version still belongs to its pack's source.
-  await page.locator('.bst-source label', { hasText: 'SRD' }).click()
+  await chooseSource(page, 'SRD')
   await expect(rows(page, 'Lobo')).toHaveCount(1)
-  await page.locator('.bst-source label', { hasText: 'Todas' }).click()
+  await chooseSource(page, 'Todas')
 
   // Back to the pack's version: the campaign version is deleted after a question.
   pane = await open(page, info, 'lobo', 'Lobo')
@@ -98,7 +118,7 @@ test('RYT-094 the bestiary reads the SRD pack, edits a creature in place and hid
   await back.getByRole('button', { name: 'Volver a la versión del paquete' }).click()
   await expect(page.getByText('Lobo vuelve a ser la versión del paquete.').first()).toBeVisible()
   await expect(
-    detail(page, info).getByRole('button', { name: 'Editar', exact: true }),
+    detail(page, info).getByRole('button', { name: 'Más acciones para Lobo' }),
   ).toBeFocused()
   expect(server.templates.some((t) => t.srd_override === true)).toBe(false)
 
@@ -212,7 +232,7 @@ test('RYT-094 two creature packs: a source list, the pack on each row, its creat
 
   // A pack creature joins the fight with its pack reference.
   const pane = await open(page, info, 'yeti', 'Yeti')
-  await pane.getByRole('button', { name: 'Añadir', exact: true }).click()
+  await pane.getByRole('button', { name: 'Añadir a Paso helado', exact: true }).click()
   const fight = server.encounters.find((e) => e.id === created.encounter_id)!
   await expect.poll(() => fight.combatants.map((c) => c.srd_id)).toEqual(['abcdef12--yeti'])
 })
@@ -287,3 +307,38 @@ for (const [language, theme] of [
     await shot('no-packs')
   })
 }
+
+test('RYT-184 a creature of another pack is used by its `<pack ref>--<key>` reference, and rows keep their pack mark', async ({
+  page,
+}, info) => {
+  const server = combatServer()
+  server.official.north = true
+  // A bare key is the SRD's: it names no creature of the other pack.
+  server.used.references.push('abcdef12--yeti', 'yeti')
+  await start(page, server)
+  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+  await expect(page.getByText('1 criatura', { exact: true })).toBeVisible({ timeout: 15_000 })
+  const row = page.locator('[data-row-key="srd:abcdef12--yeti"]')
+  await expect(row).toBeVisible()
+  await expect(row).toContainText('en un encuentro')
+  // Several packs are enabled: the row names its pack, and the source is a list of them.
+  await expect(row.locator('.bst-row-pack')).toContainText(/\S/)
+  await chooseSource(page, 'Todas')
+  await expect(page.getByText('332 criaturas', { exact: true })).toBeVisible()
+  await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('trol')
+  await expect(
+    page.locator('[data-row-key="srd:abcdef12--snow-troll"] .bst-row-pack'),
+  ).toContainText('Bestias del Norte')
+  // The type and the numbers come first; a long pack name is what the row cuts.
+  await page.evaluate(() => document.fonts.ready)
+  const meta = page.locator('[data-row-key="srd:abcdef12--snow-troll"] .bst-row-meta')
+  if (await meta.isVisible()) {
+    await expect(meta.locator('.bst-row-kind')).toHaveText(/\S/)
+    expect(
+      await meta.locator('.bst-row-kind').evaluate((node) => node.scrollWidth <= node.clientWidth),
+    ).toBe(true)
+  }
+  const s = size(info.project.name)
+  if (s && process.env.RYT_EVIDENCE)
+    await page.screenshot({ path: `docs/evidence/RYT-184/bestiary/pack-mark-last-${s}.png` })
+})

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
   Button,
@@ -19,12 +19,13 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { formatGp } from '@/shared/lib/money'
 import { newRequestId } from '@/shared/lib/request-id'
+import { StatusRail } from '@/shared/ui/rail-line'
 import { localizedDescription, localizedName } from '@/shared/lib/translations'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { proposalsQuery, useResolveProposal } from '../api'
 import type { Resolution } from '../data/repository'
 import { proposalToDraft, sortProposals, type ItemProposal } from '../domain/catalogue'
-import type { DefinitionDraft, ItemDefinition } from '../domain/item'
+import { draftIssue, type DefinitionDraft, type ItemDefinition } from '../domain/item'
 import { Forge } from './forge'
 import { ItemIcon } from './item-icon'
 import { statusGlyphs } from './item-visuals'
@@ -76,7 +77,7 @@ export function ProposalReview({
   const { state } = useAuth()
   const phone = usePhone()
   const { format } = useWeightFormat()
-  /** Who the proposal is for; a Player named like their character is not repeated. */
+  /** Who the proposal is for, for the list row; a Player named like their character is not repeated. */
   const proposedFor = (p: ItemProposal) => {
     const character = p.character_name ?? ''
     const player = p.proposer_name ?? ''
@@ -91,6 +92,11 @@ export function ProposalReview({
   const [forging, setForging] = useState(false)
   const [note, setNote] = useState('')
   const [quantity, setQuantity] = useState<number | null>(1)
+  /** The last answer given while other proposals still wait, said on the list in view. */
+  const [result, setResultState] = useState<{ text: string; serial: number } | null>(null)
+  const resultSerial = useRef(0)
+  const setResult = (text: string | null) =>
+    setResultState(text === null ? null : { text, serial: ++resultSerial.current })
   const [target, setTarget] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const requests = useRef(new Map<string, string>())
@@ -109,9 +115,12 @@ export function ProposalReview({
   const pending = sorted.filter((p) => p.status === 'pending')
   const closed = sorted.filter((p) => p.status !== 'pending' && p.status !== 'cancelled')
   const proposal = sorted.find((p) => p.id === openId) ?? null
-  const nameOf = (p: ItemProposal) => localizedName(p.draft, i18n.language)
+  // A proposal with a blank name still has a heading and a row to open it from.
+  const nameOf = (p: ItemProposal) =>
+    localizedName(p.draft, i18n.language).trim() || t('store.noProposalName')
   const open = (p: ItemProposal) => {
     resolve.reset()
+    setResult(null)
     setOpenId(p.id)
     setStep('detail')
     setNote('')
@@ -120,6 +129,19 @@ export function ProposalReview({
     setSearch('')
     focusSoon(headword)
   }
+  // One proposal waiting: opening the review lands on its card, so accepting it is the next tap.
+  const [landed, setLanded] = useState<'no' | 'list' | 'card'>('no')
+  if (landed === 'no' && query.data) {
+    const only = pending.length === 1 ? pending[0]! : null
+    setLanded(only ? 'card' : 'list')
+    if (only) {
+      setOpenId(only.id)
+      setQuantity(only.quantity)
+    }
+  }
+  useEffect(() => {
+    if (landed === 'card') headword.current?.focus()
+  }, [landed])
   const goTo = (next: Step) => {
     const from = step
     setStep(next)
@@ -155,8 +177,15 @@ export function ProposalReview({
       {
         onSuccess: () => {
           setForging(false)
-          onNotice(message)
-          back()
+          // The last proposal closes the view and the storeroom list says it; otherwise the
+          // list of what is left says it.
+          if (pending.every((entry) => entry.id === p.id)) {
+            onNotice(message)
+            onClose()
+          } else {
+            setResult(message)
+            back()
+          }
         },
       },
     )
@@ -164,6 +193,19 @@ export function ProposalReview({
   const errorKey = resolve.error
     ? (resolveErrors[resolve.error.message] ?? 'items.review.error')
     : null
+  /** The draft the forge would send untouched; direct accept is offered only when it is valid. */
+  const proposed = proposal ? proposalToDraft(proposal.draft, true) : null
+  const issue = proposed ? draftIssue(proposed) : null
+  const acceptNow = (p: ItemProposal) =>
+    decide(
+      p,
+      {
+        resolution: 'accept',
+        draft: acceptDraft(proposalToDraft(p.draft, true)),
+        quantity: p.quantity,
+      },
+      t('items.review.accepted', { name: nameOf(p), character: p.character_name ?? '' }),
+    )
   const merged = items.find((item) => item.id === target) ?? null
   const candidates = items
     .filter((item) => !item.archived)
@@ -188,7 +230,11 @@ export function ProposalReview({
         submitLabel={t('items.review.accept', { name: proposal.character_name ?? '' })}
         pending={resolve.isPending}
         error={errorKey ? t(errorKey as 'items.review.error') : null}
-        onClose={() => !resolve.isPending && setForging(false)}
+        onClose={() => {
+          if (resolve.isPending) return
+          resolve.reset()
+          setForging(false)
+        }}
         onSave={(draft, extra) =>
           decide(
             proposal,
@@ -239,6 +285,8 @@ export function ProposalReview({
       onClose={() => !resolve.isPending && onClose()}
       closeButtonProps={{ 'aria-label': t('common.close'), size: 44 }}
     >
+      {/* Mounted for both views, so a message set as the list returns is announced. */}
+      <StatusRail className="review-result" text={result?.text ?? null} serial={result?.serial} />
       {!proposal && (
         <Stack gap="md">
           {query.isPending && <Text role="status">{t('common.loading')}</Text>}
@@ -300,7 +348,15 @@ export function ProposalReview({
             <dl className="item-card-facts">
               <div>
                 <dt>{t('items.review.for')}</dt>
-                <dd className="user-copy">{proposedFor(proposal)}</dd>
+                <dd className="user-copy">
+                  {[proposal.character_name, proposal.proposer_name]
+                    .filter(
+                      (name, at, all) =>
+                        name &&
+                        all.findIndex((x) => x?.toLowerCase() === name.toLowerCase()) === at,
+                    )
+                    .join(' · ')}
+                </dd>
               </div>
               <div>
                 <dt>{t('inventory.card.weight')}</dt>
@@ -329,10 +385,31 @@ export function ProposalReview({
               </Text>
             )}
           </article>
+          {errorKey && step === 'detail' && (
+            <Alert color="red" role="alert">
+              {t(errorKey as 'items.review.error')}
+            </Alert>
+          )}
           {proposal.status === 'pending' && step === 'detail' && (
             <Stack gap="sm">
+              {issue ? (
+                <Text size="sm" c="dimmed">
+                  {t(issue === 'name' ? 'items.review.needsName' : 'items.review.needsDice')}
+                </Text>
+              ) : (
+                <Button
+                  size="md"
+                  aria-disabled={resolve.isPending || undefined}
+                  aria-busy={resolve.isPending}
+                  leftSection={resolve.isPending ? <Loader size={16} /> : undefined}
+                  onClick={() => acceptNow(proposal)}
+                >
+                  {t('items.review.acceptNow', { name: proposal.character_name ?? '' })}
+                </Button>
+              )}
               <Button
                 size="md"
+                variant={issue ? 'filled' : 'outline'}
                 leftSection={<Hammer size={18} aria-hidden="true" />}
                 onClick={() => {
                   resolve.reset()
@@ -372,7 +449,7 @@ export function ProposalReview({
                 data-autofocus
               />
               {candidates.length === 0 ? (
-                <Text c="dimmed">{t('store.noResults')}</Text>
+                <Text c="dimmed">{t('store.noMatch')}</Text>
               ) : (
                 <PickList
                   label={t('items.review.mergeGroup')}

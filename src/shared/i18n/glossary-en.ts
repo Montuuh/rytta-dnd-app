@@ -110,8 +110,8 @@ export const glossaryEn = {
   'glossary.licenseLegacy':
     '2014 rules include material taken from the System Reference Document 5.1 (“SRD 5.1”) by Wizards of the Coast LLC, licensed under the Creative Commons Attribution 4.0 International License. Quick facts and short summaries are Rytta adaptations.',
   'glossary.welcomeTitle': 'Look something up',
-  'glossary.welcomeBody':
-    'Search above or pick an entry. Words with a dotted underline anywhere in Rytta open the same definition.',
+  'glossary.landingTitle': 'Look up a rule',
+  'glossary.landingHint': 'Type a name, in English or Spanish.',
   'glossary.recent': 'Recently viewed',
   'glossary.atTheTable': 'Conditions at the table',
   'glossary.open': 'Open in the glossary',

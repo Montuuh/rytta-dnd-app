@@ -45,7 +45,7 @@ export type {
   RollSource,
   RollVisibility,
 } from './domain/settings'
-export { partyBelow, partySuggested } from './domain/party-level'
+export { partyBelow, partySuggested, type PartyCharacter } from './domain/party-level'
 export { CampaignHub } from './ui/hub'
 export { LeaveCampaignDialog, LeaveCampaignItem } from './ui/leave'
 export { CampaignBoundary } from './ui/campaign-boundary'
@@ -53,6 +53,13 @@ export { keepsStaleData, showsData } from './ui/load-cause'
 export { StaleLine, type LoadedQuery } from './ui/stale-line'
 export { useCampaign, useIsRealDm } from './campaign-context'
 export { CampaignMembers } from './ui/members'
+// RYT-179: the command centre frame, its panels and the home's first-session steps.
+export { DmCenterShell } from './ui/dm-shell'
+export { dmPanelIcons, dmPanelLabels } from './ui/dm-panel-meta'
+export { dmPanels, dmPlaceHref, type DmPanel, type DmPlace } from './domain/dm-panels'
+export { firstSessionSteps, type FirstSessionSteps } from './domain/first-session'
+export { SoloRehearsal } from './ui/first-session'
+export { implementedModuleKeys } from './ui/module-catalog'
 export { CampaignViewContext, useCampaignView } from './view-context'
 export { QueryFeedback } from './ui/feedback'
 export { AuditTimeline } from './ui/audit-timeline'

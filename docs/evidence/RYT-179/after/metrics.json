@@ -1,0 +1,594 @@
+{
+  "mobile": {
+    "home": {
+      "viewportHeight": 844,
+      "pageHeight": 993,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 172,
+        "name": "Bestiario"
+      },
+      "focusableInMain": 13,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 En la mesa",
+        "H2 Campaña"
+      ],
+      "currentLinks": [
+        "Inicio de The Sunken Coast",
+        "Centro de mando DM"
+      ],
+      "axeViolations": []
+    },
+    "members": {
+      "viewportHeight": 844,
+      "pageHeight": 1088,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 183,
+        "name": "Invitar jugador"
+      },
+      "focusableInMain": 11,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Miembros",
+        "H3 Invitaciones pendientes"
+      ],
+      "currentLinks": [
+        "Centro de mando DM"
+      ],
+      "axeViolations": []
+    },
+    "level": {
+      "viewportHeight": 844,
+      "pageHeight": 844,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 322,
+        "name": "Bajar el nivel del grupo"
+      },
+      "focusableInMain": 5,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Nivel del grupo Sin fijar"
+      ],
+      "currentLinks": [
+        "Centro de mando DM"
+      ],
+      "axeViolations": []
+    },
+    "modules": {
+      "viewportHeight": 844,
+      "pageHeight": 844,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 287,
+        "name": "Grupo: visible para jugadores"
+      },
+      "focusableInMain": 9,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Módulos activos"
+      ],
+      "currentLinks": [
+        "Centro de mando DM"
+      ],
+      "axeViolations": []
+    },
+    "content": {
+      "viewportHeight": 844,
+      "pageHeight": 945,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 230,
+        "name": "Usar SRD 5.2.1 en criaturas"
+      },
+      "focusableInMain": 8,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Contenido de la campaña",
+        "H3 Criaturas",
+        "H3 Conjuros",
+        "H3 Personajes",
+        "H3 Reglas",
+        "H3 Objetos"
+      ],
+      "currentLinks": [
+        "Centro de mando DM"
+      ],
+      "axeViolations": []
+    },
+    "dice": {
+      "viewportHeight": 844,
+      "pageHeight": 1165,
+      "horizontalOverflow": false,
+      "firstPanelControl": null,
+      "focusableInMain": 2,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Dados de la mesa"
+      ],
+      "currentLinks": [
+        "Centro de mando DM"
+      ],
+      "axeViolations": []
+    },
+    "items": {
+      "viewportHeight": 844,
+      "pageHeight": 1132,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 183,
+        "name": "Nuevo objeto"
+      },
+      "focusableInMain": 28,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Almacén de objetos"
+      ],
+      "currentLinks": [
+        "Centro de mando DM"
+      ],
+      "axeViolations": []
+    },
+    "bestiary": {
+      "viewportHeight": 844,
+      "pageHeight": 37229,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 183,
+        "name": "Nueva criatura"
+      },
+      "focusableInMain": 99,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Bestiario",
+        "H3 A23(23 en este grupo)",
+        "H3 B14(14 en este grupo)",
+        "H3 C40(40 en este grupo)",
+        "H3 D47(47 en este grupo)",
+        "H3 E30(30 en este grupo)",
+        "H3 F3(3 en este grupo)",
+        "H3 G33(33 en este grupo)",
+        "H3 H17(17 en este grupo)",
+        "H3 I2(2 en este grupo)",
+        "H3 J4(4 en este grupo)",
+        "H3 K1(1 en este grupo)",
+        "H3 L10(10 en este grupo)"
+      ],
+      "currentLinks": [
+        "Centro de mando DM"
+      ],
+      "axeViolations": []
+    },
+    "audit": {
+      "viewportHeight": 844,
+      "pageHeight": 844,
+      "horizontalOverflow": false,
+      "firstPanelControl": null,
+      "focusableInMain": 3,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Auditoría"
+      ],
+      "currentLinks": [
+        "Centro de mando DM"
+      ],
+      "axeViolations": []
+    },
+    "tapsPartyToBestiary": 2,
+    "bestiarySearchTop": 328,
+    "tapsPanelToPanel": 2,
+    "switcherLootUrl": "/campaign/20000000-0000-4000-8000-000000000001/members?panel=items&do=loot",
+    "pageErrors": []
+  },
+  "tablet": {
+    "home": {
+      "viewportHeight": 1180,
+      "pageHeight": 1180,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 237,
+        "name": "Bestiario"
+      },
+      "focusableInMain": 22,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 En la mesa",
+        "H2 Campaña"
+      ],
+      "currentLinks": [
+        "Inicio de The Sunken Coast",
+        "Centro de mando DM",
+        "Resumen"
+      ],
+      "axeViolations": []
+    },
+    "members": {
+      "viewportHeight": 1180,
+      "pageHeight": 1180,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 239,
+        "name": "Invitar jugador"
+      },
+      "focusableInMain": 18,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Miembros",
+        "H3 Invitaciones pendientes"
+      ],
+      "currentLinks": [
+        "Centro de mando DM",
+        "Miembros"
+      ],
+      "axeViolations": []
+    },
+    "level": {
+      "viewportHeight": 1180,
+      "pageHeight": 1180,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 316,
+        "name": "Bajar el nivel del grupo"
+      },
+      "focusableInMain": 12,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Nivel del grupo Sin fijar"
+      ],
+      "currentLinks": [
+        "Centro de mando DM",
+        "Nivel del grupo"
+      ],
+      "axeViolations": []
+    },
+    "modules": {
+      "viewportHeight": 1180,
+      "pageHeight": 1180,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 306,
+        "name": "Grupo: visible para jugadores"
+      },
+      "focusableInMain": 16,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Módulos activos"
+      ],
+      "currentLinks": [
+        "Centro de mando DM",
+        "Módulos activos"
+      ],
+      "axeViolations": []
+    },
+    "content": {
+      "viewportHeight": 1180,
+      "pageHeight": 1180,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 290,
+        "name": "Usar SRD 5.2.1 en criaturas"
+      },
+      "focusableInMain": 15,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Contenido de la campaña",
+        "H3 Criaturas",
+        "H3 Conjuros",
+        "H3 Personajes",
+        "H3 Reglas",
+        "H3 Objetos"
+      ],
+      "currentLinks": [
+        "Centro de mando DM",
+        "Contenido"
+      ],
+      "axeViolations": []
+    },
+    "dice": {
+      "viewportHeight": 1180,
+      "pageHeight": 1180,
+      "horizontalOverflow": false,
+      "firstPanelControl": null,
+      "focusableInMain": 9,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Dados de la mesa"
+      ],
+      "currentLinks": [
+        "Centro de mando DM",
+        "Dados"
+      ],
+      "axeViolations": []
+    },
+    "items": {
+      "viewportHeight": 1180,
+      "pageHeight": 1180,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 198,
+        "name": "Nuevo objeto"
+      },
+      "focusableInMain": 35,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Almacén de objetos"
+      ],
+      "currentLinks": [
+        "Centro de mando DM",
+        "Almacén de objetos"
+      ],
+      "axeViolations": []
+    },
+    "bestiary": {
+      "viewportHeight": 1180,
+      "pageHeight": 28796,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 270,
+        "name": "Nueva criatura"
+      },
+      "focusableInMain": 148,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Bestiario",
+        "H3 A23(23 en este grupo)",
+        "H3 B14(14 en este grupo)",
+        "H3 C40(40 en este grupo)",
+        "H3 D47(47 en este grupo)",
+        "H3 E30(30 en este grupo)",
+        "H3 F3(3 en este grupo)",
+        "H3 G33(33 en este grupo)",
+        "H3 H17(17 en este grupo)",
+        "H3 I2(2 en este grupo)",
+        "H3 J4(4 en este grupo)",
+        "H3 K1(1 en este grupo)",
+        "H3 L10(10 en este grupo)"
+      ],
+      "currentLinks": [
+        "Centro de mando DM",
+        "Bestiario"
+      ],
+      "axeViolations": []
+    },
+    "audit": {
+      "viewportHeight": 1180,
+      "pageHeight": 1180,
+      "horizontalOverflow": false,
+      "firstPanelControl": null,
+      "focusableInMain": 10,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Auditoría"
+      ],
+      "currentLinks": [
+        "Centro de mando DM",
+        "Auditoría"
+      ],
+      "axeViolations": []
+    },
+    "tapsPartyToBestiary": 2,
+    "bestiarySearchTop": 362,
+    "switcherLootUrl": "/campaign/20000000-0000-4000-8000-000000000001/members?panel=items&do=loot",
+    "pageErrors": []
+  },
+  "laptop": {
+    "home": {
+      "viewportHeight": 800,
+      "pageHeight": 835,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 252,
+        "name": "Bestiario"
+      },
+      "focusableInMain": 22,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 En la mesa",
+        "H2 Campaña"
+      ],
+      "currentLinks": [
+        "Inicio de The Sunken Coast",
+        "Centro de mando DM",
+        "Resumen"
+      ],
+      "axeViolations": []
+    },
+    "members": {
+      "viewportHeight": 800,
+      "pageHeight": 989,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 254,
+        "name": "Invitar jugador"
+      },
+      "focusableInMain": 18,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Miembros",
+        "H3 Invitaciones pendientes"
+      ],
+      "currentLinks": [
+        "Centro de mando DM",
+        "Miembros"
+      ],
+      "axeViolations": []
+    },
+    "level": {
+      "viewportHeight": 800,
+      "pageHeight": 800,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 330,
+        "name": "Bajar el nivel del grupo"
+      },
+      "focusableInMain": 12,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Nivel del grupo Sin fijar"
+      ],
+      "currentLinks": [
+        "Centro de mando DM",
+        "Nivel del grupo"
+      ],
+      "axeViolations": []
+    },
+    "modules": {
+      "viewportHeight": 800,
+      "pageHeight": 800,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 301,
+        "name": "Grupo: visible para jugadores"
+      },
+      "focusableInMain": 16,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Módulos activos"
+      ],
+      "currentLinks": [
+        "Centro de mando DM",
+        "Módulos activos"
+      ],
+      "axeViolations": []
+    },
+    "content": {
+      "viewportHeight": 800,
+      "pageHeight": 893,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 304,
+        "name": "Usar SRD 5.2.1 en criaturas"
+      },
+      "focusableInMain": 15,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Contenido de la campaña",
+        "H3 Criaturas",
+        "H3 Conjuros",
+        "H3 Personajes",
+        "H3 Reglas",
+        "H3 Objetos"
+      ],
+      "currentLinks": [
+        "Centro de mando DM",
+        "Contenido"
+      ],
+      "axeViolations": []
+    },
+    "dice": {
+      "viewportHeight": 800,
+      "pageHeight": 903,
+      "horizontalOverflow": false,
+      "firstPanelControl": null,
+      "focusableInMain": 9,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Dados de la mesa"
+      ],
+      "currentLinks": [
+        "Centro de mando DM",
+        "Dados"
+      ],
+      "axeViolations": []
+    },
+    "items": {
+      "viewportHeight": 800,
+      "pageHeight": 908,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 212,
+        "name": "Nuevo objeto"
+      },
+      "focusableInMain": 35,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Almacén de objetos"
+      ],
+      "currentLinks": [
+        "Centro de mando DM",
+        "Almacén de objetos"
+      ],
+      "axeViolations": []
+    },
+    "bestiary": {
+      "viewportHeight": 800,
+      "pageHeight": 1229,
+      "horizontalOverflow": false,
+      "firstPanelControl": {
+        "top": 212,
+        "name": "Nueva criatura"
+      },
+      "focusableInMain": 106,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Bestiario",
+        "H3 A23(23 en este grupo)",
+        "H3 B14(14 en este grupo)",
+        "H3 C40(40 en este grupo)",
+        "H3 D47(47 en este grupo)",
+        "H3 E30(30 en este grupo)",
+        "H3 F3(3 en este grupo)",
+        "H3 G33(33 en este grupo)",
+        "H3 H17(17 en este grupo)",
+        "H3 I2(2 en este grupo)",
+        "H3 J4(4 en este grupo)",
+        "H3 K1(1 en este grupo)",
+        "H3 L10(10 en este grupo)"
+      ],
+      "currentLinks": [
+        "Centro de mando DM",
+        "Bestiario"
+      ],
+      "axeViolations": []
+    },
+    "audit": {
+      "viewportHeight": 800,
+      "pageHeight": 800,
+      "horizontalOverflow": false,
+      "firstPanelControl": null,
+      "focusableInMain": 10,
+      "targetsUnder44": [],
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Auditoría"
+      ],
+      "currentLinks": [
+        "Centro de mando DM",
+        "Auditoría"
+      ],
+      "axeViolations": []
+    },
+    "tapsPartyToBestiary": 2,
+    "bestiarySearchTop": 312,
+    "switcherLootUrl": "/campaign/20000000-0000-4000-8000-000000000001/members?panel=items&do=loot",
+    "pageErrors": []
+  }
+}

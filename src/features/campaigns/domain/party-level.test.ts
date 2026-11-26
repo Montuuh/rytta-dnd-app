@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { createPartyRequestIds, partyBelow, partySuggested } from './party-level'
+import {
+  createPartyRequestIds,
+  orderPartyCharacters,
+  partyBelow,
+  partyStanding,
+  partySuggested,
+  raiseTarget,
+} from './party-level'
 
 const row = (level: number | null, status: 'draft' | 'complete' | null, below?: boolean) => ({
   level,
@@ -58,5 +65,41 @@ describe('RYT-130 party level request ids', () => {
   it('tells clearing apart from setting', () => {
     const registry = ids()
     expect(registry.idFor(4, null)).not.toBe(registry.idFor(4, 3))
+  })
+})
+
+describe('RYT-180 party level panel helpers', () => {
+  const character = (name: string, below: boolean, draft = false) => ({
+    id: name,
+    name,
+    level: draft ? null : 4,
+    below,
+    draft,
+    href: `/${name}`,
+  })
+
+  it('lists the characters below the party level first, then by name', () => {
+    const ordered = orderPartyCharacters([
+      character('Bea', false),
+      character('Cato', true),
+      character('Arin', false),
+      character('Dora', true),
+    ])
+    expect(ordered.map((entry) => entry.name)).toEqual(['Cato', 'Dora', 'Arin', 'Bea'])
+  })
+
+  it('counts only finished sheets, and those below the level among them', () => {
+    expect(partyStanding([])).toEqual({ below: 0, total: 0 })
+    expect(
+      partyStanding([character('A', true), character('B', false), character('C', false, true)]),
+    ).toEqual({ below: 1, total: 2 })
+  })
+
+  it('raises by one, starts at the suggestion while unset and stops at the highest level', () => {
+    expect(raiseTarget(6, undefined)).toBe(7)
+    expect(raiseTarget(19, undefined)).toBe(20)
+    expect(raiseTarget(20, undefined)).toBeNull()
+    expect(raiseTarget(null, 5)).toBe(5)
+    expect(raiseTarget(null, undefined)).toBe(1)
   })
 })

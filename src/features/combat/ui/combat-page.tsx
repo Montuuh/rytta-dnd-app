@@ -1,4 +1,4 @@
-import { useMemo, useState, type ComponentType } from 'react'
+import { useEffect, useMemo, useState, type ComponentType } from 'react'
 import { Alert, Button, Group, Paper, SegmentedControl, Stack, Text, Title } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Monitor, SlidersHorizontal, Swords } from 'lucide-react'
@@ -19,6 +19,7 @@ import { isLive, previewAsPlayer, type CombatState, type EncounterStatus } from 
 import { DmConsole } from './dm-console'
 import { EncounterGroup, EncounterList } from './encounter-list'
 import { useFreshness } from './helpers'
+import { rememberEncounter } from './last-encounter'
 import { TableDisplay } from './table-display'
 import './combat.css'
 
@@ -212,7 +213,12 @@ type DmView = 'table' | 'console'
 /** The DM opens the table view; the console is one switch away. */
 function DmEncounter({ projection }: { projection: ProjectionAction }) {
   const { encounterId } = useParams()
+  const { campaignId } = useCombatViewer()
   const { query, data } = useCombatState(encounterId ?? null)
+  // The bestiary offers the encounter opened last as the target of its one-tap add.
+  useEffect(() => {
+    if (encounterId && data?.encounter) rememberEncounter(campaignId, encounterId)
+  }, [campaignId, encounterId, data?.encounter])
   if (query.isError && !query.data && query.error.message === 'gone') return <NotFound />
   if (!data?.encounter)
     return (

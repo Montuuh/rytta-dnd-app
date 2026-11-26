@@ -20,10 +20,11 @@ export type { PartyMember } from './domain/party'
 export { classEmblem, useClassEmblemOf, useClassEmblems, type ClassEmblem } from './ui/class-emblem'
 
 export {
-  MemberCharacters,
-  MemberCharacterDialog,
-  type MemberCharacterChoice,
+  MemberCharacterLine,
+  MemberCharacterSheet,
+  type MemberCharacterView,
 } from './ui/member-characters'
+export { hasActiveCharacter } from './domain/roster'
 // RYT-168: the library edits classes and subclasses.
 export { classIndexSchema, subclassIndexSchema } from './domain/class-catalog'
 export {

@@ -22,8 +22,10 @@ import { PageHead } from '@/shared/ui/page-head'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { draftsQuery, libraryQuery } from '../api'
 import {
+  contentCounts,
   entryName,
   entryOrigins,
+  isCoverKind,
   knownKinds,
   libraryErrorCode,
   missingLanguage,
@@ -37,6 +39,7 @@ import { EntryThumb } from './entry-image'
 import { hasPicture } from './entry-picture'
 import { ImportDialog, PackDialog, PublishDialog } from './dialogs'
 import { OffersDialog } from './offers-dialog'
+import { PackCoverField } from './pack-cover-field'
 import { EntryEditor } from './entry-editor'
 import { entryMeta, kindLabel, originFilterLabel, originLabel, packLine } from './labels'
 import { hasKeptEdits, keepEdits, useKeptEditsVersion } from './unsaved'
@@ -230,7 +233,12 @@ export function LibraryPage() {
       </div>
     )
 
-  const kind = pack ? (params.kind ?? defaultKind(pack)) : null
+  // The reserved cover entry is not content: its kind is never a screen of its own.
+  const kind = pack
+    ? params.kind && !isCoverKind(params.kind)
+      ? params.kind
+      : defaultKind(pack)
+    : null
   const newPackButton = (
     <Button
       variant="light"
@@ -443,7 +451,7 @@ export function LibraryPage() {
 
 /** The kind a pack opens on: creatures when it has them, else its largest kind. */
 function defaultKind(pack: ContentPack): string {
-  const counts = pack.drafts ?? pack.kinds
+  const counts = contentCounts(pack.drafts ?? pack.kinds)
   if (counts.creature) return 'creature'
   const [largest] = Object.entries(counts).sort((a, b) => b[1] - a[1])
   return largest?.[0] ?? 'creature'
@@ -486,7 +494,7 @@ function EntryPane({
     setOrigin('all')
   }
   const drafts = useQuery(draftsQuery(userId, pack.id, kind))
-  const counts = pack.drafts ?? pack.kinds
+  const counts = contentCounts(pack.drafts ?? pack.kinds)
   const kinds = [...new Set([...Object.keys(counts), ...knownKinds, kind])].map((value) => ({
     value,
     label: counts[value] ? `${kindLabel(t, value)} · ${counts[value]}` : kindLabel(t, value),
@@ -544,6 +552,7 @@ function EntryPane({
           )}
         </Group>
       </div>
+      <PackCoverField pack={pack} language={language} userId={userId} />
       {!!pack.pending && (
         <div className="lib-banner">
           <span>{t('library.pending', { count: pack.pending })}</span>

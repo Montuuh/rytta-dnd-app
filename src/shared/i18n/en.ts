@@ -25,7 +25,9 @@ import { legalEn } from './legal-en'
 import { adminEn } from './admin-en'
 import { questsEn } from './quests-en'
 import { campaignContentEn } from './campaign-content-en'
+import { contentChoiceEn } from './content-choice-en'
 import { diceEn } from './dice-en'
+import { switcherEn } from './switcher-en'
 import { levelupEn } from './levelup-en'
 import { castEn } from './cast-en'
 import { activationEn } from './activation-en'
@@ -38,7 +40,9 @@ export const en = {
   ...adminEn,
   ...questsEn,
   ...campaignContentEn,
+  ...contentChoiceEn,
   ...diceEn,
+  ...switcherEn,
   ...levelupEn,
   ...castEn,
   ...identityEn,

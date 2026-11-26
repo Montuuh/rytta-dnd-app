@@ -114,7 +114,7 @@ export function MergeItems({
             data-autofocus
           />
           {candidates.length === 0 ? (
-            <Text c="dimmed">{t('store.noResults')}</Text>
+            <Text c="dimmed">{t('store.noMatch')}</Text>
           ) : (
             <PickList
               label={t('items.merge.keepGroup')}

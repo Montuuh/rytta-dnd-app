@@ -112,3 +112,24 @@ logs (read through the Supabase connector) show the email flow end to end on the
 - After 30 days (from 2026-12-24) remove the `rytta.pages.dev` entries from the Supabase redirect
   allowlist and the Turnstile hostnames. Keep the Bulk Redirect and the first Pages project.
 - The `next` commits of this ticket reach production with the next release.
+
+## Released (2026-11-24)
+
+- Release pull request 40 (`next` to `main`) merged as `45f8e91a` after its five checks passed
+  on `5f891b9d`. It carries the RYT-175 subclass screens (`c0fa7dc5`) and the RYT-158 and
+  RYT-176 documentation; no migration.
+- Before merging: clean install, `npm run check` (1278 unit tests), UI review PASS on the
+  current source (only the `index.html` comment changed since the RYT-175 PASS), build without
+  secret keys (the only `sb_secret_` text is the client library's key-type check), hosted
+  migrations equal to the repository's (latest `item_description_limit`). Of 1631 local
+  browser tests, 13 failed on timeouts under load and all 13 passed when rerun with two
+  workers; CI passed all four shards. `format:check` fails locally on Windows line endings and
+  passes in CI.
+- `https://rytta.app` serves build `45f8e91afd1b-mwv38kzp` (built 19:29 UTC) with its security
+  headers; `/privacy/`, `/en/terms/` and the manifest answer 200; `og:url` is
+  `https://rytta.app/`; `rytta.pages.dev` still answers 301 to the same path and query.
+- Google sign-in on `https://rytta.app` with the project mailbox account returned to the
+  campaign list with production data; every REST call answered 200 and the console stayed
+  empty.
+- Rollback: revert the merge commit on `main` (Pages redeploys `1b09c73`); no data change to
+  undo.

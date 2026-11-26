@@ -141,3 +141,20 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
 68. [ADR 055: own domain rytta.app](decisions/055-own-domain.md): the domain, the Pages project in
     the project account, the redirect from rytta.pages.dev and the email sender on the domain
     (RYT-158).
+69. [ADR 056: the DM command centre has a home and grouped navigation](decisions/056-dm-command-centre-home-and-navigation.md):
+    the board, the three panel groups, links instead of tabs, the quick switcher and `?do=` action
+    links (RYT-179).
+70. [ADR 057: the DM administration panels act in fewer steps](decisions/057-dm-administration-panels.md):
+    member rows with a sheet per member, the party level saved at once with Undo, dice as two rows
+    with a sheet each, pack versions to review first and the audit per character (RYT-180).
+71. [ADR 058: the bestiary and the storeroom are built for use at the table](decisions/058-bestiary-and-storeroom-at-the-table.md):
+    scanning rows, ranked search, a stat block that opens on the numbers, a pane beside the list,
+    direct add with Undo, the item sheet and giving, loot as lines and proposals accepted as
+    written (RYT-181).
+72. [ADR 059: a shadcn kit beside Mantine](decisions/059-shadcn-kit-beside-mantine.md):
+    shadcn components in `src/shared/ui/kit` for widgets Mantine lacks, Tailwind without
+    Preflight and with the `tw:` prefix, one set of tokens (RYT-183).
+73. [ADR 060: campaign content is read by pack](decisions/060-campaign-content-by-pack.md):
+    one card and one switch per pack, one update notice, entries in a sheet, items added one at a
+    time, one-step campaign creation, pack covers and lists that open on what the campaign uses
+    (RYT-184).

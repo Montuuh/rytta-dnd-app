@@ -472,8 +472,9 @@ describe('RYT-096 free character list and portraits', () => {
       await asUser(user)
       const rows = await pub.claimable(s.c)
       for (const row of rows) expect(Object.keys(row).sort()).toEqual(claimableColumns)
-      // Assigned (Arin, Bea) and archived (Old) characters are not free.
-      expect(rows).toEqual(expected)
+      // Assigned (Arin, Bea) and archived (Old) characters are not free. Ilsa and Juno share a
+      // creation time, so the id tie-break decides their order: compare them by name.
+      expect([...rows].sort((a, b) => a.name.localeCompare(b.name))).toEqual(expected)
     }
     // An absent free character is not claimable until the DM marks it present again.
     await asUser(dm)

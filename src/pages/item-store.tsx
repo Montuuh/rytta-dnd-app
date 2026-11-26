@@ -1,40 +1,33 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActionIcon,
   Alert,
-  Badge,
   Button,
-  Group,
   Menu,
+  Group,
   Select,
-  SegmentedControl,
   Stack,
   Text,
   TextInput,
   Title,
   UnstyledButton,
-  VisuallyHidden,
 } from '@mantine/core'
 import { Drawer } from '@/shared/ui/overlays'
 import { usePhone } from '@/shared/ui/use-viewport'
-import { useBasePackLabel } from '@/shared/ui/pack-origins-context'
+import { FilterLine, StatusRail } from '@/shared/ui/rail-line'
+import { Windowed } from '@/shared/ui/windowed'
 import { useQuery } from '@tanstack/react-query'
 import {
-  ArrowUpDown,
-  Bookmark,
   BookmarkCheck,
+  ChevronRight,
   Ellipsis,
   Gift,
   GitMerge,
   Inbox,
-  LayoutGrid,
-  List,
   PackagePlus,
-  Pencil,
   Plus,
   Search,
-  Store,
-  Trash2,
+  SlidersHorizontal,
   X,
 } from 'lucide-react'
 import { useSearchParams } from 'react-router'
@@ -43,35 +36,36 @@ import { useAuth } from '@/features/auth'
 import {
   BasicImport,
   catalogueQuery,
-  categoryIcons,
   DefinitionEditor,
   DeleteItemDialog,
   ItemIcon,
+  ItemSheet,
   itemCategories,
   MergeItems,
   LootDrawer,
+  PackFinds,
   ProposalReview,
   rarities,
   rarityPips,
   rosterQuery,
-  unitPounds,
+  StoreFilters,
   useItemTemplate,
+  useItemText,
   usePendingProposalCount,
-  useWeightFormat,
   type GiveOutcome,
   type ItemCategory,
   type ItemDefinition,
+  type StoreSort,
+  type StoreView,
 } from '@/features/inventory'
 import { CatalogueShopPicker } from '@/features/shops'
-import { formatGp } from '@/shared/lib/money'
 import { newRequestId } from '@/shared/lib/request-id'
+import { rankSearch } from '@/shared/lib/search-rank'
 import { localizedName } from '@/shared/lib/translations'
 import './item-store.css'
 
-type View = 'list' | 'grid'
-type Sort = 'name' | 'category' | 'rarity' | 'value'
 const viewKey = 'rytta-store-view'
-function savedView(): View {
+function savedView(): StoreView {
   try {
     return localStorage.getItem(viewKey) === 'grid' ? 'grid' : 'list'
   } catch {
@@ -79,22 +73,29 @@ function savedView(): View {
   }
 }
 
-/** RYT-027 item storeroom: a dense, filterable list (or compact grid) of campaign items with
- * icon actions, inside the DM Command Center. `?create=<characterId>` opens "new item for". */
+/** Rows mounted together; chunks far from the screen are replaced by a spacer (RYT-117). */
+const chunkSize = 24
+const rowEstimate = 62
+
+/** RYT-027 item storeroom: a filterable list (or compact grid) of campaign items inside the DM
+ * Command Center. A row opens the item sheet; giving, editing and the rest start there.
+ * `?create=<characterId>` opens "new item for". */
 export function ItemStore({ campaignId }: { campaignId: string }) {
   const { state } = useAuth()
   const { t, i18n } = useTranslation()
-  const baseLabel = useBasePackLabel(t('store.origin.srd'))
+  const text = useItemText()
   const [params, setParams] = useSearchParams()
   const query = useQuery(catalogueQuery(state.user!.id, campaignId))
   const roster = useQuery(rosterQuery(state.user!.id, campaignId))
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<ItemCategory | 'all'>('all')
-  const [sort, setSort] = useState<Sort>('name')
-  const [view, setViewState] = useState<View>(savedView)
+  const [sort, setSort] = useState<StoreSort>('name')
+  const [view, setViewState] = useState<StoreView>(savedView)
+  const [filtering, setFiltering] = useState(false)
   const [editor, setEditor] = useState<{ item: ItemDefinition | null; give?: string[] } | null>(
     null,
   )
+  const [sheetId, setSheetId] = useState<string | null>(null)
   const [give, setGive] = useState<ItemDefinition | true | null>(null)
   const [managing, setManaging] = useState(false)
   const [mergeSource, setMergeSource] = useState<string | null>(null)
@@ -103,25 +104,40 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
   // RYT-104/105: basic catalogue import, proposal review and duplicate merges.
   const [importing, setImporting] = useState(false)
   const [reviewing, setReviewing] = useState(false)
+  // RYT-184: the group "In your packs" under the list, read only while the search has 2+ characters.
+  const [packsShown, setPackShown] = useState(false)
   const [merging, setMerging] = useState<ItemDefinition | null>(null)
   const pendingProposals = usePendingProposalCount(campaignId, true)
   const template = useItemTemplate(campaignId)
   const templateRequests = useRef(new Map<string, string>())
-  const { format } = useWeightFormat()
-  const nameOf = (item: ItemDefinition) => localizedName(item, i18n.language)
-  const [notice, setNotice] = useState<{ text: string; tone: 'ok' | 'warn' } | null>(null)
+  const nameOf = text.nameOf
+  // Every message gets a serial, so the same sentence said twice is announced and shown again.
+  const [notice, setNoticeState] = useState<{
+    text: string
+    tone: 'ok' | 'warn'
+    serial: number
+  } | null>(null)
+  const noticeSerial = useRef(0)
+  const setNotice = (next: { text: string; tone: 'ok' | 'warn' } | null) =>
+    setNoticeState(next && { ...next, serial: ++noticeSerial.current })
   const phone = usePhone()
-  // Overlays opened from a ⋯ menu would otherwise "restore" focus to a menu item that no
-  // longer exists. Remember the visible trigger and return focus there (RYT-027 F1).
+  // Overlays opened from a menu would otherwise "restore" focus to a menu item that no longer
+  // exists. Remember the visible trigger and return focus there (RYT-027 F1).
   const trigger = useRef<HTMLElement | null>(null)
-  const newButton = useRef<HTMLButtonElement>(null)
+  const menuButton = useRef<HTMLButtonElement>(null)
   const searchInput = useRef<HTMLInputElement>(null)
   const returnFocus = () =>
     requestAnimationFrame(() =>
-      (trigger.current?.isConnected ? trigger.current : newButton.current)?.focus(),
+      (trigger.current?.isConnected ? trigger.current : menuButton.current)?.focus(),
     )
   const remember = (target: HTMLElement | null) => {
     trigger.current = target
+  }
+  // Run the chosen menu action only after the menu has closed and returned focus to its ⋯
+  // button, so the overlay that opens next remembers a real element (RYT-027 review F1).
+  const pendingAction = useRef<(() => void) | null>(null)
+  const choose = (run: () => void) => () => {
+    pendingAction.current = run
   }
   // `?create=<characterId>` opens "new item for" on load and whenever the link changes while the
   // storeroom is already mounted (RYT-027 R2-2). Closing the editor removes the parameter.
@@ -131,7 +147,43 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
     setSeenCreate(createFor)
     if (createFor) setEditor({ item: null, give: [createFor] })
   }
-  const setView = (next: View) => {
+  // RYT-179: `?do=new` and `?do=loot` (from the quick switcher) act once and leave the URL, so a
+  // reload or Back never repeats them. Loot waits for the catalogue, which its button needs.
+  const action = params.get('do')
+  const due = action === 'new' || (action === 'loot' && !query.isPending) ? action : null
+  const [seenAction, setSeenAction] = useState<string | null>(null)
+  if (due !== seenAction) {
+    setSeenAction(due)
+    if (due === 'new') setEditor({ item: null })
+    else if (due === 'loot' && (query.data ?? []).some((item) => !item.archived)) setGive(true)
+  }
+  useEffect(() => {
+    if (!due) return
+    trigger.current = null
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current)
+        next.delete('do')
+        return next
+      },
+      { replace: true },
+    )
+  }, [due, setParams])
+  // "/" jumps to the item search from anywhere on the screen, as in the glossary and the bestiary.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) return
+      if (event.defaultPrevented || event.isComposing || event.repeat) return
+      const target = event.target as HTMLElement | null
+      if (target?.closest('input, textarea, select, [contenteditable="true"]')) return
+      if (document.querySelector('[role="dialog"]')) return
+      event.preventDefault()
+      searchInput.current?.focus()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [])
+  const setView = (next: StoreView) => {
     setViewState(next)
     try {
       localStorage.setItem(viewKey, next)
@@ -171,30 +223,33 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
     return map
   }, [all])
   const items = useMemo(() => {
-    const needle = search.trim().toLocaleLowerCase()
-    const filtered = all.filter(
-      (item) =>
-        (category === 'all' || item.category === category) &&
-        [item.name, localizedName(item, i18n.language)].some((name) =>
-          name.toLocaleLowerCase().includes(needle),
-        ),
-    )
     const byName = (a: ItemDefinition, b: ItemDefinition) =>
       localizedName(a, i18n.language).localeCompare(localizedName(b, i18n.language), i18n.language)
-    return filtered.sort((a, b) => {
-      if (sort === 'category')
-        return (
-          itemCategories.indexOf(a.category) - itemCategories.indexOf(b.category) || byName(a, b)
-        )
-      if (sort === 'rarity')
-        return rarities.indexOf(b.rarity) - rarities.indexOf(a.rarity) || byName(a, b)
-      if (sort === 'value') return (b.value_gp ?? -1) - (a.value_gp ?? -1) || byName(a, b)
-      return byName(a, b)
-    })
+    const sorted = all
+      .filter((item) => category === 'all' || item.category === category)
+      .sort((a, b) => {
+        if (sort === 'category')
+          return (
+            itemCategories.indexOf(a.category) - itemCategories.indexOf(b.category) || byName(a, b)
+          )
+        if (sort === 'rarity')
+          return rarities.indexOf(b.rarity) - rarities.indexOf(a.rarity) || byName(a, b)
+        if (sort === 'value') return (b.value_gp ?? -1) - (a.value_gp ?? -1) || byName(a, b)
+        return byName(a, b)
+      })
+    // Names that start with the search first, then names with a word that starts with it.
+    return rankSearch(sorted, search, (item) => [item.name, localizedName(item, i18n.language)])
   }, [all, category, search, sort, i18n.language])
+  const chunks = useMemo(() => {
+    const out: ItemDefinition[][] = []
+    for (let at = 0; at < items.length; at += chunkSize) out.push(items.slice(at, at + chunkSize))
+    return out
+  }, [items])
+  const packSearch = search.trim().length >= 2 && Boolean(query.data)
+  const sheetItem = sheetId ? (all.find((item) => item.id === sheetId) ?? null) : null
   const closeEditor = () => {
     setEditor(null)
-    // A `?create=` link has no visible opener; fall back to "New item".
+    // A `?create=` link has no visible opener; fall back to the menu button.
     if (params.has('create')) trigger.current = null
     returnFocus()
     if (params.has('create'))
@@ -226,199 +281,183 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
       })
     else setNotice({ tone: 'ok', text: t('catalogue.savedName', { name: nameOf(item) }) })
   }
-  const meta = (item: ItemDefinition) =>
-    [
-      t(`inventory.category.${item.category}`),
-      t(`inventory.rarity.${item.rarity}`),
-      unitPounds(item) > 0 ? format(unitPounds(item)).replaceAll(' ', '\u00a0') : null,
-    ]
-      .filter(Boolean)
-      .join(' · ')
-  const value = (item: ItemDefinition) =>
-    item.value_gp === null
-      ? t('store.noValue')
-      : t('store.value', { value: formatGp(item.value_gp, i18n.language) })
-  const actionProps = (item: ItemDefinition) => ({
-    item,
-    name: nameOf(item),
-    onTrigger: remember,
-    onEdit: () => setEditor({ item }),
-    onGive: () => setGive(item),
-    onShop: () => setShop(item),
-    onDelete: () => setRemoving(item),
-    onMerge: () => setMerging(item),
-    onTemplate: () => toggleTemplate(item),
-  })
+  const filterParts = [
+    category === 'all' ? null : t(`inventory.category.${category}`),
+    sort === 'name' ? null : t(`store.by.${sort}`),
+  ].filter(Boolean)
   const filtersActive = category !== 'all' || search.trim().length > 0
+  // The Filters sheet's own choices in force: the category and the order (the view is a preference).
+  const filterCount = (category === 'all' ? 0 : 1) + (sort === 'name' ? 0 : 1)
+  const openItem = (item: ItemDefinition, from: HTMLElement | null) => {
+    remember(from)
+    setSheetId(item.id)
+  }
+  const countText =
+    items.length === all.length
+      ? t('store.count', { count: all.length })
+      : t('store.countOf', { shown: items.length, count: all.length })
 
   return (
     <section aria-labelledby="store-heading" className="item-store">
-      <Group justify="space-between" align="flex-start" gap="sm" mb="sm">
-        <div>
-          <Group gap="xs" align="center">
-            <Title order={2} id="store-heading">
-              {t('catalogue.title')}
-            </Title>
-            {query.data && (
-              <Badge variant="light" size="lg">
-                {t('store.count', { count: all.length })}
-              </Badge>
-            )}
-          </Group>
-        </div>
-        <Button
-          ref={newButton}
-          variant="outline"
-          leftSection={<Plus size={18} aria-hidden="true" />}
-          onClick={(event) => {
-            remember(event.currentTarget)
-            setEditor({ item: null })
-          }}
-        >
-          {t('catalogue.create')}
-        </Button>
-      </Group>
-      <div className="store-find">
-        <TextInput
-          className="store-search"
-          ref={searchInput}
-          aria-label={t('catalogue.search')}
-          placeholder={t('catalogue.search')}
-          rightSectionWidth={48}
-          leftSection={<Search size={16} aria-hidden="true" />}
-          value={search}
-          onChange={(event) => setSearch(event.currentTarget.value)}
-          rightSection={
-            search ? (
-              <ActionIcon
-                variant="subtle"
-                size={44}
-                aria-label={t('store.clearSearch')}
-                onClick={() => {
-                  setSearch('')
-                  searchInput.current?.focus()
+      <Title order={2} id="store-heading" className="store-title">
+        {t('catalogue.title')}
+      </Title>
+      <div className="store-sticky">
+        <div className="store-find">
+          <TextInput
+            className="store-search"
+            ref={searchInput}
+            type="search"
+            enterKeyHint="go"
+            aria-label={t('catalogue.search')}
+            placeholder={t('store.searchPlaceholder')}
+            rightSectionWidth={48}
+            leftSection={<Search size={16} aria-hidden="true" />}
+            value={search}
+            onChange={(event) => setSearch(event.currentTarget.value)}
+            onKeyDown={(event) => {
+              // Enter opens the best match.
+              if (event.key !== 'Enter' || event.nativeEvent.isComposing || !items[0]) return
+              event.preventDefault()
+              openItem(items[0], searchInput.current)
+            }}
+            rightSection={
+              search ? (
+                <ActionIcon
+                  variant="subtle"
+                  size={44}
+                  aria-label={t('store.clearSearch')}
+                  onClick={() => {
+                    setSearch('')
+                    searchInput.current?.focus()
+                  }}
+                >
+                  <X size={16} aria-hidden="true" />
+                </ActionIcon>
+              ) : null
+            }
+          />
+          <div className="store-tools">
+            {all.length > 0 && (
+              <Button
+                variant="default"
+                className="store-filters-button"
+                data-active={filterCount > 0 || undefined}
+                leftSection={<SlidersHorizontal size={18} aria-hidden="true" />}
+                onClick={(event) => {
+                  remember(event.currentTarget)
+                  setFiltering(true)
                 }}
               >
-                <X size={16} aria-hidden="true" />
-              </ActionIcon>
-            ) : null
-          }
-        />
-        {all.length > 0 && (
-          <Button
-            leftSection={<Gift size={18} aria-hidden="true" />}
-            onClick={(event) => {
-              remember(event.currentTarget)
-              setGive(true)
+                {t('store.filters')}
+                {filterCount > 0 && (
+                  <>
+                    <span className="store-filters-count tabular" aria-hidden="true">
+                      {filterCount}
+                    </span>
+                    <span className="visually-hidden">
+                      {t('store.filtersActive', { count: filterCount })}
+                    </span>
+                  </>
+                )}
+              </Button>
+            )}
+            <Menu
+              position="bottom-end"
+              withinPortal
+              withInitialFocusPlaceholder={false}
+              onExitTransitionEnd={() => {
+                const run = pendingAction.current
+                pendingAction.current = null
+                run?.()
+              }}
+            >
+              <Menu.Target>
+                <ActionIcon
+                  ref={menuButton}
+                  variant="default"
+                  size={44}
+                  onClick={() => remember(menuButton.current)}
+                  aria-label={t('store.menu')}
+                  title={t('common.moreActions')}
+                >
+                  <Ellipsis size={20} aria-hidden="true" />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Item
+                  leftSection={<Plus size={18} aria-hidden="true" />}
+                  onClick={choose(() => setEditor({ item: null }))}
+                >
+                  {t('catalogue.create')}
+                </Menu.Item>
+                <Menu.Item
+                  leftSection={<PackagePlus size={18} aria-hidden="true" />}
+                  onClick={choose(() => {
+                    setMergeSource(null)
+                    setManaging(true)
+                  })}
+                >
+                  {t('loot.manage')}
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          </div>
+        </div>
+        {filterParts.length > 0 && (
+          <FilterLine
+            className="store-filter-line"
+            text={filterParts.join(' · ')}
+            clearLabel={t('store.clearActive')}
+            clearName={t('store.clearActiveFilters')}
+            onClear={() => {
+              setCategory('all')
+              setSort('name')
             }}
-          >
-            {t('loot.open')}
-          </Button>
+          />
         )}
+        <StatusRail
+          className="store-status"
+          text={notice?.text ?? null}
+          serial={notice?.serial}
+          tone={notice?.tone}
+        >
+          <ActionIcon
+            variant="subtle"
+            size={44}
+            aria-label={t('common.close')}
+            onClick={() => setNotice(null)}
+          >
+            <X size={16} aria-hidden="true" />
+          </ActionIcon>
+        </StatusRail>
       </div>
-      <div className="store-desk">
+      {all.length > 0 && (
+        <Button
+          fullWidth
+          size="md"
+          className="store-loot"
+          leftSection={<Gift size={18} aria-hidden="true" />}
+          onClick={(event) => {
+            remember(event.currentTarget)
+            setGive(true)
+          }}
+        >
+          {t('loot.open')}
+        </Button>
+      )}
+      {pendingProposals > 0 && (
         <UnstyledButton
-          className="store-desk-link"
-          data-waiting={pendingProposals > 0 || undefined}
+          className="store-proposals"
           onClick={(event) => {
             remember(event.currentTarget)
             setReviewing(true)
           }}
         >
           <Inbox size={18} aria-hidden="true" />
-          <span>{t('items.review.open')}</span>
-          {pendingProposals > 0 && (
-            <span className="store-desk-count">
-              {t('items.review.waiting', { count: pendingProposals })}
-            </span>
-          )}
+          <span>{t('store.proposals', { count: pendingProposals })}</span>
+          <ChevronRight size={18} aria-hidden="true" />
         </UnstyledButton>
-        <UnstyledButton
-          className="store-desk-link"
-          onClick={(event) => {
-            remember(event.currentTarget)
-            setMergeSource(null)
-            setManaging(true)
-          }}
-        >
-          <PackagePlus size={18} aria-hidden />
-          {t('loot.manage')}
-        </UnstyledButton>
-      </div>
-
-      <details className="store-options">
-        <summary>{t('loot.options')}</summary>
-        <Group gap="sm">
-          <Select
-            className="store-sort"
-            aria-label={t('store.sort')}
-            leftSection={<ArrowUpDown size={16} aria-hidden="true" />}
-            value={sort}
-            allowDeselect={false}
-            onChange={(next) => next && setSort(next as Sort)}
-            data={(['name', 'category', 'rarity', 'value'] as const).map((key) => ({
-              value: key,
-              label: t(`store.sort${key[0]!.toUpperCase()}${key.slice(1)}` as 'store.sortName'),
-            }))}
-          />
-          <SegmentedControl
-            className="store-view"
-            aria-label={t('store.view')}
-            value={view}
-            onChange={(next) => setView(next as View)}
-            data={[
-              {
-                value: 'list',
-                label: (
-                  <span className="view-option" title={t('store.viewList')}>
-                    <List size={18} aria-hidden="true" />
-                    <VisuallyHidden>{t('store.viewList')}</VisuallyHidden>
-                  </span>
-                ),
-              },
-              {
-                value: 'grid',
-                label: (
-                  <span className="view-option" title={t('store.viewGrid')}>
-                    <LayoutGrid size={18} aria-hidden="true" />
-                    <VisuallyHidden>{t('store.viewGrid')}</VisuallyHidden>
-                  </span>
-                ),
-              },
-            ]}
-          />
-        </Group>
-      </details>
-      <div className="category-rail store-rail" role="group" aria-label={t('inventory.filter')}>
-        {(['all', ...itemCategories] as const)
-          .filter((key) => key === 'all' || counts.has(key))
-          .map((key) => (
-            <UnstyledButton
-              key={key}
-              aria-pressed={category === key}
-              className="category-chip"
-              onClick={() => setCategory(key)}
-            >
-              <ItemIcon icon={key === 'all' ? 'package' : categoryIcons[key]} size={16} />
-              <span>{t(`inventory.category.${key}`)}</span>
-              <span className="chip-count" aria-hidden="true">
-                {key === 'all' ? all.length : counts.get(key)}
-              </span>
-            </UnstyledButton>
-          ))}
-      </div>
-
-      {notice && (
-        <Alert
-          role="status"
-          color={notice.tone === 'warn' ? 'orange' : undefined}
-          withCloseButton
-          closeButtonLabel={t('common.close')}
-          onClose={() => setNotice(null)}
-          my="sm"
-        >
-          {notice.text}
-        </Alert>
       )}
       {query.isPending && (
         <Text role="status" mt="md">
@@ -433,20 +472,41 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
           </Button>
         </Alert>
       )}
-      {query.data && items.length === 0 && (
+      {query.data && all.length > 0 && <p className="store-count">{countText}</p>}
+      {query.data && items.length === 0 && !(packSearch && packsShown) && (
         <Stack align="center" gap="xs" py="xl" className="store-empty">
           <ItemIcon icon="package" size={36} />
-          <Text>{t(all.length ? 'store.noResults' : 'items.import.empty')}</Text>
+          <Text>
+            {t(
+              all.length
+                ? category === 'all'
+                  ? 'store.noMatch'
+                  : 'store.noResults'
+                : 'items.import.empty',
+            )}
+          </Text>
           {all.length === 0 && (
-            <Button
-              variant="light"
-              onClick={(event) => {
-                remember(event.currentTarget)
-                setImporting(true)
-              }}
-            >
-              {t('items.import.open')}
-            </Button>
+            <Group justify="center" gap="xs">
+              <Button
+                variant="light"
+                onClick={(event) => {
+                  remember(event.currentTarget)
+                  setImporting(true)
+                }}
+              >
+                {t('items.import.open')}
+              </Button>
+              <Button
+                variant="outline"
+                leftSection={<Plus size={18} aria-hidden="true" />}
+                onClick={(event) => {
+                  remember(event.currentTarget)
+                  setEditor({ item: null })
+                }}
+              >
+                {t('catalogue.create')}
+              </Button>
+            </Group>
           )}
           {filtersActive && (
             <Button
@@ -463,98 +523,178 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
       )}
 
       {items.length > 0 && view === 'list' && (
-        <ul className="store-list" aria-label={t('catalogue.title')}>
-          {items.map((item) => (
-            <li key={item.id} className="store-row">
-              <UnstyledButton
-                className="store-row-main"
-                onClick={(event) => {
-                  remember(event.currentTarget)
-                  setEditor({ item })
-                }}
-                title={t('store.editItem', { name: nameOf(item) })}
-              >
-                <span className={`store-glyph rarity-${item.rarity}`} aria-hidden="true">
-                  <ItemIcon icon={item.icon} imagePath={item.image_path} size={22} />
-                </span>
-                <span className="store-row-body">
-                  <span className="store-row-name user-copy">
-                    <VisuallyHidden>{t('catalogue.edit')}: </VisuallyHidden>
-                    {nameOf(item)}
-                    {item.is_template && (
-                      <span className="store-template-mark" title={t('items.template.mark')}>
-                        <BookmarkCheck size={14} aria-hidden="true" />
-                        <VisuallyHidden> · {t('items.template.mark')}</VisuallyHidden>
+        <div className="store-lists">
+          {chunks.map((chunk, index) => (
+            <Windowed
+              key={chunk[0]!.id}
+              estimate={chunk.length * rowEstimate}
+              initiallyMounted={index < 2}
+            >
+              <ul className="store-list" aria-label={t('catalogue.title')}>
+                {chunk.map((item) => (
+                  <li key={item.id} className="store-row">
+                    <UnstyledButton
+                      className="store-row-main"
+                      aria-haspopup="dialog"
+                      onClick={(event) => openItem(item, event.currentTarget)}
+                    >
+                      <span className={`store-glyph rarity-${item.rarity}`} aria-hidden="true">
+                        <ItemIcon icon={item.icon} imagePath={item.image_path} size={22} />
                       </span>
-                    )}
-                  </span>
-                  {/* Phones keep the price beside, not inside, the ellipsized meta line, so it
-                      never hides and the name keeps the full width (RYT-027 R2-1, R3-1). */}
-                  <span className="store-row-line">
-                    <span className="store-row-meta">{meta(item)}</span>
-                    {phone && (
+                      <span className="store-row-body">
+                        <span className="store-row-name user-copy">
+                          {nameOf(item)}
+                          {item.is_template && (
+                            <span className="store-template-mark" title={t('items.template.mark')}>
+                              <BookmarkCheck size={14} aria-hidden="true" />
+                              <span className="visually-hidden"> · {t('items.template.mark')}</span>
+                            </span>
+                          )}
+                        </span>
+                        <span className="store-row-meta">
+                          <span className="store-meta-part">
+                            {t(`inventory.category.${item.category}`)}
+                          </span>
+                          <span className="store-meta-part">
+                            {t(`inventory.rarity.${item.rarity}`)}
+                          </span>
+                          {text.weight(item) && (
+                            <span className="store-meta-part">{text.weight(item)}</span>
+                          )}
+                        </span>
+                      </span>
                       <span
                         className="store-value"
                         data-empty={item.value_gp === null || undefined}
                       >
-                        {value(item)}
+                        {text.price(item)}
                       </span>
-                    )}
-                  </span>
-                </span>
-                {!phone && (
-                  <span className="store-row-side">
-                    <span className="store-origin">
-                      {item.origin === 'srd' ? baseLabel : t(`store.origin.${item.origin}`)}
-                    </span>
-                    <span className="store-value" data-empty={item.value_gp === null || undefined}>
-                      {value(item)}
-                    </span>
-                  </span>
-                )}
-              </UnstyledButton>
-              <ItemActions {...actionProps(item)} compact={phone} />
-            </li>
+                    </UnstyledButton>
+                  </li>
+                ))}
+              </ul>
+            </Windowed>
           ))}
-        </ul>
+        </div>
       )}
       {items.length > 0 && view === 'grid' && (
-        <ul className="store-grid" aria-label={t('catalogue.title')}>
-          {items.map((item) => (
-            <li key={item.id} className={`store-tile rarity-${item.rarity}`}>
-              <UnstyledButton
-                className="store-tile-main"
-                onClick={(event) => {
-                  remember(event.currentTarget)
-                  setEditor({ item })
-                }}
-                title={t('store.editItem', { name: nameOf(item) })}
-              >
-                <span className="store-tile-icon" aria-hidden="true">
-                  <ItemIcon icon={item.icon} imagePath={item.image_path} size={30} />
-                </span>
-                <span className="store-tile-name user-copy">
-                  <VisuallyHidden>{t('catalogue.edit')}: </VisuallyHidden>
-                  {nameOf(item)}
-                  {item.is_template && (
-                    <VisuallyHidden> · {t('items.template.mark')}</VisuallyHidden>
-                  )}
-                </span>
-                <span className="store-tile-meta" data-empty={item.value_gp === null || undefined}>
-                  {value(item)}
-                </span>
-                <span className="item-rarity-pips" aria-hidden="true">
-                  {'◆'.repeat(rarityPips[item.rarity])}
-                </span>
-              </UnstyledButton>
-              <div className="store-tile-menu">
-                <ItemActions {...actionProps(item)} compact />
-              </div>
-            </li>
+        <div className="store-grids">
+          {chunks.map((chunk, index) => (
+            <Windowed
+              key={chunk[0]!.id}
+              estimate={Math.ceil(chunk.length / 3) * 140}
+              initiallyMounted={index < 2}
+            >
+              <ul className="store-grid" aria-label={t('catalogue.title')}>
+                {chunk.map((item) => (
+                  <li key={item.id} className={`store-tile rarity-${item.rarity}`}>
+                    <UnstyledButton
+                      className="store-tile-main"
+                      aria-haspopup="dialog"
+                      onClick={(event) => openItem(item, event.currentTarget)}
+                    >
+                      <span className="store-tile-icon" aria-hidden="true">
+                        <ItemIcon icon={item.icon} imagePath={item.image_path} size={30} />
+                      </span>
+                      <span className="store-tile-name user-copy">
+                        {nameOf(item)}
+                        {item.is_template && (
+                          <span className="visually-hidden"> · {t('items.template.mark')}</span>
+                        )}
+                      </span>
+                      <span
+                        className="store-tile-meta"
+                        data-empty={item.value_gp === null || undefined}
+                      >
+                        {text.price(item)}
+                      </span>
+                      <span className="item-rarity-pips" aria-hidden="true">
+                        {'◆'.repeat(rarityPips[item.rarity])}
+                      </span>
+                    </UnstyledButton>
+                  </li>
+                ))}
+              </ul>
+            </Windowed>
           ))}
-        </ul>
+        </div>
+      )}
+      {packSearch && query.data && (
+        <PackFinds
+          campaignId={campaignId}
+          search={search}
+          definitions={query.data}
+          category={category}
+          storeroomEmpty={items.length === 0}
+          fallbackFocus={searchInput}
+          onShown={setPackShown}
+          onAdded={(message) => setNotice({ tone: 'ok', text: message })}
+        />
       )}
 
+      {filtering && (
+        <StoreFilters
+          counts={counts}
+          total={all.length}
+          category={category}
+          sort={sort}
+          view={view}
+          shown={items.length}
+          onCategory={setCategory}
+          onSort={setSort}
+          onView={setView}
+          onClose={() => {
+            setFiltering(false)
+            returnFocus()
+          }}
+        />
+      )}
+      {sheetItem && (
+        <ItemSheet
+          campaignId={campaignId}
+          item={sheetItem}
+          onClose={() => {
+            setSheetId(null)
+            returnFocus()
+          }}
+          onEdit={() => {
+            setSheetId(null)
+            setEditor({ item: sheetItem })
+          }}
+          onShop={() => {
+            setSheetId(null)
+            setShop(sheetItem)
+          }}
+          onMerge={() => {
+            setSheetId(null)
+            setMerging(sheetItem)
+          }}
+          onDelete={() => {
+            setSheetId(null)
+            setRemoving(sheetItem)
+          }}
+          onTemplate={() => {
+            setSheetId(null)
+            toggleTemplate(sheetItem)
+            returnFocus()
+          }}
+          onShare={() => {
+            setSheetId(null)
+            setGive(sheetItem)
+          }}
+          onGiven={(character, quantity) => {
+            setSheetId(null)
+            setNotice({
+              tone: 'ok',
+              text:
+                quantity > 1
+                  ? t('store.givenMany', { name: nameOf(sheetItem), character, count: quantity })
+                  : t('store.givenOne', { name: nameOf(sheetItem), character }),
+            })
+            returnFocus()
+          }}
+        />
+      )}
       {editor && (
         <DefinitionEditor
           campaignId={campaignId}
@@ -571,8 +711,8 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
               : undefined
           }
           initialGive={editor.give?.filter((id) => roster.data?.some((c) => c.id === id) ?? true)}
-          // The storeroom returns focus itself: to the visible trigger, or to "New item" after a
-          // `?create=` link, whatever had focus before the link (RYT-027 R3-2).
+          // The storeroom returns focus itself: to the visible trigger, or to the menu button
+          // after a `?create=` link, whatever had focus before the link (RYT-027 R3-2).
           returnFocusToOpener={false}
           onClose={closeEditor}
           onSaved={saved}
@@ -583,6 +723,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
           campaignId={campaignId}
           items={all}
           initial={give === true ? undefined : give}
+          onDelivered={(delivered) => setNotice({ tone: 'ok', text: delivered })}
           onClose={() => {
             setGive(null)
             returnFocus()
@@ -653,7 +794,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
           }}
           onDeleted={(item) => {
             setRemoving(null)
-            // The row is gone: land on "New item" rather than a detached trigger.
+            // The row is gone: land on the menu button rather than a detached trigger.
             trigger.current = null
             setNotice({ tone: 'ok', text: t('lifecycle.deleted', { name: nameOf(item) }) })
             returnFocus()
@@ -668,9 +809,9 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
             setImporting(false)
             returnFocus()
           }}
-          onDone={(text) => {
+          onDone={(done) => {
             setImporting(false)
-            setNotice({ tone: 'ok', text })
+            setNotice({ tone: 'ok', text: done })
             returnFocus()
           }}
         />
@@ -683,7 +824,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
             setReviewing(false)
             returnFocus()
           }}
-          onNotice={(text) => setNotice({ tone: 'ok', text })}
+          onNotice={(done) => setNotice({ tone: 'ok', text: done })}
         />
       )}
       {merging && (
@@ -695,11 +836,11 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
             setMerging(null)
             returnFocus()
           }}
-          onDone={(text) => {
+          onDone={(done) => {
             setMerging(null)
-            // The duplicate's row is gone: land on "New item".
+            // The duplicate's row is gone: land on the menu button.
             trigger.current = null
-            setNotice({ tone: 'ok', text })
+            setNotice({ tone: 'ok', text: done })
             returnFocus()
           }}
         />
@@ -715,119 +856,5 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
         />
       )}
     </section>
-  )
-}
-
-/** Give and Shop as icon buttons on wide rows; the rest (and everything when compact) sits in one
- * menu: the template flag, merging a duplicate and delete (RYT-104/105). */
-function ItemActions({
-  item,
-  name,
-  compact,
-  onTrigger,
-  onEdit,
-  onGive,
-  onShop,
-  onDelete,
-  onMerge,
-  onTemplate,
-}: {
-  item: ItemDefinition
-  name: string
-  compact: boolean
-  onTrigger: (target: HTMLElement | null) => void
-  onEdit: () => void
-  onGive: () => void
-  onShop: () => void
-  onDelete: () => void
-  onMerge: () => void
-  onTemplate: () => void
-}) {
-  const { t } = useTranslation()
-  const shopable = item.origin !== 'player' || item.value_gp !== null
-  const menuButton = useRef<HTMLButtonElement>(null)
-  // Run the chosen action only after the menu has closed and returned focus to its ⋯ button,
-  // so the overlay that opens next remembers a real element (RYT-027 review F1).
-  const pending = useRef<(() => void) | null>(null)
-  const choose = (run: () => void) => () => {
-    pending.current = run
-  }
-  return (
-    <div className="store-row-actions">
-      {/* RYT-151: giving and stocking a shop have consequences, so they sit in the named ⋯ menu
-          with their verbs at every width instead of as bare icons. */}
-      <Menu
-        position="bottom-end"
-        withinPortal
-        withInitialFocusPlaceholder={false}
-        onExitTransitionEnd={() => {
-          const run = pending.current
-          pending.current = null
-          run?.()
-        }}
-      >
-        <Menu.Target>
-          <ActionIcon
-            ref={menuButton}
-            variant="subtle"
-            size={44}
-            onClick={() => onTrigger(menuButton.current)}
-            aria-label={t('store.actionsFor', { name })}
-            title={t('common.moreActions')}
-          >
-            <Ellipsis size={20} aria-hidden="true" />
-          </ActionIcon>
-        </Menu.Target>
-        <Menu.Dropdown>
-          {compact && (
-            <Menu.Item
-              leftSection={<Pencil size={18} aria-hidden="true" />}
-              onClick={choose(onEdit)}
-            >
-              {t('catalogue.edit')}
-            </Menu.Item>
-          )}
-          <>
-            <Menu.Item leftSection={<Gift size={18} aria-hidden="true" />} onClick={choose(onGive)}>
-              {t('catalogue.give')}
-            </Menu.Item>
-            {shopable && (
-              <Menu.Item
-                leftSection={<Store size={18} aria-hidden="true" />}
-                onClick={choose(onShop)}
-              >
-                {t('catalogue.addToShop')}
-              </Menu.Item>
-            )}
-          </>
-          <Menu.Item
-            leftSection={
-              item.is_template ? (
-                <BookmarkCheck size={18} aria-hidden="true" />
-              ) : (
-                <Bookmark size={18} aria-hidden="true" />
-              )
-            }
-            onClick={onTemplate}
-          >
-            {t(item.is_template ? 'items.template.remove' : 'items.template.add')}
-          </Menu.Item>
-          <Menu.Item
-            leftSection={<GitMerge size={18} aria-hidden="true" />}
-            onClick={choose(onMerge)}
-          >
-            {t('items.merge.open')}
-          </Menu.Item>
-          <Menu.Divider />
-          <Menu.Item
-            color="var(--danger)"
-            leftSection={<Trash2 size={18} aria-hidden="true" />}
-            onClick={choose(onDelete)}
-          >
-            {t('store.delete')}
-          </Menu.Item>
-        </Menu.Dropdown>
-      </Menu>
-    </div>
   )
 }

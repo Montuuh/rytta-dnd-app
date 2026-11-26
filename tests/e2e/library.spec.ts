@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { identityFixture } from './fixtures/identity.ts'
-import { capture, expectTouchTargets } from './fixtures/audit.ts'
+import { capture, expectTouchTargets, limitMatrix } from './fixtures/audit.ts'
 import {
   homebrewPackId,
   libraryServer,
@@ -713,6 +713,8 @@ test('accounts that are not editors see neither the menu item nor the library', 
   await page.goto('./#/library')
   await expect(page.getByRole('heading', { name: 'Solo para cuentas editoras' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Nuevo paquete' })).toHaveCount(0)
+  // RYT-184: nobody who cannot write the library reaches the cover control.
+  await expect(page.getByRole('region', { name: 'Portada' })).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Volver a mis campañas' })).toBeVisible()
   await audit(page)
 })
@@ -863,4 +865,135 @@ test('a subclass can give spellcasting to its class', async ({ page }, info) => 
   await page.getByRole('option', { name: 'Sin conjuros' }).click()
   await page.getByRole('button', { name: 'Guardar', exact: true }).click()
   await expect.poll(() => (saved() as { index: unknown }).index).toEqual({ class: 'druid' })
+})
+
+// RYT-184: a pack's cover is the reserved entry pack/cover, drafted and published like any entry.
+const coverPng = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAFElEQVR4nGM8UaHBgA0wYRUdtBIAHicBeAYWg8oAAAAASUVORK5CYII=',
+  'base64',
+)
+for (const [language, scheme] of [
+  ['es', 'dark'],
+  ['en', 'light'],
+] as const)
+  test(`RYT-184 an editor sets and removes a pack's cover (${language}, ${scheme})`, async ({
+    page,
+  }, info) => {
+    test.setTimeout(90_000)
+    limitMatrix(info, language === 'es')
+    const es = language === 'es'
+    await page.addInitScript(
+      ({ language, scheme }) => {
+        localStorage.setItem('rytta-language', language)
+        localStorage.setItem('rytta-color-scheme', scheme)
+      },
+      { language, scheme },
+    )
+    await identityFixture(page)
+    const server = libraryServer({ sample: true })
+    await server.install(page)
+    await page.goto(`./#/library/${homebrewPackId}/spell`)
+    const cover = page.getByRole('region', { name: es ? 'Portada' : 'Cover' })
+    const none = cover.getByText(es ? /Sin portada: la app muestra/ : /No cover: the app shows/)
+    await expect(none).toBeVisible()
+    await audit(page)
+    await capture(page, `test-results/ryt-184-none-${language}-${scheme}-${info.project.name}.png`)
+
+    // A failed upload says so, keeps the editor open and a retry saves.
+    const failure = '**/storage/v1/object/pack-images/**'
+    await page.route(failure, (route) => route.fulfill({ status: 500, body: '{}' }))
+    await cover
+      .locator('input[type=file]')
+      .setInputFiles({ name: 'cover.png', mimeType: 'image/png', buffer: coverPng })
+    const editor = page.getByRole('dialog', {
+      name: es ? 'Portada de Homebrew de la mesa' : 'Cover of Table homebrew',
+    })
+    await expect(editor).toBeVisible()
+    const use = editor.getByRole('button', { name: es ? 'Usar como portada' : 'Use as cover' })
+    await use.click()
+    await expect(editor.getByRole('alert')).toContainText(
+      es ? 'No se pudo subir la imagen' : 'could not be uploaded',
+    )
+    expect(server.entries().some((e) => e.kind === 'pack')).toBe(false)
+    await page.unroute(failure)
+    await use.click()
+    await expect(editor).toHaveCount(0)
+    const change = cover.getByRole('button', { name: es ? 'Cambiar' : 'Change', exact: true })
+    await expect(change).toBeFocused()
+    // Saved as a draft of the reserved entry, the picture named in data.index.image.
+    const saved = server.entries().filter((e) => e.kind === 'pack')
+    expect(saved).toHaveLength(1)
+    expect(saved[0]).toMatchObject({
+      pack_id: homebrewPackId,
+      key: 'cover',
+      name_en: 'Cover',
+      name_es: 'Portada',
+      published: null,
+    })
+    expect(saved[0]!.data).toEqual({
+      index: {
+        image: expect.stringMatching(new RegExp(`^pre/${homebrewPackId}/[0-9a-f-]{36}\\.webp$`)),
+      },
+    })
+    await expect(
+      cover.getByText(es ? /próxima versión que publiques/ : /next version you publish/),
+    ).toBeVisible()
+    await expect(cover.locator('[data-slot=pack-cover]')).toHaveAttribute('src', /public-test/)
+    // It is not content: no kind, list row or pack line names it.
+    await page.getByRole('combobox', { name: es ? 'Tipo' : 'Kind' }).click()
+    await expect(page.getByRole('option', { name: /^(pack|Portada|Cover)/i })).toHaveCount(0)
+    await page.keyboard.press('Escape')
+    await expect(page.locator('.lib-entry-list')).not.toContainText(/Portada|Cover/)
+    await audit(page)
+    await capture(page, `test-results/ryt-184-set-${language}-${scheme}-${info.project.name}.png`)
+
+    // Never published: removing it withdraws the draft entry.
+    await cover.getByRole('button', { name: es ? 'Quitar' : 'Remove', exact: true }).click()
+    await expect(none).toBeVisible()
+    expect(server.entries().some((e) => e.kind === 'pack')).toBe(false)
+    await expect(
+      cover.getByRole('button', { name: es ? 'Subir' : 'Upload', exact: true }),
+    ).toBeFocused()
+  })
+
+test('RYT-184 a published cover is saved without its picture when removed, and a save error shows', async ({
+  page,
+}) => {
+  await identityFixture(page)
+  const server = libraryServer({ sample: true })
+  await server.install(page)
+  const image = `pre/${homebrewPackId}/7a000000-0000-4000-8000-000000000009.webp`
+  const data = { index: { image } }
+  server.entries().push({
+    id: '73000000-0000-4000-8000-000000000999',
+    pack_id: homebrewPackId,
+    kind: 'pack',
+    key: 'cover',
+    name_en: 'Cover',
+    name_es: 'Portada',
+    data,
+    deleted: false,
+    published: { name_en: 'Cover', name_es: 'Portada', data, version: 1 },
+    revision: 1,
+    updated_at: '2026-11-20T10:00:00Z',
+  })
+  await page.goto(`./#/library/${homebrewPackId}/spell`)
+  const cover = page.getByRole('region', { name: 'Portada' })
+  await expect(cover.getByRole('button', { name: 'Cambiar', exact: true })).toBeVisible()
+  // A save the server refuses is reported where the control is, and the cover stays.
+  const failure = '**/rest/v1/rpc/save_content_entry'
+  await page.route(failure, (route) => route.fulfill({ status: 500, body: '{}' }))
+  await cover.getByRole('button', { name: 'Quitar', exact: true }).click()
+  await expect(cover.getByRole('alert')).toBeVisible()
+  await expect(cover.getByRole('button', { name: 'Cambiar', exact: true })).toBeVisible()
+  await page.unroute(failure)
+  await cover.getByRole('button', { name: 'Quitar', exact: true }).click()
+  await expect(cover.getByRole('button', { name: 'Subir', exact: true })).toBeFocused()
+  const entry = server.entries().find((e) => e.kind === 'pack')!
+  expect(entry.data).toEqual({ index: {} })
+  expect(entry.published?.data).toEqual(data)
+  // The change list of the next version reads "Portada", not an entry of a kind named pack.
+  await page.getByRole('button', { name: /Publicar versión 2/ }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.getByRole('listitem').filter({ hasText: 'Portada' })).toHaveText('Portada')
 })

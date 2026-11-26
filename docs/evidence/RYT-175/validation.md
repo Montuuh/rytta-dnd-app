@@ -156,3 +156,9 @@ level by level; SRD renames such as `hideous-laughter` and `arcane-hand` count a
   the subclass screens were exercised with invented content only.
 - The hand-written lists (names, levels, schools, class lists, concentration and ritual marks)
   are still unverified against the book.
+
+## Owner acceptance (2026-11-26)
+
+The owner reported in the session of 26 November 2026 that the Player's Handbook pack was
+downloaded into one of the owner's campaigns and worked, and accepted the ticket as done. The
+hand-written lists named under "Still to do" were not checked against the book separately.

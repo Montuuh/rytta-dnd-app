@@ -529,6 +529,27 @@
   }
 }
 
+/* RYT-184: the pack's cover beside its actions, as a book front (3:4). */
+.lib-cover {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px 16px;
+  align-items: center;
+  padding-block: 8px;
+  border-block: 1px solid var(--app-border);
+}
+.lib-cover-body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.lib-cover-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin-top: 4px;
+}
+
 /* RYT-174: origin filter, the protected note and the SRD original of a changed entry. */
 .lib-origin .mantine-SegmentedControl-label {
   min-height: 44px;

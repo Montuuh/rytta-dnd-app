@@ -1,0 +1,73 @@
+/*
+ * The shadcn kit (src/shared/ui/kit) beside Mantine (ADR 059).
+ * Tailwind without Preflight: Mantine and app/styles.css own the page's base styles. Every
+ * utility carries the `tw:` prefix, so none can collide with a class of the app's own CSS.
+ * The layers sit below the unlayered Mantine and app styles.
+ */
+@layer theme, base, components, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme) prefix(tw);
+@import 'tailwindcss/utilities.css' layer(utilities) prefix(tw);
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+/* The app's theme attribute, not a `.dark` class. */
+@custom-variant dark (&:where([data-mantine-color-scheme='dark'], [data-mantine-color-scheme='dark'] *));
+
+/* The kit's colours are the app's semantic tokens, which already change with the theme. */
+@theme inline {
+  --color-background: var(--app-bg);
+  --color-foreground: var(--app-text);
+  --color-card: var(--app-surface);
+  --color-card-foreground: var(--app-text);
+  --color-popover: var(--app-raised);
+  --color-popover-foreground: var(--app-text);
+  --color-primary: var(--app-accent);
+  --color-primary-foreground: var(--app-on-accent);
+  --color-secondary: var(--app-raised);
+  --color-secondary-foreground: var(--app-text);
+  --color-muted: var(--app-raised);
+  --color-muted-foreground: var(--app-muted);
+  --color-accent: var(--app-hover);
+  --color-accent-foreground: var(--app-text);
+  --color-destructive: var(--danger);
+  --color-border: var(--app-border);
+  --color-input: var(--app-border);
+  --color-ring: var(--app-focus);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-heading: Georgia, Cambria, serif;
+}
+
+/* The part of Preflight the kit's components assume, on the kit's parts (`data-slot`). Focus is
+ * the application's one outline (app/styles.css): kit components carry no ring of their own. */
+@layer base {
+  [data-slot],
+  [data-slot]::before,
+  [data-slot]::after {
+    box-sizing: border-box;
+    border: 0 solid var(--app-border);
+  }
+  button[data-slot],
+  input[data-slot] {
+    font: inherit;
+    color: inherit;
+    letter-spacing: inherit;
+    background-color: transparent;
+  }
+  button[data-slot] {
+    padding: 0;
+    cursor: pointer;
+  }
+  /* Text parts keep the kit's spacing, not the browser's margins. */
+  :is(p, h1, h2, h3, h4, h5, h6, ul, ol)[data-slot] {
+    margin: 0;
+  }
+  a[data-slot] {
+    color: inherit;
+    text-decoration: inherit;
+  }
+}

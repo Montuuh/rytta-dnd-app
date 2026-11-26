@@ -5689,6 +5689,30 @@
         "docs/decisions/060-campaign-content-by-pack.md",
         "supabase/migrations/20261228120000_campaign_content_by_pack.sql"
       ]
+    },
+    {
+      "id": "RYT-185",
+      "title": "Admin access reads and rolls in a campaign as its DM does",
+      "priority": "P1",
+      "owner": "backend",
+      "status": "review",
+      "dependsOn": ["RYT-153"],
+      "sources": [
+        "Owner request, 26 November 2026: inside a campaign entered from Administration the super admin cannot see the characters; the super admin must have the same permissions as the campaign DM, and the other players must not see that a super admin is inside."
+      ],
+      "scope": "private.my_campaign_ids() includes the campaigns of the caller's open admin access, so the read policies that require it (campaigns, characters, campaign_members, rest requests, tabletop live state, roll and encounter signals, item definitions) grant admin access what they grant the campaign DM. campaign_rolls.roller_id references the account instead of the membership, so a super admin can log rolls as the DM; a removed member's rolls still go with the seat (trigger). Nothing player-visible names the super admin: no member row, character history and campaign events show the DM without a name, inventory and rolls read as the DM's. Non-goals: membership management through admin access, a super admin owning or claiming a character.",
+      "acceptance": [
+        "While admin access is open the super admin reads the campaign, its roster, members and sheets exactly as the campaign DM does, and logs rolls; after exit, expiry or role withdrawal nothing is readable.",
+        "anon, outsider, a Player of the campaign and the DM of another campaign read nothing new; the Player still reads only their own member row and never the super admin.",
+        "Removing a member removes that member's rolls in the campaign, as before.",
+        "PGlite denial tests pass; the migration is applied to staging, then production and PRE, with the stored statement matching the committed file."
+      ],
+      "validation": [
+        "tests/database/super-admin.test.ts",
+        "npm run check",
+        "hosted staging then production apply with md5 comparison"
+      ],
+      "evidence": []
     }
   ]
 }

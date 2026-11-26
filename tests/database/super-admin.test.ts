@@ -280,6 +280,106 @@ describe('super admin role (RYT-153)', () => {
     await refused('select public.set_party_level($1, 4, $2)', [campaignA, randomUUID()])
   })
 
+  it('reads and rolls in the entered campaign as its DM, and nowhere else (RYT-185)', async () => {
+    const count = async (table: string, c: string) =>
+      scalar<number>(
+        `select count(*)::int result from public.${table} where ${table === 'campaigns' ? 'id' : 'campaign_id'} = $1`,
+        [c],
+      )
+    // Without an access row nothing is readable; the Player and other DM see what they saw before.
+    await asUser(admin)
+    for (const table of ['campaigns', 'characters', 'campaign_members']) {
+      expect(await count(table, campaignA)).toBe(0)
+    }
+    await db.query('select public.admin_enter_campaign($1)', [campaignA])
+    for (const table of ['campaigns', 'characters', 'campaign_members']) {
+      expect(await count(table, campaignA)).toBeGreaterThan(0)
+    }
+    // Exactly what the campaign's own DM reads.
+    const seen = async (viewer: string) => {
+      await asUser(viewer)
+      return [
+        await count('characters', campaignA),
+        await count('campaign_members', campaignA),
+        await count('character_sheets', campaignA),
+        await count('rest_requests', campaignA),
+        await count('tabletop_live', campaignA),
+        await count('campaign_roll_signals', campaignA),
+        await count('encounter_signals', campaignA),
+        await count('item_definitions', campaignA),
+      ]
+    }
+    const asAdmin = await seen(admin)
+    expect(asAdmin).toEqual(await seen(dmA))
+    // Only the entered campaign.
+    await asUser(admin)
+    for (const table of ['campaigns', 'characters', 'campaign_members']) {
+      expect(await count(table, campaignB)).toBe(0)
+    }
+    // A roll without a character is the DM's: it names nobody and the Player sees it as the DM's.
+    const roll = await scalar<Json>(
+      "select public.log_roll($1, null, 'Check', '1d20', 'custom', 'app', null, null, $2) result",
+      [campaignA, randomUUID()],
+    )
+    expect(roll).toMatchObject({ roller_id: admin, character_id: null })
+    await asUser(dmB)
+    expect(await count('campaign_rolls', campaignA)).toBe(0)
+    for (const table of ['campaigns', 'characters', 'campaign_members']) {
+      expect(await count(table, campaignA)).toBe(0)
+    }
+    await asUser(outsider)
+    for (const table of ['campaigns', 'characters', 'campaign_members', 'campaign_rolls']) {
+      expect(await count(table, campaignA)).toBe(0)
+    }
+    await asAnon()
+    await refused('select count(*) from public.characters')
+    // The Player still sees only their own seat and the super admin is in no member row.
+    await asUser(playerA)
+    const rows = await scalar<Json[]>(
+      'select coalesce(jsonb_agg(m), $2::jsonb) result from public.campaign_members m where m.campaign_id = $1',
+      [campaignA, '[]'],
+    )
+    expect(rows).toHaveLength(1)
+    expect(JSON.stringify(rows)).not.toContain(admin)
+    // A super admin claims and creates no character: those stay a Player's.
+    await asUser(admin)
+    await refused('select public.list_claimable_characters($1)', [campaignA])
+    // Leaving ends the reads.
+    await db.query('select public.admin_exit_campaign($1)', [campaignA])
+    for (const table of ['campaigns', 'characters', 'campaign_members', 'campaign_rolls']) {
+      expect(await count(table, campaignA)).toBe(0)
+    }
+    // Removing a member still removes their rolls, as the old membership cascade did.
+    await asUser(playerA)
+    await db.query(
+      "select public.log_roll($1, $2, 'Check', '1d20', 'custom', 'recorded', '{12}', 12, $3)",
+      [campaignA, characterA, randomUUID()],
+    )
+    await asSystem()
+    const before = await scalar<number>(
+      'select count(*)::int result from public.campaign_rolls where roller_id = $1',
+      [playerA],
+    )
+    expect(before).toBe(1)
+    await db.query('begin')
+    // Unassigned first: a character's own rolls go with the character, a seat's with the seat.
+    await db.query('update public.characters set user_id = null where campaign_id = $1 and user_id = $2', [
+      campaignA,
+      playerA,
+    ])
+    await db.query('delete from public.campaign_members where campaign_id = $1 and user_id = $2', [
+      campaignA,
+      playerA,
+    ])
+    expect(
+      await scalar<number>(
+        'select count(*)::int result from public.campaign_rolls where roller_id = $1',
+        [playerA],
+      ),
+    ).toBe(0)
+    await db.query('rollback')
+  })
+
   it('ends access when it expires or the role is withdrawn', async () => {
     await asUser(admin)
     await db.query('select public.admin_enter_campaign($1)', [campaignB])

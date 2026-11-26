@@ -136,8 +136,9 @@ describe('foreign keys to auth.users', () => {
     const bySchema = (s: string) => keys.filter((k) => k.schema === s).length
     // RYT-006 adds quests.created_by (set null) and private.quest_reads (cascade).
     // RYT-162 adds campaign_content.updated_by (set null).
-    expect(bySchema('public')).toBe(25)
-    expect(bySchema('pre')).toBe(25)
+    // RYT-185: campaign_rolls.roller_id references the account (cascade), not the membership.
+    expect(bySchema('public')).toBe(26)
+    expect(bySchema('pre')).toBe(26)
     expect(
       keys
         .filter((k) => k.action === 'c')
@@ -145,7 +146,9 @@ describe('foreign keys to auth.users', () => {
         .sort(),
     ).toEqual([
       'campaign_members',
+      'campaign_rolls',
       'pre.campaign_members',
+      'pre.campaign_rolls',
       'pre.profiles',
       // RYT-153: the role, admin accesses and favourites go with the account; campaign requests
       // now reference the account instead of the membership.

@@ -39,9 +39,24 @@ export type CampaignContentFunctions = {
       target_category: string
       search?: string | null
       page?: number
+      only_hidden?: boolean
     }
     Returns: Json
   }
+  // 20261228120000_campaign_content_by_pack (RYT-184).
+  set_campaign_content_pack: {
+    Args: { target_campaign: string; target_pack: string; enabled: boolean }
+    Returns: Json
+  }
+  get_campaign_content_pack_changes: {
+    Args: { target_campaign: string; target_pack: string }
+    Returns: Json
+  }
+  update_campaign_content_pack: {
+    Args: { target_campaign: string; target_pack: string; expected_version: number }
+    Returns: Json
+  }
+  get_campaign_used_creatures: { Args: { target_campaign: string }; Returns: Json }
   set_campaign_content_hidden: {
     Args: {
       target_campaign: string

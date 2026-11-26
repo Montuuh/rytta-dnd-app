@@ -11,6 +11,7 @@ import { useClassName } from './class-names'
 import { useGlossary } from './glossary-context'
 import { customFactIcon, factIcons } from './icon-maps'
 import { CategoryIcon } from './icons'
+import { packNameOf, packRefOf } from './pack-mark'
 import { GlossaryTerm, GlossaryText, RulesText } from './term'
 
 const isFactKey = (key: string): key is FactKey => (factKeys as readonly string[]).includes(key)
@@ -239,7 +240,12 @@ export function EntryArticle({
   // RYT-174: an entry the base pack changed or added no longer cites the SRD alone.
   const origins = usePackOrigins()
   const origin = entryOriginById(origins, entry.id)
-  const packName = origins.title?.[i18n.resolvedLanguage === 'en' ? 'en' : 'es'] ?? ''
+  const language = i18n.resolvedLanguage === 'en' ? 'en' : 'es'
+  const packName = origins.title?.[language] ?? ''
+  // RYT-187: an entry of another pack cites that pack's book, never the SRD.
+  const otherPack = packRefOf(entry.id)
+    ? packNameOf(entry, glossary?.packs ?? [], language, '')
+    : undefined
   const homebrew = entry.homebrew
   const facts = homebrew
     ? homebrew.facts.map((f) => ({ key: 'custom', label: f.label, value: f.value }))
@@ -337,17 +343,23 @@ export function EntryArticle({
           </Accordion.Item>
         </Accordion>
       )}
-      {body && (
-        <p className="gl-source">
-          {entry.edition === '2014'
-            ? t('glossary.legacySource', { page: body.page })
-            : origin === 'own'
-              ? packName
-              : origin === 'changed'
-                ? t('glossary.sourceChanged', { page: body.page, pack: packName })
-                : t('glossary.source', { page: body.page })}
-        </p>
-      )}
+      {body && otherPack !== undefined
+        ? otherPack && (
+            <p className="gl-source">
+              {t('glossary.sourcePack', { pack: otherPack, page: body.page })}
+            </p>
+          )
+        : body && (
+            <p className="gl-source">
+              {entry.edition === '2014'
+                ? t('glossary.legacySource', { page: body.page })
+                : origin === 'own'
+                  ? packName
+                  : origin === 'changed'
+                    ? t('glossary.sourceChanged', { page: body.page, pack: packName })
+                    : t('glossary.source', { page: body.page })}
+            </p>
+          )}
     </article>
   )
 }

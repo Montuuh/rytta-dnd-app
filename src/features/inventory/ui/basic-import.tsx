@@ -151,7 +151,8 @@ export function BasicImport({
   const differenceText = (differences: ItemDifference[]) =>
     differences.map((difference) => t(`items.import.difference.${difference}`)).join(' · ')
   const noPacks = catalogue.data && packs.length === 0
-  const hasSrd = packs.some((pack) => pack.srd)
+  // RYT-187: the SRD credit shows only when the chosen source includes the SRD's items.
+  const hasSrd = packs.some((pack) => pack.srd && (sourceId === allSources || pack.id === sourceId))
   return (
     <Drawer
       opened

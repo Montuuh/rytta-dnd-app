@@ -103,6 +103,7 @@ export const glossaryEn = {
   'glossary.houseRule': 'House rule',
   'glossary.houseRuleFor': 'House rule for',
   'glossary.source': 'SRD 5.2.1, page {{page}}',
+  'glossary.sourcePack': '{{pack}}, page {{page}}',
   'glossary.sourceChanged': 'SRD 5.2.1, page {{page}} · changed by {{pack}}',
   'glossary.legacySource': 'SRD 5.1, page {{page}}',
   'glossary.license':

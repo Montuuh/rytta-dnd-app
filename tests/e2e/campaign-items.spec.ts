@@ -1792,6 +1792,42 @@ test('RYT-184 the storeroom search finds the items of the packs and adds them on
   await expect(group.getByRole('listitem').filter({ hasText: 'Cuerda' })).toHaveCount(0)
 })
 
+test('RYT-184 typing a new search while an item is added keeps focus and every key in the search', async ({
+  page,
+}) => {
+  itemPackState.books = true
+  try {
+    await identityFixture(page, { inventory: true, catalogue: true })
+    let release = () => {}
+    const held = new Promise<void>((resolve) => (release = resolve))
+    await page.route('**/rpc/import_basic_items', async (route) => {
+      await held
+      await route.fallback()
+    })
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto(url)
+    const search = page.getByRole('searchbox', { name: 'Buscar objetos' })
+    const group = page.getByRole('region', { name: 'En tus paquetes' })
+    await search.fill('hoja lunar')
+    await group.getByRole('button', { name: 'Añadir Hoja lunar' }).focus()
+    await page.keyboard.press('Enter')
+    // The add is slow: the person goes back to the search and keeps typing.
+    await search.click()
+    await page.keyboard.press('End')
+    await page.keyboard.type(' de plata')
+    release()
+    // The search no longer matches it, so the storeroom says so in its status line.
+    await expect(
+      page.getByRole('status').filter({ hasText: 'Hoja lunar añadido al almacén.' }),
+    ).toBeAttached()
+    await page.keyboard.type(' fina')
+    await expect(search).toBeFocused()
+    await expect(search).toHaveValue('hoja lunar de plata fina')
+  } finally {
+    itemPackState.books = false
+  }
+})
+
 test('RYT-184 the pack group names its pack with several packs, fails with a retry and leaves one empty state', async ({
   page,
 }) => {
@@ -1809,10 +1845,14 @@ test('RYT-184 the pack group names its pack with several packs, fails with a ret
     await search.fill('hoja lunar')
     const row = group.getByRole('listitem').filter({ hasText: 'Hoja lunar' })
     await expect(row).toContainText('Libros del dueño')
-    await row.getByRole('button', { name: 'Añadir Hoja lunar' }).click()
+    // From the keyboard: the busy button keeps focus, and after the failure Retry has it.
+    await row.getByRole('button', { name: 'Añadir Hoja lunar' }).focus()
+    await page.keyboard.press('Enter')
     await expect(row.getByRole('alert')).toHaveText('No se pudo añadir.')
+    await expect(row.getByRole('button', { name: 'Añadir Hoja lunar' })).toBeFocused()
+    await expect(row.getByRole('button', { name: 'Añadir Hoja lunar' })).toHaveText('Reintentar')
     fail = false
-    await row.getByRole('button', { name: 'Añadir Hoja lunar' }).press('Enter')
+    await page.keyboard.press('Enter')
     await expect(page.locator('.store-row').filter({ hasText: 'Hoja lunar' })).toHaveCount(1)
     // The storeroom matches but the packs do not: the group says so.
     await search.fill('cuerda')

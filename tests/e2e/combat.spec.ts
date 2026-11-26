@@ -1714,11 +1714,14 @@ test('RYT-043 the DM adds and changes a creature image from its bestiary token',
   await page.goto(`./#/campaign/${campaignId}/combat?tab=bestiary`)
   await expect(page).toHaveURL(/members\?panel=bestiary/, { timeout: 15_000 })
   // RYT-184: the campaign's own creatures are "Propias", in a list where the segments do not fit.
+  // The toolbar measures its width before it picks segments or a list: wait for one of them.
   const sources = page.getByRole('combobox', { name: /^(Origen|Source)$/ })
-  if (await sources.count()) {
+  const segment = page.locator('.bst-source label', { hasText: 'Propias' })
+  await expect(sources.or(segment)).toBeVisible()
+  if (await sources.isVisible()) {
     await sources.click()
     await page.getByRole('option', { name: 'Propias', exact: true }).click()
-  } else await page.locator('.bst-source label', { hasText: 'Propias' }).click()
+  } else await segment.click()
   await expect(page.locator('.bst-row', { hasText: 'Wolf' }).locator('.combat-token')).toHaveClass(
     /shape-ally/,
   )

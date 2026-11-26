@@ -36,11 +36,14 @@ const content = `#/campaign/${campaignId}/members?panel=content`
 /** Picks a source by name: from the list when the sources are one, else from the segments. */
 async function chooseSource(page: Page, name: string) {
   const list = page.getByRole('combobox', { name: /^(Origen|Source)$/ })
-  if (await list.count()) {
+  const segment = page.locator('.bst-source label', { hasText: name })
+  // The toolbar measures its width before it picks segments or a list: wait for one of them.
+  await expect(list.or(segment)).toBeVisible()
+  if (await list.isVisible()) {
     await list.click()
     await page.getByRole('option', { name, exact: true }).click()
   } else {
-    await page.locator('.bst-source label', { hasText: name }).click()
+    await segment.click()
   }
 }
 

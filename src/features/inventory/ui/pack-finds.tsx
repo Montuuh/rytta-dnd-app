@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
-import { Alert, Button, Text, Title } from '@mantine/core'
+import { Alert, Button, Loader, Text, Title } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import { shortPackName } from '@/shared/api/pack-origins'
 import { cn } from '@/shared/lib/cn'
@@ -62,6 +62,8 @@ export function PackFinds({
   const [busy, setBusy] = useState<string | null>(null)
   const list = useRef<HTMLDivElement>(null)
   const requests = useRef(new Map<string, string>())
+  // After an add, focus moves once the storeroom has the item and its row has left this list.
+  const pendingFocus = useRef<{ key: string; index: number } | null>(null)
   const held = useMemo(
     () =>
       new Set(
@@ -75,6 +77,21 @@ export function PackFinds({
     )
     return rankSearch(open, search, (item) => [item.name.es, item.name.en]).slice(0, findLimit)
   }, [catalogue.data, held, category, search])
+  // The row is gone: focus the one that took its place, or the search when it was the last.
+  useEffect(() => {
+    const pending = pendingFocus.current
+    if (!pending || !held.has(pending.key) || finds.some((item) => item.key === pending.key)) return
+    pendingFocus.current = null
+    // The person may have moved on (typing a new search) while the item was added: leave them there.
+    const active = document.activeElement
+    if (active && active !== document.body && !list.current?.contains(active)) return
+    // Not cancelled on a later render: the item is already added and focus must land.
+    requestAnimationFrame(() => {
+      const next = list.current?.querySelectorAll<HTMLElement>('[data-pack-add]')
+      const target = next && next.length > 0 ? next[Math.min(pending.index, next.length - 1)] : null
+      ;(target ?? fallbackFocus.current)?.focus()
+    })
+  }, [finds, held, fallbackFocus])
   const several = (catalogue.data?.packs.length ?? 0) > 1
   const nameOf = (item: BasicItem) => item.name[language] || item.name.en || item.name.es
   const packOf = (item: BasicItem) => {
@@ -95,16 +112,16 @@ export function PackFinds({
         requestId = newRequestId()
         requests.current.set(signature, requestId)
       }
+      // Set before the request: the storeroom may refresh before the request resolves here.
+      pendingFocus.current = { key: item.key, index }
       await importer.mutateAsync({ items: payload, requestId })
       onAdded(t('store.packs.added', { name: nameOf(item) }))
-      // The row is gone: focus the one that took its place, or the search when it was the last.
-      requestAnimationFrame(() => {
-        const next = list.current?.querySelectorAll<HTMLElement>('[data-pack-add]')
-        const target = next && next.length > 0 ? next[Math.min(index, next.length - 1)] : null
-        ;(target ?? fallbackFocus.current)?.focus()
-      })
     } catch {
+      pendingFocus.current = null
       setFailed(item.key)
+      // The row stays: its button, now Retry, keeps focus when the person was on it.
+      const button = list.current?.querySelectorAll<HTMLElement>('[data-pack-add]')[index]
+      if (document.activeElement === document.body) button?.focus()
     } finally {
       setBusy(null)
     }
@@ -209,7 +226,9 @@ export function PackFinds({
                     mih={44}
                     data-pack-add=""
                     aria-label={t('store.packs.addName', { name: nameOf(item) })}
-                    loading={busy === item.key}
+                    // Busy, not disabled: a disabled button drops focus to the page.
+                    leftSection={busy === item.key ? <Loader size={14} aria-hidden="true" /> : null}
+                    aria-busy={busy === item.key || undefined}
                     aria-disabled={Boolean(busy) || undefined}
                     onClick={() => void add(item, index)}
                   >
